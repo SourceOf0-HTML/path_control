@@ -2,7 +2,6 @@
 var dom = "";
 var csvdata = document.getElementById("csvdata");
 csvdata.addEventListener("load", function() {
-  let parser = new DOMParser();
   dom = csvdata.contentDocument.documentElement;
 });
 
@@ -46,35 +45,34 @@ window.addEventListener("load", function() {
         let path = group[j].getElementsByTagName("path");
         for(let i = 0; i < path.length; i++) {
           let child = path[i];
+          let style = window.getComputedStyle(child);
           
           if(child.parentNode.nodeName == "clipPath") {
+          //if(child.parentNode.nodeName == "mask") {
             continue;
           }
           
-          let data = child.getAttribute("d").split(" ");
+          let data = child.getAttribute("d");
+          if(data.indexOf(",") < 0) {
+            data = data.split(/ /);
+          } else {
+            data = data.replace(/([MCZ])/g,",$1,").split(/[, ]/);
+          }
           let getD=()=>parseFloat(data.shift());
           let region = new Path2D();
-          let fillmode = "nonzero";
           
-          if(child.hasAttribute("fill-rule")) {
-            fillmode = "evenodd";
-          }
-          
-          let fillColor = child.getAttribute("fill");
+          let fillmode = style.fillRule;
+          let fillColor = style.fill;
           if(fillColor == "none") {
             context.fillStyle = "transparent";
           } else {
             context.fillStyle = fillColor;
           }
-          
-          let strokeColor = child.getAttribute("stroke");
-          if(strokeColor == "none") {
-            context.strokeStyle = "transparent";
-          } else {
-            context.lineWidth = parseInt(child.getAttribute("stroke-width"));
+          let strokeColor = style.stroke;
+          if(strokeColor != "none") {
+            context.lineWidth = parseInt(style.strokeWidth);
             context.strokeStyle = strokeColor;
           }
-          
           while(data.length > 0) {
             let c = data.shift();
             switch(c) {
@@ -86,12 +84,15 @@ window.addEventListener("load", function() {
                 break;
               case "Z":
                 region.closePath();
-              case "":
-                context.stroke(region);
-                context.fill(region, fillmode);
+                break;
+              default:
                 break;
             }
           }
+          if(strokeColor != "none") {
+            context.stroke(region);
+          }
+          context.fill(region, fillmode);
         };
       };
     }
