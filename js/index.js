@@ -1,23 +1,25 @@
 
-var dom = "";
-var csvdata = document.getElementById("csvdata");
-csvdata.addEventListener("load", function() {
-  dom = csvdata.contentDocument.documentElement;
-});
+var svgData = 0;
+var context = 0;
 
 window.addEventListener("load", function() {
-  var canvas = document.getElementById("main-canvas");
+  let csvdata = document.getElementById("csvdata");
+  let dom = csvdata.contentDocument.documentElement;
+  svgData = SVG_DATA.makeGroup(dom.querySelector("g"));
+  
+  let canvas = document.getElementById("main-canvas");
   
   if(canvas.parentNode === null) return;
   
-  var requestAnimationFrame = window.requestAnimationFrame ||
+  context = canvas.getContext("2d");
+  if(context === null) return;
+  
+  let requestAnimationFrame = window.requestAnimationFrame ||
                               window.mozRequestAnimationFrame ||
                               window.webkitRequestAnimationFrame ||
                               window.msRequestAnimationFrame;
-  var cancelAnimationFrame = window.cancelAnimationFrame ||
+  let cancelAnimationFrame = window.cancelAnimationFrame ||
                               window.mozCancelAnimationFrame;
-  
-  var context = canvas.getContext("2d");
   
   var width = document.documentElement.clientWidth;
   var height = document.documentElement.clientHeight;
@@ -32,70 +34,108 @@ window.addEventListener("load", function() {
     canvas.height = height;
   });
   
-  (function draw() {
+  let prevTimestamp = 0;
+  (function draw(timestamp) {
     if(canvas.parentNode === null) {
       return cancelAnimationFrame(draw);
     }
-    if(!!dom) {
-      context.clearRect(0, 0, width, height);
-      
-      let group = dom.getElementsByTagName("g");
-      for(let j = 0; j < group.length; j++) {
-        
-        let path = group[j].getElementsByTagName("path");
-        for(let i = 0; i < path.length; i++) {
-          let child = path[i];
-          let style = window.getComputedStyle(child);
-          
-          if(child.parentNode.nodeName == "clipPath") {
-          //if(child.parentNode.nodeName == "mask") {
-            continue;
-          }
-          
-          let data = child.getAttribute("d");
-          if(data.indexOf(",") < 0) {
-            data = data.split(/ /);
-          } else {
-            data = data.replace(/([MCZ])/g,",$1,").split(/[, ]/);
-          }
-          let getD=()=>parseFloat(data.shift());
-          let region = new Path2D();
-          
-          let fillmode = style.fillRule;
-          let fillColor = style.fill;
-          if(fillColor == "none") {
-            context.fillStyle = "transparent";
-          } else {
-            context.fillStyle = fillColor;
-          }
-          let strokeColor = style.stroke;
-          if(strokeColor != "none") {
-            context.lineWidth = parseInt(style.strokeWidth);
-            context.strokeStyle = strokeColor;
-          }
-          while(data.length > 0) {
-            let c = data.shift();
-            switch(c) {
-              case "M":
-                region.moveTo(getD(), getD());
-                break;
-              case "C":
-                region.bezierCurveTo(getD(), getD(), getD(), getD(), getD(), getD());
-                break;
-              case "Z":
-                region.closePath();
-                break;
-              default:
-                break;
-            }
-          }
-          if(strokeColor != "none") {
-            context.stroke(region);
-          }
-          context.fill(region, fillmode);
-        };
-      };
+    
+    let elapsed = (timestamp - prevTimestamp) / 1000;
+    let frameTime = 1/24;
+    if(elapsed <= frameTime) {
+      requestAnimationFrame(draw);
+      return;
     }
+    prevTimestamp = timestamp;
+    
+    context.clearRect(0, 0, width, height);
+    drawGroup(svgData);
+    
     requestAnimationFrame(draw);
   })();
 });
+
+
+function drawGroup(group, isMask = false) {
+  let isFoundMask = false;
+  
+  if(!isMask && !!group.maskIdToUse) {
+    let mask = SVG_DATA.getMaskGroup(group.maskIdToUse);
+    if(!!mask) {
+      isFoundMask = true;
+      context.save();
+      drawGroup(mask, true);
+    } else {
+      console.log("group is not found : " + group.maskIdToUse);
+    }
+  }
+  
+  let region = isMask? (new Path2D()):0;
+  
+  if(!!group.paths) {
+    group.paths.forEach(path=>{
+      
+      if(path.type == "group") {
+        drawGroup(path, isMask);
+        return;
+      }
+      
+      let isFoundMaskPath = false;
+      
+      if(!isMask && !!path.maskIdToUse) {
+        let maskPath = SVG_DATA.getMaskGroup(path.maskIdToUse);
+        if(!!maskPath) {
+          isFoundMaskPath = true;
+          context.save();
+          drawGroup(maskPath, true);
+        } else {
+          console.log("mask is not found : " + path.maskIdToUse);
+        }
+      }
+      
+      if(!isMask) {
+        region = new Path2D();
+      }
+      
+      path.pathDataList.forEach(d=>{
+        let i = 0;
+        switch(d.type) {
+          case "M":
+            region.moveTo(d.pos[i++], d.pos[i++]);
+            break;
+          case "C":
+            region.bezierCurveTo(d.pos[i++], d.pos[i++], d.pos[i++], d.pos[i++], d.pos[i++], d.pos[i++]);
+            break;
+          case "Z":
+            region.closePath();
+            break;
+          default:
+            break;
+        }
+      });
+      
+      if(!isMask) {
+        if(path.lineWidth > 0) {
+          context.lineWidth = path.lineWidth;
+          context.strokeStyle = path.strokeColor;
+          context.stroke(region);
+        }
+        context.fillStyle = path.fillStyle;
+        context.fill(region, path.fillRule);
+      }
+      
+      if(isFoundMaskPath) {
+        context.restore();
+      }
+    });
+  }
+  
+  if(isMask) {
+    context.clip(region);
+  }
+  
+  if(isFoundMask) {
+    context.restore();
+  }
+}
+
