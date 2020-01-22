@@ -3,20 +3,16 @@
   
   <head>
     <meta charset="UTF-8">
-    <title>てすと</title>
+    <title>SVGを変換</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   </head>
   
   <body>
-    <div class="container">
-      <canvas id="main-canvas"></canvas>
-    </div><!-- .container -->
-    
+    <input id="output-btn" type="button" value="出力" onclick="output_data()" disabled>
     <object id="csvdata" data="./img/original.svg" type="text/xml" style="position: absolute; width: 0; height: 0;"></object>
     <script src="./js/path_control.js"></script>
-    <script src="./js/index.js"></script>
-    
+    <script src="./js/output_data.js"></script>
   </body>
   
 </html>

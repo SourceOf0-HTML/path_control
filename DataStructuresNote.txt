@@ -1,0 +1,93 @@
+
+/**
+ * GroupObj constructor
+ */
+GroupObj: function(id, paths, maskIdToUse) {
+  this.type = "group";
+  this.id = id;                   // group ID
+  this.paths = paths;             // path object array ( contains group objects )
+  this.maskIdToUse = maskIdToUse; // ID of the mask to use
+},
+
+/**
+ * PathObj constructor
+ */
+PathObj: function(pathDataList, maskIdToUse, fillRule, fillStyle, lineWidth, strokeStyle) {
+  this.type = "path";
+  this.pathDataList = pathDataList;  // path data array
+  this.maskIdToUse = maskIdToUse;    // ID of the mask to use
+  this.fillRule = fillRule;          // "nonzero" or "evenodd"
+  this.fillStyle = fillStyle;        // fillColor ( context2D.fillStyle )
+  this.lineWidth = lineWidth;        // strokeWidth ( context2D.lineWidth )
+  this.strokeStyle = strokeStyle;    // strokeColor ( context2D.strokeStyle )
+},
+
+/**
+ * PathContainer constructor
+ */
+PathContainer : function() {
+  this.context = null;    // CanvasRenderingContext2D ( canvas.getContext("2d") )
+  this.rootGroup = null;  // root group
+  this.groups = {};       // list of groups
+  this.masks = {};        // list of defined mask IDs
+},
+
+
+-----------------
+
+Binnary Data
+
+PathContainer
+ masks
+  length : Uint8
+  key
+    length : Uint8
+    String : Uint16Array
+  values
+    length : Uint8
+    String : Uint16Array
+ rootGroup
+   GroupObj
+
+GroupObj
+ type
+   0 : Uint8
+ id
+   length : Uint8
+   String : Uint16Array
+ maskIdToUse
+   length : Uint8
+   String : Uint16Array
+ paths
+   length : Uint32
+   Array : PathObj or GroupObj
+
+PathObj
+ type
+   1 : Uint8
+ maskIdToUse
+   length : Uint8
+   String : Uint16Array
+ fillRule
+   nonzero = 0, evenodd = 1 : Uint8
+ lineWidth : Float32
+ fillStyle
+   A : Uint8
+   R : Uint8
+   G : Uint8
+   B : Uint8
+ strokeStyle
+   A : Uint8
+   R : Uint8
+   G : Uint8
+   B : Uint8
+ pathDataList
+   length : Uint32
+   Array : PathData
+
+PathData
+ type
+   M = 0, C = 1, Z = 2 : Uint8
+ pos
+   Array : Float32Array ( length: M = 2, C = 6, Z = 0 )
+
