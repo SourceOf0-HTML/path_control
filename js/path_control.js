@@ -31,7 +31,7 @@ var PathCtr = {
     */
    PathContainer : function() {
      this.context = null;    // CanvasRenderingContext2D ( canvas.getContext("2d") )
-     this.rootGroup = null;  // root group
+     this.rootGroups = [];   // root group
      this.groups = {};       // list of groups
      this.masks = {};        // list of defined mask IDs
    },
@@ -59,7 +59,7 @@ var PathCtr = {
     if(dataDOM.indexOf(",") < 0) {
       data = dataDOM.split(/ /);
     } else {
-      data = dataDOM.replace(/([MCZ])/g,",$1,").split(/[, ]/);
+      data = dataDOM.replace(/([MCZ])/g,",$1,").replace(/[^,]-/g,",-").split(/[, ]/);
     }
     
     let getD=()=>parseFloat(data.shift());
@@ -82,7 +82,6 @@ var PathCtr = {
           break;
       }
     }
-    
     return ret;
   },
   
@@ -121,7 +120,8 @@ var PathCtr = {
     let id = groupDOM.getAttribute("id");
     let children = groupDOM.children;
     let paths = [];
-    for(let i = 0; i < children.length; ++i) {
+    let childNum = children.length;
+    for(let i = 0; i < childNum; ++i) {
       let child = children[i];
       let name = child.tagName;
       switch(name) {
@@ -129,7 +129,8 @@ var PathCtr = {
           paths.push( this.makePath(child, window.getComputedStyle(child)) );
           break;
         case "mask":
-          for(let j = 0; j < child.children.length; ++j) {
+          let maskNum = child.children.length;
+          for(let j = 0; j < maskNum; ++j) {
             let maskChild = child.children[j];
             if( maskChild.tagName == "use" ) {
               this.initTarget.masks[child.getAttribute("id")] = maskChild.getAttribute("xlink:href").slice(1);
@@ -164,18 +165,22 @@ var PathCtr = {
   },
   
   /**
-   * @param groupDOM : root group element
+   * @param groupsDOM : root group elements
    * @param context  : CanvasRenderingContext2D ( canvas.getContext("2d") )
    * @return PathContainer
    */
-  initFromSvg: function(groupDOM) {
-    if(!groupDOM) {
-      console.error("group dom is not found");
+  initFromSvg: function(groupsDOM) {
+    if(!groupsDOM) {
+      console.error("groups dom is not found");
       return null;
     }
     
     let ret = this.initTarget = new this.PathContainer();
-    ret.rootGroup = this.makeGroup(groupDOM);
+    let domNum = groupsDOM.length;
+    for(let i = 0; i < domNum; ++i) {
+      if(groupsDOM[i].tagName != "g") continue;
+      ret.rootGroups.push(this.makeGroup(groupsDOM[i]));
+    }
     this.initTarget = null;
     
     return ret;
@@ -276,7 +281,9 @@ var PathCtr = {
       //console.log(id);
       return group;
     };
-    ret.rootGroup = getGroup();
+    for(let i = getUint8(); i > 0; --i) {
+      ret.rootGroups.push(getGroup());
+    }
     
     return ret;
   },
@@ -365,7 +372,11 @@ var PathCtr = {
       group.paths.forEach(setPath);
       console.log(sumLength);
     };
-    setGroup(pathContainer.rootGroup);
+    let rootGroupNum = pathContainer.rootGroups.length;
+    setUint8(pathContainer.rootGroups.length);
+    pathContainer.rootGroups.forEach(group=>{
+      setGroup(group);
+    });
     
     return buffer.slice(0, sumLength);
   },
@@ -411,7 +422,7 @@ PathCtr.PathContainer.prototype = {
       }
     }
     
-    let region = isMask? (new Path2D()):0;
+    let path2D = isMask? (new Path2D()):0;
     
     if(!!group.paths) {
       group.paths.forEach(path=>{
@@ -435,20 +446,20 @@ PathCtr.PathContainer.prototype = {
         }
         
         if(!isMask) {
-          region = new Path2D();
+          path2D = new Path2D();
         }
         
         path.pathDataList.forEach(d=>{
           let i = 0;
           switch(d.type) {
             case "M":
-              region.moveTo(d.pos[i++], d.pos[i++]);
+              path2D.moveTo(d.pos[i++], d.pos[i++]);
               break;
             case "C":
-              region.bezierCurveTo(d.pos[i++], d.pos[i++], d.pos[i++], d.pos[i++], d.pos[i++], d.pos[i++]);
+              path2D.bezierCurveTo(d.pos[i++], d.pos[i++], d.pos[i++], d.pos[i++], d.pos[i++], d.pos[i++]);
               break;
             case "Z":
-              region.closePath();
+              path2D.closePath();
               break;
             default:
               break;
@@ -459,10 +470,10 @@ PathCtr.PathContainer.prototype = {
           if(path.lineWidth > 0) {
             this.context.lineWidth = path.lineWidth;
             this.context.strokeStyle = path.strokeStyle;
-            this.context.stroke(region);
+            this.context.stroke(path2D);
           }
           this.context.fillStyle = path.fillStyle;
-          this.context.fill(region, path.fillRule);
+          this.context.fill(path2D, path.fillRule);
         }
         
         if(isFoundMaskPath) {
@@ -472,7 +483,7 @@ PathCtr.PathContainer.prototype = {
     }
     
     if(isMask) {
-      this.context.clip(region);
+      this.context.clip(path2D);
     }
     
     if(isFoundMask) {
@@ -481,11 +492,13 @@ PathCtr.PathContainer.prototype = {
   },
   
   draw: function() {
-    if(!this.rootGroup) {
-      console.error("root group is not found");
+    if(!this.rootGroups) {
+      console.error("root groups is not found");
       return;
     }
-    this.drawGroup(this.rootGroup);
+    this.rootGroups.forEach(group=>{
+      this.drawGroup(group);
+    });
   },
 };
 

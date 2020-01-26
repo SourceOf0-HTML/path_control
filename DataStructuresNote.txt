@@ -27,7 +27,7 @@ PathObj: function(pathDataList, maskIdToUse, fillRule, fillStyle, lineWidth, str
  */
 PathContainer : function() {
   this.context = null;    // CanvasRenderingContext2D ( canvas.getContext("2d") )
-  this.rootGroup = null;  // root group
+  this.rootGroups = [];   // root groups
   this.groups = {};       // list of groups
   this.masks = {};        // list of defined mask IDs
 },
@@ -46,8 +46,9 @@ PathContainer
   values
     length : Uint8
     String : Uint16Array
- rootGroup
-   GroupObj
+ rootGroups
+   length : Uint8
+   Array : GroupObj
 
 GroupObj
  type

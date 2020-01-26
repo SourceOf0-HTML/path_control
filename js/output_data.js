@@ -1,19 +1,19 @@
-var charaData = null;
+var pathData = null;
 
 window.addEventListener("load", function() {
   let svgDataDom = document.getElementById("csvdata");
   let dom = svgDataDom.contentDocument.documentElement;
   
   if(!!dom) {
-    charaData = PathCtr.initFromSvg(dom.querySelector("g"));
+    pathData = PathCtr.initFromSvg(dom.children);
     document.getElementById("output-btn").disabled = "";
   }
 });
 
 function output_data() {
-  if(!charaData) return;
+  if(!pathData) return;
   
-  let buffer = PathCtr.dataTobin(charaData);
+  let buffer = PathCtr.dataTobin(pathData);
   
   var a = document.createElement("a");
   document.body.appendChild(a);
