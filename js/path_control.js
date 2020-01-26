@@ -423,6 +423,7 @@ PathCtr.PathContainer.prototype = {
     }
     
     let path2D = isMask? (new Path2D()):0;
+    let isUsed = false;
     
     if(!!group.paths) {
       group.paths.forEach(path=>{
@@ -431,6 +432,7 @@ PathCtr.PathContainer.prototype = {
           this.drawGroup(path, isMask);
           return;
         }
+        isUsed = true;
         
         let isFoundMaskPath = false;
         
@@ -482,7 +484,7 @@ PathCtr.PathContainer.prototype = {
       });
     }
     
-    if(isMask) {
+    if(isMask && isUsed) {
       this.context.clip(path2D);
     }
     
