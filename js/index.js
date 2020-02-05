@@ -99,7 +99,7 @@ window.addEventListener("load", function() {
     context.putImageData(imagedata, 0, 0);
     
     let event = document.createEvent("HTMLEvents");
-    event.initEvent("resize", false, true);
+    event.initEvent("orientationchange", false, true);
     window.dispatchEvent(event);
   })();
 });
