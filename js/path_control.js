@@ -789,14 +789,12 @@ PathCtr.PathObj.prototype = {
   draw: function(displayWidth, displayHeight, context, path2D, isMask){
     let drawPath =d=>{
       let pos = d.pos;
-      let ratioX = displayWidth
-      let ratioY = displayHeight;
       switch(d.type) {
         case "M":
-          path2D.moveTo(pos[0]*ratioX, pos[1]*ratioY);
+          path2D.moveTo(pos[0]*displayWidth, pos[1]*displayHeight);
           break;
         case "C":
-          path2D.bezierCurveTo(pos[0]*ratioX, pos[1]*ratioY, pos[2]*ratioX, pos[3]*ratioY, pos[4]*ratioX, pos[5]*ratioY);
+          path2D.bezierCurveTo(pos[0]*displayWidth, pos[1]*displayHeight, pos[2]*displayWidth, pos[3]*displayHeight, pos[4]*displayWidth, pos[5]*displayHeight);
           break;
         case "Z":
           path2D.closePath();
@@ -858,11 +856,9 @@ PathCtr.GroupObj.prototype = {
     if( !this.actionList.hasOwnProperty(actionName) ) {
       let actionID = Object.keys(this.actionList).length;
       this.actionList[actionName] = actionID;
-      this.childGroups[actionID] = [];
-      this.childGroups[actionID][0] = this.childGroups[0][0].concat();
+      this.childGroups[actionID] = [this.childGroups[0][0].concat()];
     }
-    let actionID = this.actionList[actionName];
-    this.childGroups[actionID][frame] = childGroups;
+    this.childGroups[this.actionList[actionName]][frame] = childGroups;
   },
   
   /**
