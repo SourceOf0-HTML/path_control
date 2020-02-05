@@ -3,6 +3,7 @@ var frameTime = 1 / 30;
 var totalFrames = 1120;
 var frameNumber = 0;
 var canvas = null;
+var subCanvas = null;
 var requestAnimationIDs = [];
 
 var request = new XMLHttpRequest();
@@ -21,11 +22,13 @@ request.send();
 
 window.addEventListener("load", function() {
   canvas = document.getElementById("main-canvas");
+  subCanvas = document.getElementById("sub-canvas");
   
   if(!canvas.parentNode) return;
   
   let context = canvas.getContext("2d");
-  if(!context) return;
+  let subContext = subCanvas.getContext("2d");
+  if(!context || !subContext) return;
   
   let requestAnimationFrame = window.requestAnimationFrame ||
                               window.mozRequestAnimationFrame ||
@@ -38,15 +41,15 @@ window.addEventListener("load", function() {
   let viewHeight = document.documentElement.clientHeight;
   
   canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + viewWidth + "px;height:" + viewHeight + "px;");
-  canvas.width = viewWidth;
-  canvas.height = viewHeight;
+  canvas.width = subCanvas.width = viewWidth;
+  canvas.height = subCanvas.height = viewHeight;
   
   window.addEventListener("resize", function() {
     viewWidth = document.documentElement.clientWidth;
     viewHeight = document.documentElement.clientHeight;
     canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + viewWidth + "px;height:" + viewHeight + "px;");
-    canvas.width = viewWidth;
-    canvas.height = viewHeight;
+    canvas.width = subCanvas.width = viewWidth;
+    canvas.height = subCanvas.height = viewHeight;
   });
   
   let cancelAnimationFrames =()=>{
@@ -76,11 +79,16 @@ window.addEventListener("load", function() {
     cancelAnimationFrames();
     requestAnimationIDs.push(requestAnimationFrame(draw));
     
-    pathContainer.context = context;
-    context.clearRect(0, 0, viewWidth, viewHeight);
+    pathContainer.context = subContext;
+    subContext.clearRect(0, 0, viewWidth, viewHeight);
     pathContainer.setFitSize(viewWidth, viewHeight);
     pathContainer.draw(frameNumber);
     frameNumber = (frameNumber + 1) % totalFrames;
+    
+    context.clearRect(0, 0, viewWidth, viewHeight);
+    let imagedata = subContext.getImageData(0, 0, viewWidth, viewHeight);
+    context.putImageData(imagedata, 0, 0);
+    
   })();
 });
 
