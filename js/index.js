@@ -4,7 +4,10 @@ var totalFrames = 1120;
 var frameNumber = 0;
 var canvas = null;
 var subCanvas = null;
+var subContext = null;
 var requestAnimationIDs = [];
+var viewWidth = 0;
+var viewHeight = 0;
 
 var request = new XMLHttpRequest();
 request.addEventListener("load", function(event) {
@@ -15,6 +18,8 @@ request.addEventListener("load", function(event) {
   pathContainer = PathCtr.initFromBin(buffer);
   console.log("loading completed");
   //console.log(pathContainer);
+  pathContainer.context = subContext;
+  pathContainer.setFitSize(viewWidth, viewHeight);
   request = null;
 });
 request.open("GET", "./src/path_data.bin", true);
@@ -28,7 +33,7 @@ window.addEventListener("load", function() {
   if(!canvas.parentNode) return;
   
   let context = canvas.getContext("2d");
-  let subContext = subCanvas.getContext("2d");
+  subContext = subCanvas.getContext("2d");
   if(!context || !subContext) return;
   
   let requestAnimationFrame = window.requestAnimationFrame ||
@@ -38,19 +43,21 @@ window.addEventListener("load", function() {
   let cancelAnimationFrame = window.cancelAnimationFrame ||
                               window.mozCancelAnimationFrame;
   
-  let viewWidth = document.documentElement.clientWidth;
-  let viewHeight = document.documentElement.clientHeight;
+  viewWidth = document.documentElement.clientWidth;
+  viewHeight = document.documentElement.clientHeight;
   
   canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + viewWidth + "px;height:" + viewHeight + "px;");
   canvas.width = subCanvas.width = viewWidth;
   canvas.height = subCanvas.height = viewHeight;
   
   window.addEventListener("resize", function() {
+    console.log("resize");
     viewWidth = document.documentElement.clientWidth;
     viewHeight = document.documentElement.clientHeight;
     canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + viewWidth + "px;height:" + viewHeight + "px;");
     canvas.width = subCanvas.width = viewWidth;
     canvas.height = subCanvas.height = viewHeight;
+    if(!!pathContainer) pathContainer.setFitSize(viewWidth, viewHeight);
   });
   
   let cancelAnimationFrames =()=>{
@@ -61,13 +68,14 @@ window.addEventListener("load", function() {
   };
   
   let prevTimestamp = 0;
+  let elapsed = 0;
   (function draw(timestamp) {
     if(!canvas.parentNode) {
       cancelAnimationFrames();
       return;
     }
     
-    let elapsed = (timestamp - prevTimestamp) / 1000;
+    elapsed = (timestamp - prevTimestamp) / 1000;
     //console.log(elapsed, frameTime);
     
     if(!pathContainer || elapsed <= frameTime) {
@@ -80,9 +88,7 @@ window.addEventListener("load", function() {
     cancelAnimationFrames();
     requestAnimationIDs.push(requestAnimationFrame(draw));
     
-    pathContainer.context = subContext;
     subContext.clearRect(0, 0, viewWidth, viewHeight);
-    pathContainer.setFitSize(viewWidth, viewHeight);
     pathContainer.draw(frameNumber);
     frameNumber = (frameNumber + 1) % totalFrames;
     
