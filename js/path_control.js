@@ -975,6 +975,8 @@ PathCtr.PathContainer.prototype = {
       this.context.clip(path2D);
     }
     
+    path2D = null;
+    
     if(isFoundMask) {
       this.context.restore();
     }
@@ -996,6 +998,7 @@ PathCtr.PathContainer.prototype = {
     let path2D = new Path2D();
     path2D.rect(0, 0, this.displayWidth, this.displayHeight);
     this.context.clip(path2D);
+    path2D = null;
     
     this.rootGroups.forEach(id=>{
       this.drawGroup(this.groups[id], false);

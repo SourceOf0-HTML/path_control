@@ -15,6 +15,7 @@ request.addEventListener("load", function(event) {
   pathContainer = PathCtr.initFromBin(buffer);
   console.log("loading completed");
   //console.log(pathContainer);
+  request = null;
 });
 request.open("GET", "./src/path_data.bin", true);
 request.responseType = "arraybuffer";
