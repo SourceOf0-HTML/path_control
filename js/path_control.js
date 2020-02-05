@@ -9,7 +9,7 @@ var PathCtr = {
   isDebug : false,
   debugPrint: function() {
     if(!this.isDebug) return;
-    for(let i = 0; i < arguments.length; ++i) {
+    for(var i = 0; i < arguments.length; ++i) {
       console.log(arguments[i]);
     }
   },
@@ -69,22 +69,22 @@ var PathCtr = {
    * @return list of path data
    */
   makePathDataList: function(dataDOM) {
-    let ret = [];
+    var ret = [];
     
-    let data;
+    var data;
     if(dataDOM.indexOf(",") < 0) {
       data = dataDOM.split(/ /);
     } else {
       data = dataDOM.replace(/([MCZ])/g,",$1,").replace(/[^,]-/g,",-").split(/[, ]/);
     }
     
-    let baseX = this.initTarget.originalWidth;
-    let baseY = this.initTarget.originalHeight;
-    let getX=()=>parseFloat(data.shift())/baseX;
-    let getY=()=>parseFloat(data.shift())/baseY;
+    var baseX = this.initTarget.originalWidth;
+    var baseY = this.initTarget.originalHeight;
+    var getX=()=>parseFloat(data.shift())/baseX;
+    var getY=()=>parseFloat(data.shift())/baseY;
     
     while(data.length > 0) {
-      let type = data.shift();
+      var type = data.shift();
       switch(type) {
         case "M":
           // USEGE : path2D.moveTo(pos[0], pos[1])
@@ -117,13 +117,13 @@ var PathCtr = {
   makePath: function(pathDOM, style) {
     //PathCtr.debugPrint("makePath");
     //PathCtr.debugPrint(style.fill);
-    let fillStyle = style.fill;
+    var fillStyle = style.fill;
     if(fillStyle == "none") {
       fillStyle = "transparent";
     }
     
-    let lineWidth = 0;
-    let strokeStyle = style.stroke;
+    var lineWidth = 0;
+    var strokeStyle = style.stroke;
     if(strokeStyle == "none") {
       lineWidth = parseFloat(style.strokeWidth.match(/([\d\.]+)/)[1]);
       strokeStyle = "transparent";
@@ -146,21 +146,21 @@ var PathCtr = {
    * @param actionName : action name
    */
   addActionPath: function(path, pathDOM, style, frame, actionName) {
-    let fillRule = (!pathDOM)? "nonzero" : style.fillRule;
-    let fillStyle = (!pathDOM)? "none" : style.fill;
+    var fillRule = (!pathDOM)? "nonzero" : style.fillRule;
+    var fillStyle = (!pathDOM)? "none" : style.fill;
     if(fillStyle == "none") {
       fillStyle = "transparent";
     }
     
-    let lineWidth = 0;
-    let strokeStyle = (!pathDOM)? "none" : style.stroke;
+    var lineWidth = 0;
+    var strokeStyle = (!pathDOM)? "none" : style.stroke;
     if(strokeStyle == "none") {
       strokeStyle = "transparent";
     } else {
       lineWidth = parseFloat(style.strokeWidth.match(/([\d\.]+)/)[1]);
     }
     
-    let pathDataList = null;
+    var pathDataList = null;
     if(!!pathDOM) {
       pathDataList = this.makePathDataList(pathDOM.getAttribute("d"));
     } else if(!path.actionList) {
@@ -185,20 +185,20 @@ var PathCtr = {
    * @return GroupObj
    */
   makeGroup: function(groupDOM) {
-    let id = groupDOM.getAttribute("id");
-    let paths = [];
-    let childGroups = [];
-    let children = Array.prototype.slice.call(groupDOM.children);
+    var id = groupDOM.getAttribute("id");
+    var paths = [];
+    var childGroups = [];
+    var children = Array.prototype.slice.call(groupDOM.children);
     
     children.forEach(child=>{
-      let name = child.tagName;
+      var name = child.tagName;
       PathCtr.debugPrint("make group : " + id + " : " + name);
       switch(name) {
         case "path":
           paths.push( this.makePath(child, window.getComputedStyle(child)) );
           break;
         case "mask":
-          let mackChildren = Array.prototype.slice.call(child.children);
+          var mackChildren = Array.prototype.slice.call(child.children);
           mackChildren.forEach(maskChild=>{
             if( maskChild.tagName == "use" ) {
               this.initTarget.masks[child.getAttribute("id")] = maskChild.getAttribute("xlink:href").slice(1);
@@ -222,7 +222,7 @@ var PathCtr = {
       }
     });
     
-    let ret = new this.GroupObj(
+    var ret = new this.GroupObj(
       id,
       paths,
       childGroups,
@@ -241,14 +241,14 @@ var PathCtr = {
    * @param actionName : action name
    */
   addActionGroup: function(groupDOM, id, frame, actionName) {
-    let targetGroup = this.initTarget.groups[id];
-    let childGroups = [];
-    let dataIndex = 0;
+    var targetGroup = this.initTarget.groups[id];
+    var childGroups = [];
+    var dataIndex = 0;
     
     if(!!groupDOM) {
-      let children = Array.prototype.slice.call(groupDOM.children);
+      var children = Array.prototype.slice.call(groupDOM.children);
       children.forEach(child=>{
-        let name = child.tagName;
+        var name = child.tagName;
         switch(name) {
           case "path":
             this.addActionPath(targetGroup.paths[dataIndex++], child, window.getComputedStyle(child), frame, actionName);
@@ -266,7 +266,7 @@ var PathCtr = {
         }
       });
     } else {
-      let children = Array.prototype.slice.call(targetGroup.paths);
+      var children = Array.prototype.slice.call(targetGroup.paths);
       children.forEach(child=>{
         this.addActionPath(child, null, null, frame, actionName);
       });
@@ -286,15 +286,15 @@ var PathCtr = {
     
     console.log("init");
     
-    let ret = this.initTarget = new this.PathContainer();
+    var ret = this.initTarget = new this.PathContainer();
     
     this.initTarget.originalWidth = this.initTarget.displayWidth = parseInt(groupsDOM.getAttribute("width").replace("px", ""));
     this.initTarget.originalHeight = this.initTarget.displayHeight = parseInt(groupsDOM.getAttribute("height").replace("px", ""));
     
-    let children = Array.prototype.slice.call(groupsDOM.children);
+    var children = Array.prototype.slice.call(groupsDOM.children);
     children.forEach(child=>{
       if(child.tagName != "g") return;
-      let group = this.makeGroup(child);
+      var group = this.makeGroup(child);
       ret.rootGroups.push(group.id);
     });
     this.initTarget = null;
@@ -320,15 +320,15 @@ var PathCtr = {
     this.initTarget = pathContainer;
     
     console.log("check id");
-    let actionGroup = {};
-    let groupsDOMArr = Array.prototype.slice.call(groupsDOMList);
-    let baseDom = groupsDOMArr[0];
-    let baseGroups = baseDom.getElementsByTagName("g");
-    let ids = [].map.call(baseGroups, group=>group.getAttribute("id"));
-    let frame = 0;
+    var actionGroup = {};
+    var groupsDOMArr = Array.prototype.slice.call(groupsDOMList);
+    var baseDom = groupsDOMArr[0];
+    var baseGroups = baseDom.getElementsByTagName("g");
+    var ids = [].map.call(baseGroups, group=>group.getAttribute("id"));
+    var frame = 0;
     groupsDOMArr.forEach(targetDom=>{
-      let targetGroups = targetDom.getElementsByTagName("g");
-      let targetIds = [].map.call(targetGroups, group=>group.getAttribute("id"));
+      var targetGroups = targetDom.getElementsByTagName("g");
+      var targetIds = [].map.call(targetGroups, group=>group.getAttribute("id"));
       Array.prototype.forEach.call(targetIds, id=>{
         if(ids.includes(id)) return;
         ids.push(id);
@@ -339,7 +339,7 @@ var PathCtr = {
     console.log("check diff");
     groupsDOMArr.forEach(targetDom=>{
       ids.forEach(id=>{
-        let base = baseDom.getElementById(id);
+        var base = baseDom.getElementById(id);
         if( !base || !targetDom || !base.isEqualNode(targetDom.getElementById(id)) ) {
           actionGroup[id] = true;
         }
@@ -367,40 +367,40 @@ var PathCtr = {
       console.error("array buffer is not found");
       return null;
     }
-    let pathContainer = new this.PathContainer();
-    let dv = new DataView(buffer);
-    let sumLength = 0;
-    let groupIDs = { 0 : "" };
+    var pathContainer = new this.PathContainer();
+    var dv = new DataView(buffer);
+    var sumLength = 0;
+    var groupIDs = { 0 : "" };
     
     // -- prepare getting function --
     
-    let getUint8  =()=>{let ret = dv.getUint8(sumLength); sumLength += 1; return ret};
-    let getUint16 =()=>{let ret = dv.getUint16(sumLength); sumLength += 2; return ret};
-    let getUint32 =()=>{let ret = dv.getUint32(sumLength); sumLength += 4; return ret};
-    let getFloat32=()=>{let ret = dv.getFloat32(sumLength); sumLength += 4; return ret};
-    let getPos    =()=>{let ret = dv.getInt16(sumLength)/this.binDataPosRange; sumLength += 2; return ret};
-    let getString=()=>{
-      let num = getUint8();
-      let ret = "";
-      for(let i = 0; i < num; ++i) {
+    var getUint8  =()=>{var ret = dv.getUint8(sumLength); sumLength += 1; return ret};
+    var getUint16 =()=>{var ret = dv.getUint16(sumLength); sumLength += 2; return ret};
+    var getUint32 =()=>{var ret = dv.getUint32(sumLength); sumLength += 4; return ret};
+    var getFloat32=()=>{var ret = dv.getFloat32(sumLength); sumLength += 4; return ret};
+    var getPos    =()=>{var ret = dv.getInt16(sumLength)/this.binDataPosRange; sumLength += 2; return ret};
+    var getString=()=>{
+      var num = getUint8();
+      var ret = "";
+      for(var i = 0; i < num; ++i) {
         ret += String.fromCharCode(getUint16());
       }
       return ret;
     };
-    let getColor=()=>{
-      let a = getUint8();
+    var getColor=()=>{
+      var a = getUint8();
       if(a == 0) {
         return "transparent";
       }
-      let str = "rgb(" + getUint8() + ", " + getUint8() + ", " + getUint8() + ")";
+      var str = "rgb(" + getUint8() + ", " + getUint8() + ", " + getUint8() + ")";
       return str;
     };
     
-    let getArray=(lengFunc, getFunc)=>{
-      let ret = [];
-      let num = lengFunc();
-      for(let i = 0; i < num;) {
-        let count = getUint16();
+    var getArray=(lengFunc, getFunc)=>{
+      var ret = [];
+      var num = lengFunc();
+      for(var i = 0; i < num;) {
+        var count = getUint16();
         if(count == 0) {
           count = getUint16();
           if(count == 0) {
@@ -410,13 +410,13 @@ var PathCtr = {
           i += count;
           continue;
         }
-        let val = getFunc();
+        var val = getFunc();
         if(Array.isArray(val)) {
-          for(let j = 0; j < count; ++j) {
+          for(var j = 0; j < count; ++j) {
             ret[i + j] = val.concat();
           }
         } else {
-          for(let j = 0; j < count; ++j) {
+          for(var j = 0; j < count; ++j) {
             ret[i + j] = val;
           }
         }
@@ -425,17 +425,17 @@ var PathCtr = {
       return ret;
     };
     
-    let getGroupID=()=>groupIDs[getUint16()];
+    var getGroupID=()=>groupIDs[getUint16()];
     
-    let getAction=(func)=>{
+    var getAction=(func)=>{
       return getArray(getUint8, ()=>getArray(getUint16, ()=>func()));
     };
     
-    let getPathData=()=>{
-      let retNum = getUint16();
-      let ret = [];
-      for(let i = 0; i < retNum; ++i) {
-        let type = getUint8();
+    var getPathData=()=>{
+      var retNum = getUint16();
+      var ret = [];
+      for(var i = 0; i < retNum; ++i) {
+        var type = getUint8();
         switch(type) {
           case 0:  // M
             ret.push({type:"M", pos:[getPos(), getPos()]});
@@ -454,17 +454,17 @@ var PathCtr = {
       return ret;
     }
     
-    let getPath=()=>{
-      let maskIdToUse = getGroupID();
-      let fillRule = (getUint8() == 0 ? "nonzero" : "evenodd");
+    var getPath=()=>{
+      var maskIdToUse = getGroupID();
+      var fillRule = (getUint8() == 0 ? "nonzero" : "evenodd");
       
-      let actionListNum = getUint8();
+      var actionListNum = getUint8();
       
       if(actionListNum == 0) {
-        let lineWidth = getFloat32();
-        let fillStyle = getColor();
-        let strokeStyle = getColor();
-        let pathDataList = getPathData();
+        var lineWidth = getFloat32();
+        var fillStyle = getColor();
+        var strokeStyle = getColor();
+        var pathDataList = getPathData();
         return new this.PathObj(
           pathDataList,
           maskIdToUse,
@@ -475,17 +475,17 @@ var PathCtr = {
         );
       }
       
-      let actionList = {};
-      for(let i = 0; i < actionListNum; ++i) {
+      var actionList = {};
+      for(var i = 0; i < actionListNum; ++i) {
         actionList[getString()] = getUint8();
       }
       
-      let lineWidth = getAction(getFloat32);
-      let fillStyle = getAction(getColor);
-      let strokeStyle = getAction(getColor);
-      let pathDataList = getAction(getPathData);
+      var lineWidth = getAction(getFloat32);
+      var fillStyle = getAction(getColor);
+      var strokeStyle = getAction(getColor);
+      var pathDataList = getAction(getPathData);
       
-      let pathObj = new this.PathObj(
+      var pathObj = new this.PathObj(
         pathDataList,
         maskIdToUse,
         fillRule,
@@ -497,17 +497,17 @@ var PathCtr = {
       return pathObj;
     };
     
-    let getGroup=()=>{
-      let id = getGroupID();
-      let maskIdToUse = getGroupID();
+    var getGroup=()=>{
+      var id = getGroupID();
+      var maskIdToUse = getGroupID();
       
-      let paths = getArray(getUint16, getPath);
+      var paths = getArray(getUint16, getPath);
       
-      let actionListNum = getUint8();
+      var actionListNum = getUint8();
       if(actionListNum == 0) {
-        let childGroups = getArray(getUint8, getGroupID);
+        var childGroups = getArray(getUint8, getGroupID);
         
-        let group = new this.GroupObj(
+        var group = new this.GroupObj(
           id,
           paths,
           childGroups,
@@ -516,17 +516,17 @@ var PathCtr = {
         return group;
       }
       
-      let group = new this.GroupObj(
+      var group = new this.GroupObj(
         id,
         paths,
         [],
         maskIdToUse
       );
       
-      let actionList = {};
-      let actionNameList = [];
-      for(let i = 0; i < actionListNum; ++i) {
-        let actionName = getString();
+      var actionList = {};
+      var actionNameList = [];
+      for(var i = 0; i < actionListNum; ++i) {
+        var actionName = getString();
         actionList[actionName] = getUint8();
         actionNameList.push(actionName);
       }
@@ -542,20 +542,20 @@ var PathCtr = {
     pathContainer.originalWidth = pathContainer.displayWidth = getUint16();
     pathContainer.originalHeight = pathContainer.displayHeight = getUint16();
     
-    let groupIDNum = getUint16();
-    for(let i = 0; i < groupIDNum; ++i) {
+    var groupIDNum = getUint16();
+    for(var i = 0; i < groupIDNum; ++i) {
       groupIDs[i+1] = getString();
     }
     
-    for(let i = getUint8(); i > 0; --i) {
+    for(var i = getUint8(); i > 0; --i) {
       pathContainer.masks[getGroupID()] = getGroupID();
     }
     
     pathContainer.rootGroups = getArray(getUint8, getGroupID);
     
-    let groupsNum = getUint16();
-    for(let i = 0; i < groupsNum; ++i) {
-      let id = groupIDs[i+1];
+    var groupsNum = getUint16();
+    for(var i = 0; i < groupsNum; ++i) {
+      var id = groupIDs[i+1];
       PathCtr.debugPrint("count : " + i);
       PathCtr.debugPrint(id);
       PathCtr.debugPrint(sumLength);
@@ -576,38 +576,38 @@ var PathCtr = {
       return null;
     }
     
-    let buffer = new ArrayBuffer(1000000000);
-    let dv = new DataView(buffer);
-    let sumLength = 0;
-    let groupIDs = { "" : 0 };
+    var buffer = new ArrayBuffer(1000000000);
+    var dv = new DataView(buffer);
+    var sumLength = 0;
+    var groupIDs = { "" : 0 };
     
     // -- prepare setting function --
-    let setUint8  =val=>{dv.setUint8(sumLength, val); sumLength += 1};
-    let setUint16 =val=>{dv.setUint16(sumLength, val); sumLength += 2};
-    let setUint32 =val=>{dv.setUint32(sumLength, val); sumLength += 4};
-    let setFloat32=val=>{dv.setFloat32(sumLength, val); sumLength += 4};
-    let setPos    =val=>{dv.setInt16(sumLength, val*this.binDataPosRange); sumLength += 2};
-    let setString=str=>{
+    var setUint8  =val=>{dv.setUint8(sumLength, val); sumLength += 1};
+    var setUint16 =val=>{dv.setUint16(sumLength, val); sumLength += 2};
+    var setUint32 =val=>{dv.setUint32(sumLength, val); sumLength += 4};
+    var setFloat32=val=>{dv.setFloat32(sumLength, val); sumLength += 4};
+    var setPos    =val=>{dv.setInt16(sumLength, val*this.binDataPosRange); sumLength += 2};
+    var setString=str=>{
       setUint8(str.length);
-      let arr = [].map.call(str, c=>setUint16(c.charCodeAt(0)));
+      var arr = [].map.call(str, c=>setUint16(c.charCodeAt(0)));
     };
-    let setColor=str=>{
+    var setColor=str=>{
       if(str == "transparent") {
         setUint8(0);  // A
       } else {
-        let colorArr = str.match(/(\d+), (\d+), (\d+)/);
+        var colorArr = str.match(/(\d+), (\d+), (\d+)/);
         setUint8(1);  // A
         setUint8(colorArr[1]);  // R
         setUint8(colorArr[2]);  // G
         setUint8(colorArr[3]);  // B
       }
     };
-    let setArray=(arr, lengFunc, setFunc)=>{
-      let num = arr.length;
+    var setArray=(arr, lengFunc, setFunc)=>{
+      var num = arr.length;
       lengFunc(num);
-      for(let i = 0; i < num;) {
-        let val = arr[i];
-        let j = 1;
+      for(var i = 0; i < num;) {
+        var val = arr[i];
+        var j = 1;
         if(typeof(val) == "undefined") {
           setUint16(0);
           for(; j < num; ++j) {
@@ -626,15 +626,15 @@ var PathCtr = {
       }
     };
     
-    let setAction=(ids, func)=>{
+    var setAction=(ids, func)=>{
       setArray(ids, setUint8, frames=>{
         setArray(frames, setUint16, func);
       });
     };
     
-    let setGroupID=val=>setUint16(groupIDs[val]);
+    var setGroupID=val=>setUint16(groupIDs[val]);
     
-    let setPathData=pathDataList=>{
+    var setPathData=pathDataList=>{
       setUint16(pathDataList.length);
       pathDataList.forEach(d=>{
         switch(d.type) {
@@ -645,7 +645,7 @@ var PathCtr = {
             break;
           case "C":
             setUint8(1);
-            for(let i = 0; i < 6; ++i) {
+            for(var i = 0; i < 6; ++i) {
               setPos(d.pos[i]);
             }
             break;
@@ -660,7 +660,7 @@ var PathCtr = {
       });
     };
     
-    let setPath=path=>{
+    var setPath=path=>{
       setGroupID(path.maskIdToUse);
       setUint8(path.fillRule == "nonzero" ? 0 : 1);
       if(!path.actionList) {
@@ -683,7 +683,7 @@ var PathCtr = {
       setAction(path.pathDataList, setPathData);
     };
     
-    let setGroup=group=>{
+    var setGroup=group=>{
       setGroupID(group.id);
       setGroupID(group.maskIdToUse);
       setArray(group.paths, setUint16, setPath);
@@ -711,8 +711,8 @@ var PathCtr = {
     setUint16(pathContainer.originalWidth);
     setUint16(pathContainer.originalHeight);
     
-    let groupsNum = Object.keys(pathContainer.groups).length;
-    let maskNum = Object.keys(pathContainer.masks).length;
+    var groupsNum = Object.keys(pathContainer.groups).length;
+    var maskNum = Object.keys(pathContainer.masks).length;
     setUint16(groupsNum + maskNum);
     Object.keys(pathContainer.groups).forEach(key=>{
       groupIDs[key] = Object.keys(groupIDs).length;
@@ -765,14 +765,14 @@ PathCtr.PathObj.prototype = {
       this.actionList[PathCtr.defaultAction] = 0;
     }
     if( !this.actionList.hasOwnProperty(actionName) ) {
-      let actionID = Object.keys(this.actionList).length;
+      var actionID = Object.keys(this.actionList).length;
       this.actionList[actionName] = actionID;
       this.pathDataList[actionID] = [this.pathDataList[0][0]];
       this.fillStyle[actionID] = [this.fillStyle[0][0]];
       this.lineWidth[actionID] = [this.lineWidth[0][0]];
       this.strokeStyle[actionID] = [this.strokeStyle[0][0]];
     }
-    let actionID = this.actionList[actionName];
+    var actionID = this.actionList[actionName];
     this.pathDataList[actionID][frame] = pathDataList;
     this.fillStyle[actionID][frame] = fillStyle;
     this.lineWidth[actionID][frame] = lineWidth;
@@ -787,10 +787,10 @@ PathCtr.PathObj.prototype = {
    * @param isMask : when true, draw as a mask
    */
   draw: function(displayWidth, displayHeight, context, path2D, isMask){
-    let drawPath =d=>{
-      let pos = d.pos;
-      let ratioX = displayWidth
-      let ratioY = displayHeight;
+    var drawPath =d=>{
+      var pos = d.pos;
+      var ratioX = displayWidth
+      var ratioY = displayHeight;
       switch(d.type) {
         case "M":
           path2D.moveTo(pos[0]*ratioX, pos[1]*ratioY);
@@ -806,18 +806,18 @@ PathCtr.PathObj.prototype = {
           break;
       }
     };
-    let drawStroke =(lineWidth, strokeStyle)=>{
+    var drawStroke =(lineWidth, strokeStyle)=>{
       if( !lineWidth ) return;
       context.lineWidth = lineWidth;
       context.strokeStyle = strokeStyle;
       context.stroke(path2D);
     };
-    let drawFill =(fillStyle)=>{
+    var drawFill =(fillStyle)=>{
       context.fillStyle = fillStyle;
       context.fill(path2D, this.fillRule);
     };
     if( !!this.actionList ) {
-      let actionID = this.actionList[PathCtr.currentActionName];
+      var actionID = this.actionList[PathCtr.currentActionName];
       if( !actionID ) actionID = 0;
       
       frame = Math.min(PathCtr.currentFrame, this.lineWidth[actionID].length);
@@ -856,12 +856,12 @@ PathCtr.GroupObj.prototype = {
       this.actionList[PathCtr.defaultAction] = 0;
     }
     if( !this.actionList.hasOwnProperty(actionName) ) {
-      let actionID = Object.keys(this.actionList).length;
+      var actionID = Object.keys(this.actionList).length;
       this.actionList[actionName] = actionID;
       this.childGroups[actionID] = [];
       this.childGroups[actionID][0] = this.childGroups[0][0].concat();
     }
-    let actionID = this.actionList[actionName];
+    var actionID = this.actionList[actionName];
     this.childGroups[actionID][frame] = childGroups;
   },
   
@@ -874,7 +874,7 @@ PathCtr.GroupObj.prototype = {
       return this.childGroups;
     }
     
-    let actionID = this.actionList[PathCtr.currentActionName];
+    var actionID = this.actionList[PathCtr.currentActionName];
     
     if( !this.childGroups[actionID] ) {
       return this.childGroups[0][0];
@@ -905,7 +905,7 @@ PathCtr.PathContainer.prototype = {
    * @return mask GroupObj
    */
   getMaskGroup: function(id) {
-    let refId = this.masks[id];
+    var refId = this.masks[id];
     if(!!refId) {
       return this.groups[refId];
     } else {
@@ -924,10 +924,10 @@ PathCtr.PathContainer.prototype = {
       return;
     }
     
-    let isFoundMask = false;
+    var isFoundMask = false;
     
     if(!isMask && !!group.maskIdToUse) {
-      let mask = this.getMaskGroup(group.maskIdToUse);
+      var mask = this.getMaskGroup(group.maskIdToUse);
       if(!!mask) {
         isFoundMask = true;
         this.context.save();
@@ -937,17 +937,17 @@ PathCtr.PathContainer.prototype = {
       }
     }
     
-    let path2D = isMask? (new Path2D()):0;
-    let isUsed = false;
+    var path2D = isMask? (new Path2D()):0;
+    var isUsed = false;
     
     group.paths.forEach(path=>{
       
       isUsed = true;
       
-      let isFoundMaskPath = false;
+      var isFoundMaskPath = false;
       
       if(!isMask && !!path.maskIdToUse) {
-        let maskPath = this.getMaskGroup(path.maskIdToUse);
+        var maskPath = this.getMaskGroup(path.maskIdToUse);
         if(!!maskPath) {
           isFoundMaskPath = true;
           this.context.save();
@@ -968,7 +968,7 @@ PathCtr.PathContainer.prototype = {
       }
     });
     
-    let frameGroup = group.getChildGroups();
+    var frameGroup = group.getChildGroups();
     if(!!frameGroup) {
       frameGroup.forEach(childGroup=>{
         this.drawGroup(this.groups[childGroup], isMask);
@@ -997,7 +997,7 @@ PathCtr.PathContainer.prototype = {
     PathCtr.currentFrame = frame;
     PathCtr.currentActionName = actionName;
     
-    let path2D = new Path2D();
+    var path2D = new Path2D();
     path2D.rect(0, 0, this.displayWidth, this.displayHeight);
     this.context.clip(path2D);
     
