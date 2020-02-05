@@ -55,7 +55,7 @@ window.addEventListener("load", function() {
     }
     
     let elapsed = (timestamp - prevTimestamp) / 1000;
-    //console.log(elapsed, frameTime);
+    console.log(elapsed, frameTime);
     
     if(!pathContainer || elapsed <= frameTime) {
       requestAnimationFrame(draw);
@@ -63,13 +63,13 @@ window.addEventListener("load", function() {
     }
     prevTimestamp = timestamp;
     
-    requestAnimationFrame(draw);
-    
     pathContainer.context = context;
     context.clearRect(0, 0, viewWidth, viewHeight);
     pathContainer.setFitSize(viewWidth, viewHeight);
     pathContainer.draw(frameNumber);
     frameNumber = (frameNumber + 1) % totalFrames;
+    
+    requestAnimationFrame(draw);
   })();
 });
 
