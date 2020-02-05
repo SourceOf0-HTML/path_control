@@ -33,19 +33,19 @@ window.addEventListener("load", function() {
   let cancelAnimationFrame = window.cancelAnimationFrame ||
                               window.mozCancelAnimationFrame;
   
-  let width = document.documentElement.clientWidth;
-  let height = document.documentElement.clientHeight;
+  let viewWidth = document.documentElement.clientWidth;
+  let viewHeight = document.documentElement.clientHeight;
   
-  canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + width + "px;height:" + height + "px;");
-  canvas.width = width;
-  canvas.height = height;
+  canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + viewWidth + "px;height:" + viewHeight + "px;");
+  canvas.width = viewWidth;
+  canvas.height = viewHeight;
   
   window.addEventListener("resize", function() {
-    width = document.documentElement.clientWidth;
-    height = document.documentElement.clientHeight;
-    canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + width + "px;height:" + height + "px;");
-    canvas.width = width;
-    canvas.height = height;
+    viewWidth = document.documentElement.clientWidth;
+    viewHeight = document.documentElement.clientHeight;
+    canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + viewWidth + "px;height:" + viewHeight + "px;");
+    canvas.width = viewWidth;
+    canvas.height = viewHeight;
   });
   
   let prevTimestamp = 0;
@@ -66,8 +66,8 @@ window.addEventListener("load", function() {
     requestAnimationFrame(draw);
     
     pathContainer.context = context;
-    context.clearRect(0, 0, width, height);
-    pathContainer.setFitSize(width, height);
+    context.clearRect(0, 0, viewWidth, viewHeight);
+    pathContainer.setFitSize(viewWidth, viewHeight);
     pathContainer.draw(frameNumber);
     frameNumber = (frameNumber + 1) % totalFrames;
   })();

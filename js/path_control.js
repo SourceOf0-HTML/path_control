@@ -891,7 +891,7 @@ PathCtr.PathContainer.prototype = {
    * @param height : reference height
    */
   setFitSize: function(width, height) {
-    if(width >= height) {
+    if(this.originalWidth > this.originalHeight) {
       this.displayWidth = width;
       this.displayHeight = width * this.originalHeight/this.originalWidth;
     } else {
