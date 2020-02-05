@@ -51,11 +51,9 @@ window.addEventListener("load", function() {
   canvas.height = subCanvas.height = viewHeight;
   
   window.addEventListener("resize", function() {
-    let w = document.documentElement.clientWidth;
-    let h = document.documentElement.clientHeight;
-    if(w == viewWidth && h == viewHeight) return;
-    viewWidth = w
-    viewHeight = h;
+    console.log("resize");
+    viewWidth = document.documentElement.clientWidth;
+    viewHeight = document.documentElement.clientHeight;
     canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + viewWidth + "px;height:" + viewHeight + "px;");
     canvas.width = subCanvas.width = viewWidth;
     canvas.height = subCanvas.height = viewHeight;
@@ -98,9 +96,6 @@ window.addEventListener("load", function() {
     let imagedata = subContext.getImageData(0, 0, viewWidth, viewHeight);
     context.putImageData(imagedata, 0, 0);
     
-    let event = document.createEvent("HTMLEvents");
-    event.initEvent("orientationchange", false, true);
-    window.dispatchEvent(event);
   })();
 });
 
