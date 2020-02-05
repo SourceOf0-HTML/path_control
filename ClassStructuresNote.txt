@@ -1,0 +1,47 @@
+
+PathContainer
+  originalWidth = originalWidth;   // original svg width
+  originalHeight = originalHeight; // original svg height
+  displayWidth = displayWidth;     // display width
+  displayHeight = displayHeight;   // display height
+  context = <CanvasRenderingContext2D>;    // canvas.getContext("2d")
+  rootGroups = [ groupID, ... ];        // root groups IDs
+  groups = { groupID : <GroupObj>, ... };  // list of groups
+  masks = { maskID : groupID };            // list of defined mask IDs
+
+
+GroupObj (no action data)
+  id = id;   // g tag ID
+  maskIdToUse = maskIdToUse;  // ID of the mask to use
+  paths = [<PathObj>, ... ];  // list of PathObj
+  actionList = null;          // action name list
+  childGroups = [groupID, ... ];   // list of group id
+
+
+GroupObj (after add action data)
+  id = id;   // g tag ID
+  maskIdToUse = maskIdToUse;   // ID of the mask to use
+  paths = [<PathObj>, ... ];  // list of PathObj
+  actionList = { actionName : actionID, ... };   // action name list
+  childGroups = [actionID, ... ][frame, ... ][groupID, ... ]; // list of group id
+
+
+PathObj (no action data)
+  maskIdToUse = maskIdToUse;    // ID of the mask to use
+  fillRule = fillRule;          // "nonzero" or "evenodd"
+  actionList = null;            // action name list
+  fillStyle = fillStyle;        // fillColor ( context2D.fillStyle )
+  lineWidth = lineWidth;        // strokeWidth ( context2D.lineWidth )
+  strokeStyle = strokeStyle;    // strokeColor ( context2D.strokeStyle )
+  pathDataList = pathDataList;  // path data array
+
+
+PathObj (after add action data)
+  maskIdToUse = maskIdToUse;    // ID of the mask to use
+  fillRule = fillRule;          // "nonzero" or "evenodd"
+  actionList = { actionName : actionID, ... };   // action name list
+  fillStyle = [actionID, ... ][frame, ... ] = fillStyle;        // fillColor ( context2D.fillStyle )
+  lineWidth = [actionID, ... ][frame, ... ] = lineWidth;        // strokeWidth ( context2D.lineWidth )
+  strokeStyle = [actionID, ... ][frame, ... ] = strokeStyle;    // strokeColor ( context2D.strokeStyle )
+  pathDataList = [actionID, ... ][frame, ... ] = pathDataList;  // path data array
+

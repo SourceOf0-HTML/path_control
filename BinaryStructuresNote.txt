@@ -1,0 +1,92 @@
+
+GroupIDs
+ length : Uint16
+   length : Uint8
+   String : Uint16Array
+
+
+PathContainer
+ originalWidth  : Uint16
+ originalHeight : Uint16
+ masks
+   length : Uint8
+   key
+     groupID : Uint16
+   values
+     groupID : Uint16
+ rootGroups
+   length : Uint8
+     groupID : Uint16
+ groups
+   length : Uint16
+   key
+     groupID : Uint16
+   values
+     GroupObj
+
+
+GroupObj
+ id
+   groupID : Uint16
+ maskIdToUse
+   groupID : Uint16
+ paths
+   length : Uint16
+   Array : PathObj
+ actionList
+   length : Uint8 ( != 0 : add @ data )
+   key
+     length : Uint8 @
+     String : Uint16Array @
+   values
+     actionID : Uint8 @
+ childGroups
+   actionID(length) : Uint8 @
+     frame(length) : Uint16 @
+       length : Uint8
+       groupID : Uint16
+
+
+PathObj
+ maskIdToUse
+   groupID : Uint16
+ fillRule
+   nonzero = 0, evenodd = 1 : Uint8
+ actionList
+   length : Uint8 ( != 0 : add @ data )
+   key
+     length : Uint8 @
+     String : Uint16Array @
+   values
+     actionID : Uint8 @
+ lineWidth
+   actionID(length) : Uint8 @
+     frame(length) : Uint16 @
+     val : Float32
+ fillStyle
+   actionID(length) : Uint8 @
+     frame(length) : Uint16 @
+     A : Uint8
+     R : Uint8
+     G : Uint8
+     B : Uint8
+ strokeStyle
+   actionID(length) : Uint8 @
+     frame(length) : Uint16 @
+     A : Uint8
+     R : Uint8
+     G : Uint8
+     B : Uint8
+ pathDataList
+   actionID(length) : Uint8 @
+     frame(length) : Uint16 @
+       length : Uint16
+       Array : PathData
+
+
+PathData
+ type
+   M = 0, C = 1, Z = 2 : Uint8
+ pos
+   Array : Float32Array ( length: M = 2, C = 6, Z = 0 )
+
