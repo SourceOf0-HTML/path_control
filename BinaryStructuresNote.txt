@@ -1,10 +1,4 @@
 
-GroupIDs
- length : Uint16
-   length : Uint8
-   String : Uint16Array
-
-
 PathContainer
  originalWidth  : Uint16
  originalHeight : Uint16
@@ -16,18 +10,16 @@ PathContainer
      groupID : Uint16
  rootGroups
    length : Uint8
-     groupID : Uint16
+   groupID : Uint16
  groups
    length : Uint16
-   key
-     groupID : Uint16
-   values
-     GroupObj
+   GroupObj
 
 
 GroupObj
  id
-   groupID : Uint16
+   length : Uint8
+   String : Uint16Array
  maskIdToUse
    groupID : Uint16
  paths

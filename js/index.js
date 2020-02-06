@@ -17,9 +17,9 @@ request.addEventListener("load", function(event) {
   let buffer = request.response;
   pathContainer = PathCtr.initFromBin(buffer);
   console.log("loading completed");
-  //console.log(pathContainer);
   pathContainer.context = subContext;
   pathContainer.setFitSize(viewWidth, viewHeight);
+  console.log(pathContainer);
   request = null;
 });
 request.open("GET", "./src/path_data.bin", true);
@@ -51,7 +51,6 @@ window.addEventListener("load", function() {
   canvas.height = subCanvas.height = viewHeight;
   
   window.addEventListener("resize", function() {
-    console.log("resize");
     viewWidth = document.documentElement.clientWidth;
     viewHeight = document.documentElement.clientHeight;
     canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + viewWidth + "px;height:" + viewHeight + "px;");

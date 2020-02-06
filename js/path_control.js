@@ -31,7 +31,7 @@ var PathCtr = {
    * GroupObj constructor
    */
   GroupObj: function(id, paths, childGroups, maskIdToUse) {
-    this.id = id;      // g tag ID
+    this.id = id;                     // g tag ID
     this.paths = paths;               // list of PathObj
     this.childGroups = childGroups;   // list of group id
     this.maskIdToUse = maskIdToUse;   // ID of the mask to use
@@ -42,26 +42,29 @@ var PathCtr = {
    * PathContainer constructor
    */
   PathContainer : function() {
-    this.originalWidth = 0;   // original svg width
-    this.originalHeight = 0;  // original svg height
-    this.displayWidth = 0;    // display width
-    this.displayHeight = 0;   // display height
-    this.context = null;      // CanvasRenderingContext2D ( canvas.getContext("2d") )
-    this.rootGroups = [];     // root group IDs
-    this.groups = {};         // list of groups
-    this.masks = {};          // list of defined mask IDs
+    this.originalWidth = 0;       // original svg width
+    this.originalHeight = 0;      // original svg height
+    this.displayWidth = 0;        // display width
+    this.displayHeight = 0;       // display height
+    this.context = null;          // CanvasRenderingContext2D ( canvas.getContext("2d") )
+    this.rootGroups = [];         // root group IDs
+    this.groups = [];             // list of groups
+    this.groupNameToIDList = {};  // list of group name and group ID
+    this.masks = {};              // list of mask name and group ID
   },
   
   /**
    * @param maskStr : mask attribute of element
-   * @return string of mask ID
+   * @return string of mask group ID
    */
   getMaskId: function(maskStr) {
-    if(!maskStr) {
-      return "";
-    } else {
-      return maskStr.replace(/^url\(#/, "").replace(/\)$/, "");
+    if(!maskStr) return null;
+    let maskID = maskStr.replace(/^url\(#/, "").replace(/\)$/, "");
+    if(!!this.initTarget.masks[maskID]) {
+      return this.initTarget.masks[maskID];
     }
+    console.error("unknown mask name : " + maskStr);
+    return null;
   },
   
   /**
@@ -103,6 +106,7 @@ var PathCtr = {
           break;
         default:
           console.error("unknown type : " + type);
+          console.log(type);
           break;
       }
     }
@@ -185,34 +189,26 @@ var PathCtr = {
    * @return GroupObj
    */
   makeGroup: function(groupDOM) {
-    let id = groupDOM.getAttribute("id");
+    let name = groupDOM.getAttribute("id");
     let paths = [];
     let childGroups = [];
     let children = Array.prototype.slice.call(groupDOM.children);
     
     children.forEach(child=>{
-      let name = child.tagName;
-      PathCtr.debugPrint("make group : " + id + " : " + name);
-      switch(name) {
+      let tagName = child.tagName;
+      PathCtr.debugPrint("make group : " + name + " : " + tagName);
+      switch(tagName) {
         case "path":
           paths.push( this.makePath(child, window.getComputedStyle(child)) );
           break;
         case "mask":
-          let mackChildren = Array.prototype.slice.call(child.children);
-          mackChildren.forEach(maskChild=>{
-            if( maskChild.tagName == "use" ) {
-              this.initTarget.masks[child.getAttribute("id")] = maskChild.getAttribute("xlink:href").slice(1);
-            } else {
-              console.error("unknown mask data");
-              console.log(maskChild);
-            }
-          });
+          // do nothing.
           break;
         case "clipPath":
           // TODO
           break;
         case "g":
-          childGroups.push(child.getAttribute("id"));
+          childGroups.push(this.initTarget.groupNameToIDList[child.getAttribute("id")]);
           this.makeGroup(child);
           break;
         default:
@@ -223,25 +219,25 @@ var PathCtr = {
     });
     
     let ret = new this.GroupObj(
-      id,
+      name,
       paths,
       childGroups,
       this.getMaskId(groupDOM.getAttribute("mask"))
     );
     
-    this.initTarget.groups[id] = ret;
+    this.initTarget.groups[this.initTarget.groupNameToIDList[name]] = ret;
     
     return ret;
   },
   
   /**
    * @param groupDOM : group element
-   * @param id : group ID
+   * @param name : group name
    * @param frame : frame number
    * @param actionName : action name
    */
-  addActionGroup: function(groupDOM, id, frame, actionName) {
-    let targetGroup = this.initTarget.groups[id];
+  addActionGroup: function(groupDOM, name, frame, actionName) {
+    let targetGroup = this.initTarget.groups[this.initTarget.groupNameToIDList[name]];
     let childGroups = [];
     let dataIndex = 0;
     
@@ -257,7 +253,7 @@ var PathCtr = {
           case "clipPath":
             break;
           case "g":
-            childGroups.push(child.getAttribute("id"));
+            childGroups.push(this.initTarget.groupNameToIDList[child.getAttribute("id")]);
             break;
           default:
             console.error("unknown element");
@@ -286,20 +282,38 @@ var PathCtr = {
     
     console.log("init");
     
-    let ret = this.initTarget = new this.PathContainer();
+    let pathContainer = this.initTarget = new this.PathContainer();
     
-    this.initTarget.originalWidth = this.initTarget.displayWidth = parseInt(groupsDOM.getAttribute("width").replace("px", ""));
-    this.initTarget.originalHeight = this.initTarget.displayHeight = parseInt(groupsDOM.getAttribute("height").replace("px", ""));
+    pathContainer.originalWidth = pathContainer.displayWidth = parseInt(groupsDOM.getAttribute("width").replace("px", ""));
+    pathContainer.originalHeight = pathContainer.displayHeight = parseInt(groupsDOM.getAttribute("height").replace("px", ""));
+    
+    let groups = Array.prototype.slice.call(groupsDOM.getElementsByTagName("g"));
+    groups.forEach(group=>{
+      pathContainer.groupNameToIDList[group.getAttribute("id")] = Object.keys(pathContainer.groupNameToIDList).length;
+    });
+    
+    let masks = Array.prototype.slice.call(groupsDOM.getElementsByTagName("mask"));
+    masks.forEach(mask=>{
+      let maskChildren = Array.prototype.slice.call(mask.children);
+      maskChildren.forEach(child=>{
+        if( child.tagName == "use" ) {
+          pathContainer.masks[mask.getAttribute("id")] = pathContainer.groupNameToIDList[child.getAttribute("xlink:href").slice(1)];
+        } else {
+          console.error("unknown mask data");
+          console.log(child);
+        }
+      });
+    });
     
     let children = Array.prototype.slice.call(groupsDOM.children);
     children.forEach(child=>{
       if(child.tagName != "g") return;
       let group = this.makeGroup(child);
-      ret.rootGroups.push(group.id);
+      pathContainer.rootGroups.push(pathContainer.groupNameToIDList[group.id]);
     });
     this.initTarget = null;
     
-    return ret;
+    return pathContainer;
   },
   
   /**
@@ -324,24 +338,38 @@ var PathCtr = {
     let groupsDOMArr = Array.prototype.slice.call(groupsDOMList);
     let baseDom = groupsDOMArr[0];
     let baseGroups = baseDom.getElementsByTagName("g");
-    let ids = [].map.call(baseGroups, group=>group.getAttribute("id"));
     let frame = 0;
     groupsDOMArr.forEach(targetDom=>{
       let targetGroups = targetDom.getElementsByTagName("g");
       let targetIds = [].map.call(targetGroups, group=>group.getAttribute("id"));
       Array.prototype.forEach.call(targetIds, id=>{
-        if(ids.includes(id)) return;
-        ids.push(id);
+        if(!!pathContainer.groupNameToIDList[id]) return;
+        pathContainer.groupNameToIDList[id] = Object.keys(pathContainer.groupNameToIDList).length;
         this.makeGroup(targetDom.getElementById(id));
+      });
+      let masks = Array.prototype.slice.call(targetDom.getElementsByTagName("mask"));
+      masks.forEach(mask=>{
+        let maskID = mask.getAttribute("id");
+        if(pathContainer.masks[maskID]) return;
+        let maskChildren = Array.prototype.slice.call(mask.children);
+        maskChildren.forEach(child=>{
+          if( child.tagName == "use" ) {
+            pathContainer.masks[maskID] = pathContainer.groupNameToIDList[child.getAttribute("xlink:href").slice(1)];
+          } else {
+            console.error("unknown mask data");
+            console.log(child);
+          }
+        });
       });
     });
     
+    console.log(pathContainer);
     console.log("check diff");
     groupsDOMArr.forEach(targetDom=>{
-      ids.forEach(id=>{
-        let base = baseDom.getElementById(id);
-        if( !base || !targetDom || !base.isEqualNode(targetDom.getElementById(id)) ) {
-          actionGroup[id] = true;
+      Object.keys(pathContainer.groupNameToIDList).forEach(name=>{
+        let base = baseDom.getElementById(name);
+        if( !base || !targetDom || !base.isEqualNode(targetDom.getElementById(name)) ) {
+          actionGroup[name] = true;
         }
       });
     });
@@ -370,7 +398,6 @@ var PathCtr = {
     let pathContainer = new this.PathContainer();
     let dv = new DataView(buffer);
     let sumLength = 0;
-    let groupIDs = { 0 : "" };
     
     // -- prepare getting function --
     
@@ -425,8 +452,6 @@ var PathCtr = {
       return ret;
     };
     
-    let getGroupID=()=>groupIDs[getUint16()];
-    
     let getAction=(func)=>{
       return getArray(getUint8, ()=>getArray(getUint16, ()=>func()));
     };
@@ -455,7 +480,7 @@ var PathCtr = {
     }
     
     let getPath=()=>{
-      let maskIdToUse = getGroupID();
+      let maskIdToUse = getUint16();
       let fillRule = (getUint8() == 0 ? "nonzero" : "evenodd");
       
       let actionListNum = getUint8();
@@ -497,15 +522,16 @@ var PathCtr = {
       return pathObj;
     };
     
-    let getGroup=()=>{
-      let id = getGroupID();
-      let maskIdToUse = getGroupID();
+    let getGroup=i=>{
+      let id = getString();
+      pathContainer.groupNameToIDList[id] = i;
       
+      let maskIdToUse = getUint16();
       let paths = getArray(getUint16, getPath);
       
       let actionListNum = getUint8();
       if(actionListNum == 0) {
-        let childGroups = getArray(getUint8, getGroupID);
+        let childGroups = getArray(getUint8, getUint16);
         
         let group = new this.GroupObj(
           id,
@@ -532,7 +558,7 @@ var PathCtr = {
       }
       group.actionList = actionList;
       
-      group.childGroups = getAction(()=>getArray(getUint8, getGroupID));
+      group.childGroups = getAction(()=>getArray(getUint8, getUint16));
       return group;
     };
     
@@ -542,25 +568,15 @@ var PathCtr = {
     pathContainer.originalWidth = pathContainer.displayWidth = getUint16();
     pathContainer.originalHeight = pathContainer.displayHeight = getUint16();
     
-    let groupIDNum = getUint16();
-    for(let i = 0; i < groupIDNum; ++i) {
-      groupIDs[i+1] = getString();
-    }
-    
-    for(let i = getUint8(); i > 0; --i) {
-      pathContainer.masks[getGroupID()] = getGroupID();
-    }
-    
-    pathContainer.rootGroups = getArray(getUint8, getGroupID);
+    pathContainer.rootGroups = getArray(getUint8, getUint16);
     
     let groupsNum = getUint16();
     for(let i = 0; i < groupsNum; ++i) {
-      let id = groupIDs[i+1];
       PathCtr.debugPrint("count : " + i);
-      PathCtr.debugPrint(id);
+      PathCtr.debugPrint(i);
       PathCtr.debugPrint(sumLength);
-      pathContainer.groups[id] = getGroup();
-      PathCtr.debugPrint(pathContainer.groups[id]);
+      pathContainer.groups[i] = getGroup(i);
+      PathCtr.debugPrint(pathContainer.groups[i]);
     }
     
     return pathContainer;
@@ -579,7 +595,6 @@ var PathCtr = {
     let buffer = new ArrayBuffer(1000000000);
     let dv = new DataView(buffer);
     let sumLength = 0;
-    let groupIDs = { "" : 0 };
     
     // -- prepare setting function --
     let setUint8  =val=>{dv.setUint8(sumLength, val); sumLength += 1};
@@ -632,8 +647,6 @@ var PathCtr = {
       });
     };
     
-    let setGroupID=val=>setUint16(groupIDs[val]);
-    
     let setPathData=pathDataList=>{
       setUint16(pathDataList.length);
       pathDataList.forEach(d=>{
@@ -661,7 +674,7 @@ var PathCtr = {
     };
     
     let setPath=path=>{
-      setGroupID(path.maskIdToUse);
+      setUint16(path.maskIdToUse);
       setUint8(path.fillRule == "nonzero" ? 0 : 1);
       if(!path.actionList) {
         setUint8(0);
@@ -684,13 +697,13 @@ var PathCtr = {
     };
     
     let setGroup=group=>{
-      setGroupID(group.id);
-      setGroupID(group.maskIdToUse);
+      setString(group.id);
+      setUint16(group.maskIdToUse);
       setArray(group.paths, setUint16, setPath);
       
       if(!group.actionList) {
         setUint8(0);
-        setArray(group.childGroups, setUint8, setGroupID);
+        setArray(group.childGroups, setUint8, setUint16);
         return;
       }
       
@@ -701,7 +714,7 @@ var PathCtr = {
       });
       
       setAction(group.childGroups, childGroups=>{
-        setArray(childGroups, setUint8, setGroupID);
+        setArray(childGroups, setUint8, setUint16);
       });
     };
     
@@ -711,33 +724,15 @@ var PathCtr = {
     setUint16(pathContainer.originalWidth);
     setUint16(pathContainer.originalHeight);
     
-    let groupsNum = Object.keys(pathContainer.groups).length;
-    let maskNum = Object.keys(pathContainer.masks).length;
-    setUint16(groupsNum + maskNum);
-    Object.keys(pathContainer.groups).forEach(key=>{
-      groupIDs[key] = Object.keys(groupIDs).length;
-      setString(key);
-    });
-    Object.keys(pathContainer.masks).forEach(key=>{
-      groupIDs[key] = Object.keys(groupIDs).length;
-      setString(key);
-    });
+    setArray(pathContainer.rootGroups, setUint8, setUint16);
     
-    setUint8(maskNum);
-    Object.keys(pathContainer.masks).forEach(key=>{
-      setGroupID(key);
-      setGroupID(pathContainer.masks[key]);
-    });
-    
-    setArray(pathContainer.rootGroups, setUint8, setGroupID);
-    
+    let groupsNum = pathContainer.groups.length;
     setUint16(groupsNum);
-    Object.keys(pathContainer.groups).forEach(key=>{
+    pathContainer.groups.forEach(group=>{
       console.log("count : " + groupsNum--);
-      PathCtr.debugPrint(key);
       PathCtr.debugPrint(sumLength);
-      setGroup(pathContainer.groups[key]);
-      PathCtr.debugPrint(pathContainer.groups[key]);
+      setGroup(group);
+      PathCtr.debugPrint(group);
     });
     
     return buffer.slice(0, sumLength);
@@ -848,6 +843,8 @@ PathCtr.GroupObj.prototype = {
     }
     if( childGroups.length == 0 ) return;
     if( !this.actionList ) {
+      if( JSON.stringify(childGroups) == JSON.stringify(this.childGroups) ) return;
+      
       // init action data
       this.childGroups = [[this.childGroups]];   // list of group id
       this.actionList = {};                      // action name list
@@ -872,7 +869,7 @@ PathCtr.GroupObj.prototype = {
     
     let actionID = this.actionList[PathCtr.currentActionName];
     
-    if( !this.childGroups[actionID] ) {
+    if( !this.childGroups[actionID] || !this.childGroups[actionID][PathCtr.currentFrame] ) {
       return this.childGroups[0][0];
     }
     
@@ -897,20 +894,6 @@ PathCtr.PathContainer.prototype = {
   },
   
   /**
-   * @param id           : mask ID to search
-   * @return mask GroupObj
-   */
-  getMaskGroup: function(id) {
-    let refId = this.masks[id];
-    if(!!refId) {
-      return this.groups[refId];
-    } else {
-      console.error("mask is not found : " + id);
-    }
-    return null;
-  },
-  
-  /**
    * @param group  : GroupObj to be draw
    * @param isMask : when true, draw as a mask
    */
@@ -923,7 +906,7 @@ PathCtr.PathContainer.prototype = {
     let isFoundMask = false;
     
     if(!isMask && !!group.maskIdToUse) {
-      let mask = this.getMaskGroup(group.maskIdToUse);
+      let mask = this.groups[group.maskIdToUse];
       if(!!mask) {
         isFoundMask = true;
         this.context.save();
@@ -943,7 +926,7 @@ PathCtr.PathContainer.prototype = {
       let isFoundMaskPath = false;
       
       if(!isMask && !!path.maskIdToUse) {
-        let maskPath = this.getMaskGroup(path.maskIdToUse);
+        let maskPath = this.groups[path.maskIdToUse];
         if(!!maskPath) {
           isFoundMaskPath = true;
           this.context.save();

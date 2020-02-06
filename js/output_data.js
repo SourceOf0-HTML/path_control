@@ -85,7 +85,7 @@ window.addEventListener("load", function() {
         pathContainer.context = context;
         PathCtr.addActionFromSvgList(pathContainer, domList);
         console.log("loading completed");
-        //console.log(pathContainer);
+        console.log(pathContainer);
         
         domList.forEach(dom=>dom.parentNode.remove());
         document.getElementById("output-btn").disabled = "";
