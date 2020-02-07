@@ -103,14 +103,14 @@ window.addEventListener("load", function() {
       let imagedata = subContext.getImageData(0, 0, viewWidth, viewHeight);
       context.putImageData(imagedata, 0, 0);
       
-      if(average > frameTime * 10) {
-        fixFrameTime *= 1.01;
-        console.log("up");
-      } else if(average < frameTime * 0.1) {
+      if(average > frameTime * 2) {
         fixFrameTime *= 0.99;
+        console.log("up");
+      } else if(average < frameTime * 0.5) {
+        fixFrameTime *= 1.01;
         console.log("down");
       } else {
-        fixFrameTime = frameTime;
+        fixFrameTime = (frameTime + fixFrameTime) / 2;
       }
     }, fixFrameTime*1000));
     
