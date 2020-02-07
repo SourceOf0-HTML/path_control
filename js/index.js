@@ -1,5 +1,5 @@
 var pathContainer = null;
-var frameTime = 1000 / 40;
+var frameTime = 1 / 30;
 var fixFrameTime = frameTime;
 var totalFrames = 1120;
 var frameNumber = 0;
@@ -68,7 +68,7 @@ window.addEventListener("load", function() {
     setTimeoutIDs.forEach(window.clearTimeout);
     setTimeoutIDs.length = 0;
   };
-  
+  console.log("base : ", frameTime, frameTime * 10, frameTime * 0.1);
   let prevTimestamp = 0;
   let elapsed = 0;
   let average = 0;
@@ -85,7 +85,7 @@ window.addEventListener("load", function() {
     }
     
     elapsed = (timestamp - prevTimestamp) / 1000;
-    console.log(elapsed, fixFrameTime/1000);
+    console.log(elapsed, average, fixFrameTime);
     average = (average + elapsed) / 2;
     prevTimestamp = timestamp;
     
@@ -103,16 +103,16 @@ window.addEventListener("load", function() {
       let imagedata = subContext.getImageData(0, 0, viewWidth, viewHeight);
       context.putImageData(imagedata, 0, 0);
       
-      if(average > frameTime * 1100) {
+      if(average > frameTime * 10) {
         fixFrameTime *= 1.01;
         console.log("up");
-      } else if(average < frameTime / 1100) {
-        fixFrameTime /= 1.01;
+      } else if(average < frameTime * 0.1) {
+        fixFrameTime *= 0.99;
         console.log("down");
       } else {
         fixFrameTime = frameTime;
       }
-    }, fixFrameTime));
+    }, fixFrameTime*1000));
     
   })();
 });
