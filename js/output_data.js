@@ -1,11 +1,11 @@
 var pathContainer = null;
-var frameTime = 1000 / 40;
-var totalFrames = 260;
+var frameTime = 1000 / 24;
+var totalFrames = 1120;
 var frameNumber = 0;
 var domList = [];
 var loadIndex = 1;
-//var filePath = "./img/base_single/original_single_";
-var filePath = "./img/base/original_";
+var filePath = "./img/base_single/original_single_";
+//var filePath = "./img/base/original_";
 
 var getFrameNum=i=>{
   return "00000".substr(0, 5 - i.toString().length) + i + ".svg";
@@ -23,12 +23,16 @@ var loadSVG = request.onreadystatechange = function(e) {
   let svg = div.firstElementChild;
   document.body.append(div);
   domList[parseInt(ret.match(/id="Frame_(\d+)"/)[1]) - 1] = svg;
+  div = svg = null;
   
   if(loadIndex <= totalFrames) {
     request = new XMLHttpRequest();
     request.open("GET", filePath + getFrameNum(loadIndex++), true);
     request.onreadystatechange = loadSVG;
     request.send();
+    delete request;
+  } else {
+    delete request;
   }
 };
 request.open("GET", filePath + getFrameNum(loadIndex++), true);

@@ -1,15 +1,20 @@
 var pathContainer = null;
 var frameTime = 1 / 30;
 var fixFrameTime = frameTime;
-var totalFrames = 260;
+var totalFrames = 1120;
 var frameNumber = 0;
 var canvas = null;
 var subCanvas = null;
+var Context = null;
 var subContext = null;
 var requestAnimationIDs = [];
 var setTimeoutIDs = [];
 var viewWidth = 0;
 var viewHeight = 0;
+var prevTimestamp = 0;
+var elapsed = 0;
+var average = 0;
+  
 
 var request = new XMLHttpRequest();
 request.addEventListener("load", function(event) {
@@ -28,13 +33,62 @@ request.open("GET", "./src/path_data.bin", true);
 request.responseType = "arraybuffer";
 request.send();
 
+function cancelFunctions() {
+  if(requestAnimationIDs.length > 2 || setTimeoutIDs.length > 2) console.log(requestAnimationIDs.length, setTimeoutIDs.length);
+  requestAnimationIDs.forEach(window.cancelAnimationFrame);
+  requestAnimationIDs.length = 0;
+  setTimeoutIDs.forEach(window.clearTimeout);
+  setTimeoutIDs.length = 0;
+};
+
+function timer() {
+  cancelFunctions();
+  requestAnimationIDs.push(window.requestAnimationFrame(draw));
+  setTimeoutIDs.push(window.setTimeout(timer, fixFrameTime*1000));
+}
+  
+function draw(timestamp) {
+  if(!canvas.parentNode) {
+    cancelFunctions();
+    return;
+  }
+  
+  if(typeof(timestamp) == "undefined") return;
+  
+  elapsed = (timestamp - prevTimestamp) / 1000;
+  console.log(elapsed, average, fixFrameTime);
+  average = (average + elapsed) / 2;
+  prevTimestamp = timestamp;
+  
+  if(!pathContainer) return;
+  
+  subContext.clearRect(0, 0, viewWidth, viewHeight);
+  pathContainer.draw(frameNumber);
+  frameNumber = (frameNumber + 1) % totalFrames;
+  
+  context.clearRect(0, 0, viewWidth, viewHeight);
+  let imagedata = subContext.getImageData(0, 0, viewWidth, viewHeight);
+  context.putImageData(imagedata, 0, 0);
+  imagedata = null;
+  
+  if(average > frameTime * 2) {
+    fixFrameTime *= 0.99;
+    console.log("up");
+  } else if(average < frameTime * 0.5) {
+    fixFrameTime *= 1.01;
+    console.log("down");
+  } else {
+    fixFrameTime = (frameTime + fixFrameTime) / 2;
+  }
+}
+
 window.addEventListener("load", function() {
   canvas = document.getElementById("main-canvas");
   subCanvas = document.getElementById("sub-canvas");
   
   if(!canvas.parentNode) return;
   
-  let context = canvas.getContext("2d");
+  context = canvas.getContext("2d");
   subContext = subCanvas.getContext("2d");
   if(!context || !subContext) return;
   
@@ -61,59 +115,7 @@ window.addEventListener("load", function() {
     if(!!pathContainer) pathContainer.setFitSize(viewWidth, viewHeight);
   });
   
-  let cancelFunctions=()=>{
-    if(requestAnimationIDs.length > 2 || setTimeoutIDs.length > 2) console.log(requestAnimationIDs.length, setTimeoutIDs.length);
-    requestAnimationIDs.forEach(window.cancelAnimationFrame);
-    requestAnimationIDs.length = 0;
-    setTimeoutIDs.forEach(window.clearTimeout);
-    setTimeoutIDs.length = 0;
-  };
   console.log("base : ", frameTime, frameTime * 10, frameTime * 0.1);
-  let prevTimestamp = 0;
-  let elapsed = 0;
-  let average = 0;
-  (function draw(timestamp) {
-    if(!canvas.parentNode) {
-      cancelFunctions();
-      return;
-    }
-    
-    if(typeof(timestamp) == "undefined") {
-      cancelFunctions();
-      requestAnimationIDs.push(window.requestAnimationFrame(draw));
-      return;
-    }
-    
-    elapsed = (timestamp - prevTimestamp) / 1000;
-    console.log(elapsed, average, fixFrameTime);
-    average = (average + elapsed) / 2;
-    prevTimestamp = timestamp;
-    
-    setTimeoutIDs.push(window.setTimeout(function() {
-      cancelFunctions();
-      requestAnimationIDs.push(window.requestAnimationFrame(draw));
-      
-      if(!pathContainer) return;
-      
-      subContext.clearRect(0, 0, viewWidth, viewHeight);
-      pathContainer.draw(frameNumber);
-      frameNumber = (frameNumber + 1) % totalFrames;
-      
-      context.clearRect(0, 0, viewWidth, viewHeight);
-      let imagedata = subContext.getImageData(0, 0, viewWidth, viewHeight);
-      context.putImageData(imagedata, 0, 0);
-      
-      if(average > frameTime * 2) {
-        fixFrameTime *= 0.99;
-        console.log("up");
-      } else if(average < frameTime * 0.5) {
-        fixFrameTime *= 1.01;
-        console.log("down");
-      } else {
-        fixFrameTime = (frameTime + fixFrameTime) / 2;
-      }
-    }, fixFrameTime*1000));
-    
-  })();
+  setTimeoutIDs.push(window.setTimeout(timer, fixFrameTime*1000));
 });
 
