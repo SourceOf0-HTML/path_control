@@ -1,11 +1,12 @@
 var pathContainer = null;
-var frameTime = 1 / 30;
+var frameTime = 1000 / 40;
 var totalFrames = 1120;
 var frameNumber = 0;
 var canvas = null;
 var subCanvas = null;
 var subContext = null;
 var requestAnimationIDs = [];
+var setTimeoutIDs = [];
 var viewWidth = 0;
 var viewHeight = 0;
 
@@ -19,7 +20,7 @@ request.addEventListener("load", function(event) {
   console.log("loading completed");
   pathContainer.context = subContext;
   pathContainer.setFitSize(viewWidth, viewHeight);
-  console.log(pathContainer);
+  //console.log(pathContainer);
   request = null;
 });
 request.open("GET", "./src/path_data.bin", true);
@@ -59,41 +60,40 @@ window.addEventListener("load", function() {
     if(!!pathContainer) pathContainer.setFitSize(viewWidth, viewHeight);
   });
   
-  let cancelAnimationFrames =()=>{
-    requestAnimationIDs.forEach(id=>{
-      cancelAnimationFrame(id);
-    });
+  let cancelFunctions=()=>{
+    requestAnimationIDs.forEach(cancelAnimationFrame);
     requestAnimationIDs.length = 0;
+    setTimeoutIDs.forEach(window.clearTimeout);
+    setTimeoutIDs.length = 0;
   };
   
   let prevTimestamp = 0;
   let elapsed = 0;
   (function draw(timestamp) {
     if(!canvas.parentNode) {
-      cancelAnimationFrames();
+      cancelFunctions();
       return;
     }
     
     elapsed = (timestamp - prevTimestamp) / 1000;
-    //console.log(elapsed, frameTime);
-    
-    if(!pathContainer || elapsed <= frameTime) {
-      cancelAnimationFrames();
-      requestAnimationIDs.push(requestAnimationFrame(draw));
-      return;
-    }
+    //console.log(elapsed, frameTime/1000);
     prevTimestamp = timestamp;
     
-    cancelAnimationFrames();
-    requestAnimationIDs.push(requestAnimationFrame(draw));
-    
-    subContext.clearRect(0, 0, viewWidth, viewHeight);
-    pathContainer.draw(frameNumber);
-    frameNumber = (frameNumber + 1) % totalFrames;
-    
-    context.clearRect(0, 0, viewWidth, viewHeight);
-    let imagedata = subContext.getImageData(0, 0, viewWidth, viewHeight);
-    context.putImageData(imagedata, 0, 0);
+    setTimeoutIDs.push(window.setTimeout(function() {
+      cancelFunctions();
+      requestAnimationIDs.push(requestAnimationFrame(draw));
+      
+      if(!pathContainer) return;
+      
+      subContext.clearRect(0, 0, viewWidth, viewHeight);
+      pathContainer.draw(frameNumber);
+      frameNumber = (frameNumber + 1) % totalFrames;
+      
+      context.clearRect(0, 0, viewWidth, viewHeight);
+      let imagedata = subContext.getImageData(0, 0, viewWidth, viewHeight);
+      context.putImageData(imagedata, 0, 0);
+      
+    }, frameTime));
     
   })();
 });
