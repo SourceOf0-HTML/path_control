@@ -1,5 +1,6 @@
 var pathContainer = null;
-var frameTime = 1000 / 40;
+var frameTime = 1000 / 24;
+var fixFrameTime = frameTime;
 var totalFrames = 1120;
 var frameNumber = 0;
 var canvas = null;
@@ -61,6 +62,7 @@ window.addEventListener("load", function() {
   });
   
   let cancelFunctions=()=>{
+    if(requestAnimationIDs.length > 2 || setTimeoutIDs.length > 2) console.log(requestAnimationIDs.length, setTimeoutIDs.length);
     requestAnimationIDs.forEach(cancelAnimationFrame);
     requestAnimationIDs.length = 0;
     setTimeoutIDs.forEach(window.clearTimeout);
@@ -69,14 +71,22 @@ window.addEventListener("load", function() {
   
   let prevTimestamp = 0;
   let elapsed = 0;
+  let average = 0;
   (function draw(timestamp) {
     if(!canvas.parentNode) {
       cancelFunctions();
       return;
     }
     
+    if(typeof(timestamp) == "undefined") {
+      cancelFunctions();
+      requestAnimationIDs.push(requestAnimationFrame(draw));
+      return;
+    }
+    
     elapsed = (timestamp - prevTimestamp) / 1000;
-    //console.log(elapsed, frameTime/1000);
+    //console.log(elapsed, fixFrameTime/1000);
+    average = (average + elapsed) / 2;
     prevTimestamp = timestamp;
     
     setTimeoutIDs.push(window.setTimeout(function() {
@@ -93,7 +103,16 @@ window.addEventListener("load", function() {
       let imagedata = subContext.getImageData(0, 0, viewWidth, viewHeight);
       context.putImageData(imagedata, 0, 0);
       
-    }, frameTime));
+      if(average > frameTime * 1500) {
+        fixFrameTime *= 1.01;
+        console.log("up");
+      } else if(average < frameTime / 1500) {
+        fixFrameTime /= 1.01;
+        console.log("down");
+      } else {
+        fixFrameTime = frameTime;
+      }
+    }, fixFrameTime));
     
   })();
 });
