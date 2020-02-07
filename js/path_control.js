@@ -90,16 +90,16 @@ var PathCtr = {
       let type = data.shift();
       switch(type) {
         case "M":
-          // USEGE : path2D.moveTo(pos[0], pos[1])
-          ret.push({type:"M", pos:[getX(), getY()]});
+          // USEGE : path2D.moveTo(pos[1], pos[2])
+          ret.push(["M", getX(), getY()]);
           break;
         case "C":
-          // USEGE : path2D.bezierCurveTo(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5])
-          ret.push({type:"C", pos:[getX(), getY(), getX(), getY(), getX(), getY()]});
+          // USEGE : path2D.bezierCurveTo(pos[1], pos[2], pos[3], pos[4], pos[5], pos[6])
+          ret.push(["C", getX(), getY(), getX(), getY(), getX(), getY()]);
           break;
         case "Z":
           // USEGE : path2D.closePath()
-          ret.push({type:"Z"});
+          ret.push(["Z"]);
           break;
         case "":
           // do nothing.
@@ -467,13 +467,13 @@ var PathCtr = {
         let type = getUint8();
         switch(type) {
           case 0:  // M
-            ret.push({type:"M", pos:[getPos(), getPos()]});
+            ret.push(["M", getPos(), getPos()]);
             break;
           case 1:  // C
-            ret.push({type:"C", pos:[getPos(), getPos(), getPos(), getPos(), getPos(), getPos()]});
+            ret.push(["C", getPos(), getPos(), getPos(), getPos(), getPos(), getPos()]);
             break;
           case 2:  // Z
-            ret.push({type:"Z"});
+            ret.push(["Z"]);
             break;
           default:
             console.error("unknown type : " + type);
@@ -653,17 +653,17 @@ var PathCtr = {
     
     let setPathData=pathDataList=>{
       setUint16(pathDataList.length);
-      pathDataList.forEach(d=>{
-        switch(d.type) {
+      pathDataList.forEach(posData=>{
+        switch(posData[0]) {
           case "M":
             setUint8(0);
-            setPos(d.pos[0]);
-            setPos(d.pos[1]);
+            setPos(posData[1]);
+            setPos(posData[2]);
             break;
           case "C":
             setUint8(1);
-            for(let i = 0; i < 6; ++i) {
-              setPos(d.pos[i]);
+            for(let i = 1; i < 7; ++i) {
+              setPos(posData[i]);
             }
             break;
           case "Z":
@@ -786,14 +786,14 @@ PathCtr.PathObj.prototype = {
    * @param isMask : when true, draw as a mask
    */
   draw: function(displayWidth, displayHeight, context, path2D, isMask){
-    let drawPath =d=>{
-      let pos = d.pos;
-      switch(d.type) {
+    let drawPath=posData=>{
+      let i = 0;
+      switch(posData[i]) {
         case "M":
-          path2D.moveTo(pos[0]*displayWidth, pos[1]*displayHeight);
+          path2D.moveTo(posData[++i]*displayWidth, posData[++i]*displayHeight);
           break;
         case "C":
-          path2D.bezierCurveTo(pos[0]*displayWidth, pos[1]*displayHeight, pos[2]*displayWidth, pos[3]*displayHeight, pos[4]*displayWidth, pos[5]*displayHeight);
+          path2D.bezierCurveTo(posData[++i]*displayWidth, posData[++i]*displayHeight, posData[++i]*displayWidth, posData[++i]*displayHeight, posData[++i]*displayWidth, posData[++i]*displayHeight);
           break;
         case "Z":
           path2D.closePath();
