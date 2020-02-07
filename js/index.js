@@ -1,5 +1,5 @@
 var pathContainer = null;
-var frameTime = 1000 / 24;
+var frameTime = 1000 / 40;
 var fixFrameTime = frameTime;
 var totalFrames = 1120;
 var frameNumber = 0;
@@ -63,7 +63,7 @@ window.addEventListener("load", function() {
   
   let cancelFunctions=()=>{
     if(requestAnimationIDs.length > 2 || setTimeoutIDs.length > 2) console.log(requestAnimationIDs.length, setTimeoutIDs.length);
-    requestAnimationIDs.forEach(cancelAnimationFrame);
+    requestAnimationIDs.forEach(window.cancelAnimationFrame);
     requestAnimationIDs.length = 0;
     setTimeoutIDs.forEach(window.clearTimeout);
     setTimeoutIDs.length = 0;
@@ -80,18 +80,18 @@ window.addEventListener("load", function() {
     
     if(typeof(timestamp) == "undefined") {
       cancelFunctions();
-      requestAnimationIDs.push(requestAnimationFrame(draw));
+      requestAnimationIDs.push(window.requestAnimationFrame(draw));
       return;
     }
     
     elapsed = (timestamp - prevTimestamp) / 1000;
-    //console.log(elapsed, fixFrameTime/1000);
+    console.log(elapsed, fixFrameTime/1000);
     average = (average + elapsed) / 2;
     prevTimestamp = timestamp;
     
     setTimeoutIDs.push(window.setTimeout(function() {
       cancelFunctions();
-      requestAnimationIDs.push(requestAnimationFrame(draw));
+      requestAnimationIDs.push(window.requestAnimationFrame(draw));
       
       if(!pathContainer) return;
       
