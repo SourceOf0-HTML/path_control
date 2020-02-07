@@ -1,9 +1,11 @@
 var pathContainer = null;
-const frameTime = 1000 / 40;
-var totalFrames = 1120;
+var frameTime = 1000 / 40;
+var totalFrames = 260;
 var frameNumber = 0;
 var domList = [];
 var loadIndex = 1;
+//var filePath = "./img/base_single/original_single_";
+var filePath = "./img/base/original_";
 
 var getFrameNum=i=>{
   return "00000".substr(0, 5 - i.toString().length) + i + ".svg";
@@ -24,12 +26,12 @@ var loadSVG = request.onreadystatechange = function(e) {
   
   if(loadIndex <= totalFrames) {
     request = new XMLHttpRequest();
-    request.open("GET", "./img/base_single/original_single_" + getFrameNum(loadIndex++), true);
+    request.open("GET", filePath + getFrameNum(loadIndex++), true);
     request.onreadystatechange = loadSVG;
     request.send();
   }
 };
-request.open("GET", "./img/base_single/original_single_" + getFrameNum(loadIndex++), true);
+request.open("GET", filePath + getFrameNum(loadIndex++), true);
 request.send();
 
 window.addEventListener("load", function() {
