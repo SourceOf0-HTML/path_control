@@ -289,7 +289,12 @@ var PathCtr = {
     
     let groups = Array.prototype.slice.call(groupsDOM.getElementsByTagName("g"));
     groups.forEach(group=>{
-      pathContainer.groupNameToIDList[group.getAttribute("id")] = Object.keys(pathContainer.groupNameToIDList).length;
+      let name = group.getAttribute("id");
+      if(pathContainer.groupNameToIDList[name] != null) {
+        console.error("group ID is duplicated : " + name);
+        return;
+      }
+      pathContainer.groupNameToIDList[name] = Object.keys(pathContainer.groupNameToIDList).length;
     });
     
     let masks = Array.prototype.slice.call(groupsDOM.getElementsByTagName("mask"));
@@ -343,7 +348,7 @@ var PathCtr = {
       let targetGroups = targetDom.getElementsByTagName("g");
       let targetIds = [].map.call(targetGroups, group=>group.getAttribute("id"));
       Array.prototype.forEach.call(targetIds, id=>{
-        if(!!pathContainer.groupNameToIDList[id]) return;
+        if(pathContainer.groupNameToIDList[id] != null) return;
         pathContainer.groupNameToIDList[id] = Object.keys(pathContainer.groupNameToIDList).length;
         this.makeGroup(targetDom.getElementById(id));
       });
@@ -380,7 +385,6 @@ var PathCtr = {
       Object.keys(actionGroup).forEach(key=>{
         this.addActionGroup(targetDom.getElementById(key), key, frame, actionName);
       });
-      ++frame;
     });
     
     this.initTarget = null;
@@ -869,7 +873,7 @@ PathCtr.GroupObj.prototype = {
     
     let actionID = this.actionList[PathCtr.currentActionName];
     
-    if( !this.childGroups[actionID] || !this.childGroups[actionID][PathCtr.currentFrame] ) {
+    if( this.childGroups[actionID] == null || this.childGroups[actionID][PathCtr.currentFrame] == null ) {
       return this.childGroups[0][0];
     }
     
@@ -916,7 +920,7 @@ PathCtr.PathContainer.prototype = {
       }
     }
     
-    let path2D = isMask? (new Path2D()):0;
+    let path2D = isMask? (new Path2D()):null;
     let isUsed = false;
     
     group.paths.forEach(path=>{
@@ -947,12 +951,9 @@ PathCtr.PathContainer.prototype = {
       }
     });
     
-    let frameGroup = group.getChildGroups();
-    if(!!frameGroup) {
-      frameGroup.forEach(childGroup=>{
-        this.drawGroup(this.groups[childGroup], isMask);
-      });
-    }
+    group.getChildGroups().forEach(childGroup=>{
+      this.drawGroup(this.groups[childGroup], isMask);
+    });
     
     if(isMask && isUsed) {
       this.context.clip(path2D);
