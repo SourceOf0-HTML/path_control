@@ -90,16 +90,16 @@ var PathCtr = {
       let type = data.shift();
       switch(type) {
         case "M":
-          // USEGE : path2D.moveTo(pos[1], pos[2])
-          ret.push(["M", getX(), getY()]);
+          // USEGE : path2D.moveTo(pos[0], pos[1])
+          ret.push({type:"M", pos:[getX(), getY()]});
           break;
         case "C":
-          // USEGE : path2D.bezierCurveTo(pos[1], pos[2], pos[3], pos[4], pos[5], pos[6])
-          ret.push(["C", getX(), getY(), getX(), getY(), getX(), getY()]);
+          // USEGE : path2D.bezierCurveTo(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5])
+          ret.push({type:"C", pos:[getX(), getY(), getX(), getY(), getX(), getY()]});
           break;
         case "Z":
           // USEGE : path2D.closePath()
-          ret.push(["Z"]);
+          ret.push({type:"Z"});
           break;
         case "":
           // do nothing.
@@ -419,12 +419,10 @@ var PathCtr = {
       return ret;
     };
     let getColor=()=>{
-      let a = getUint8();
-      if(a == 0) {
+      if(getUint8() == 0) {
         return "transparent";
       }
-      let str = "rgb(" + getUint8() + ", " + getUint8() + ", " + getUint8() + ")";
-      return str;
+      return "rgb(" + getUint8() + ", " + getUint8() + ", " + getUint8() + ")";
     };
     
     let getArray=(lengFunc, getFunc)=>{
@@ -467,13 +465,13 @@ var PathCtr = {
         let type = getUint8();
         switch(type) {
           case 0:  // M
-            ret.push(["M", getPos(), getPos()]);
+            ret.push({type:"M", pos:[getPos(), getPos()]});
             break;
           case 1:  // C
-            ret.push(["C", getPos(), getPos(), getPos(), getPos(), getPos(), getPos()]);
+            ret.push({type:"C", pos:[getPos(), getPos(), getPos(), getPos(), getPos(), getPos()]});
             break;
           case 2:  // Z
-            ret.push(["Z"]);
+            ret.push({type:"Z"});
             break;
           default:
             console.error("unknown type : " + type);
@@ -608,7 +606,7 @@ var PathCtr = {
     let setPos    =val=>{dv.setInt16(sumLength, val*this.binDataPosRange); sumLength += 2};
     let setString=str=>{
       setUint8(str.length);
-      let arr = [].map.call(str, c=>setUint16(c.charCodeAt(0)));
+      [].map.call(str, c=>setUint16(c.charCodeAt(0)));
     };
     let setColor=str=>{
       if(str == "transparent") {
@@ -653,17 +651,17 @@ var PathCtr = {
     
     let setPathData=pathDataList=>{
       setUint16(pathDataList.length);
-      pathDataList.forEach(posData=>{
-        switch(posData[0]) {
+      pathDataList.forEach(d=>{
+        switch(d.type) {
           case "M":
             setUint8(0);
-            setPos(posData[1]);
-            setPos(posData[2]);
+            setPos(d.pos[0]);
+            setPos(d.pos[1]);
             break;
           case "C":
             setUint8(1);
-            for(let i = 1; i < 7; ++i) {
-              setPos(posData[i]);
+            for(let i = 0; i < 6; ++i) {
+              setPos(d.pos[i]);
             }
             break;
           case "Z":
@@ -739,6 +737,7 @@ var PathCtr = {
       PathCtr.debugPrint(group);
     });
     
+    delete dv;
     return buffer.slice(0, sumLength);
   },
 };
@@ -781,58 +780,78 @@ PathCtr.PathObj.prototype = {
   /**
    * @param displayWidth : display width
    * @param displayHeight : display height
+   * @param path2D : Path2D
+   * @param d : PathData
+   */
+  drawPath: function(displayWidth, displayHeight, path2D, d) {
+    let pos = d.pos;
+    switch(d.type) {
+      case "M":
+        path2D.moveTo(pos[0]*displayWidth, pos[1]*displayHeight);
+        break;
+      case "C":
+        path2D.bezierCurveTo(pos[0]*displayWidth, pos[1]*displayHeight, pos[2]*displayWidth, pos[3]*displayHeight, pos[4]*displayWidth, pos[5]*displayHeight);
+        break;
+      case "Z":
+        path2D.closePath();
+        break;
+      default:
+        console.error("unknown type");
+        break;
+    }
+  },
+  
+  /**
+   * @param context : CanvasRenderingContext2D ( canvas.getContext("2d") )
+   * @param path2D : Path2D
+   * @param lineWidth : strokeWidth ( context2D.lineWidth )
+   * @param displayHeight : strokeColor ( context2D.strokeStyle )
+   */
+  drawStroke: function(context, path2D, lineWidth, strokeStyle) {
+    if( !lineWidth ) return;
+    context.lineWidth = lineWidth;
+    context.strokeStyle = strokeStyle;
+    context.stroke(path2D);
+  },
+  
+  /**
+   * @param context : CanvasRenderingContext2D ( canvas.getContext("2d") )
+   * @param path2D : Path2D
+   * @param fillStyle : strokeColor ( context2D.strokeStyle )
+   */
+  drawFill: function(context, path2D, fillStyle) {
+    context.fillStyle = fillStyle;
+    context.fill(path2D, this.fillRule);
+  },
+  
+  /**
+   * @param displayWidth : display width
+   * @param displayHeight : display height
    * @param context : CanvasRenderingContext2D ( canvas.getContext("2d") )
    * @param path2D : Path2D
    * @param isMask : when true, draw as a mask
    */
-  draw: function(displayWidth, displayHeight, context, path2D, isMask){
-    let drawPath=posData=>{
-      let i = 0;
-      switch(posData[i]) {
-        case "M":
-          path2D.moveTo(posData[++i]*displayWidth, posData[++i]*displayHeight);
-          break;
-        case "C":
-          path2D.bezierCurveTo(posData[++i]*displayWidth, posData[++i]*displayHeight, posData[++i]*displayWidth, posData[++i]*displayHeight, posData[++i]*displayWidth, posData[++i]*displayHeight);
-          break;
-        case "Z":
-          path2D.closePath();
-          break;
-        default:
-          console.error("unknown type");
-          break;
-      }
-    };
-    let drawStroke =(lineWidth, strokeStyle)=>{
-      if( !lineWidth ) return;
-      context.lineWidth = lineWidth;
-      context.strokeStyle = strokeStyle;
-      context.stroke(path2D);
-    };
-    let drawFill =(fillStyle)=>{
-      context.fillStyle = fillStyle;
-      context.fill(path2D, this.fillRule);
-    };
+  draw: function(displayWidth, displayHeight, context, path2D, isMask) {
     if( !!this.actionList ) {
       let actionID = this.actionList[PathCtr.currentActionName];
       if( !actionID ) actionID = 0;
       
       frame = Math.min(PathCtr.currentFrame, this.lineWidth[actionID].length);
       
-      this.pathDataList[actionID][frame].forEach(drawPath);
+      this.pathDataList[actionID][frame].forEach(d=>this.drawPath(displayWidth, displayHeight, path2D, d));
       
       if(isMask) return;
-      drawStroke(this.lineWidth[actionID][frame], this.strokeStyle[actionID][frame]);
-      drawFill(this.fillStyle[actionID][frame]);
+      this.drawStroke(context, path2D, this.lineWidth[actionID][frame], this.strokeStyle[actionID][frame]);
+      this.drawFill(context, path2D, this.fillStyle[actionID][frame]);
       return;
     }
     
-    this.pathDataList.forEach(drawPath);
+    this.pathDataList.forEach(d=>this.drawPath(displayWidth, displayHeight, path2D, d));
     
     if(isMask) return;
     
-    drawStroke(this.lineWidth, this.strokeStyle);
-    drawFill(this.fillStyle);
+    this.drawStroke(context, path2D, this.lineWidth, this.strokeStyle);
+    this.drawFill(context, path2D, this.fillStyle);
   },
 }
 

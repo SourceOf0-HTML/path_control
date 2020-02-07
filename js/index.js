@@ -5,7 +5,7 @@ var totalFrames = 1120;
 var frameNumber = 0;
 var canvas = null;
 var subCanvas = null;
-var Context = null;
+var context = null;
 var subContext = null;
 var requestAnimationIDs = [];
 var setTimeoutIDs = [];
@@ -62,6 +62,9 @@ function draw(timestamp) {
   
   if(!pathContainer) return;
   
+  canvas.width = subCanvas.width = viewWidth;
+  canvas.height = subCanvas.height = viewHeight;
+  
   subContext.clearRect(0, 0, viewWidth, viewHeight);
   pathContainer.draw(frameNumber);
   frameNumber = (frameNumber + 1) % totalFrames;
@@ -110,8 +113,6 @@ window.addEventListener("load", function() {
     viewWidth = document.documentElement.clientWidth;
     viewHeight = document.documentElement.clientHeight;
     canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + viewWidth + "px;height:" + viewHeight + "px;");
-    canvas.width = subCanvas.width = viewWidth;
-    canvas.height = subCanvas.height = viewHeight;
     if(!!pathContainer) pathContainer.setFitSize(viewWidth, viewHeight);
   });
   
