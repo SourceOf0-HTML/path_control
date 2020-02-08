@@ -1,11 +1,11 @@
 var pathContainer = null;
-var frameTime = 1000 / 24;
-var totalFrames = 1120;
+var frameTime = 1000 / 40;
+var totalFrames = 260;
 var frameNumber = 0;
 var domList = [];
 var loadIndex = 1;
-var filePath = "./img/base_single/original_single_";
-//var filePath = "./img/base/original_";
+//var filePath = "./img/base_single/original_single_";
+var filePath = "./img/base/original_";
 
 var getFrameNum=i=>{
   return "00000".substr(0, 5 - i.toString().length) + i + ".svg";

@@ -1,7 +1,7 @@
 var pathContainer = null;
 var frameTime = 1 / 30;
 var fixFrameTime = frameTime;
-var totalFrames = 1120;
+var totalFrames = 260;
 var frameNumber = 0;
 var canvas = null;
 var subCanvas = null;
