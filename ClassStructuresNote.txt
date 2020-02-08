@@ -9,13 +9,14 @@ PathContainer
   groups = [ <GroupObj>, ... ];                     // list of groups
   groupNameToIDList = { groupName : groupID, ... }; // list of group name and group ID
   masks = { maskName : groupID };                   // list of mask name and group ID
+  actionList = { actionName : { id : actionID, totalFrames : totalFrames } };  // action info list
 
 
 GroupObj (no action data)
   id = id;   // g tag ID
   maskIdToUse = maskIdToUse;  // ID of the mask to use
   paths = [<PathObj>, ... ];  // list of PathObj
-  actionList = null;          // action name list
+  hasActionList = [];   // if true, have action
   childGroups = [groupID, ... ];   // list of group id
 
 
@@ -23,14 +24,14 @@ GroupObj (after add action data)
   id = id;   // g tag ID
   maskIdToUse = maskIdToUse;   // ID of the mask to use
   paths = [<PathObj>, ... ];  // list of PathObj
-  actionList = { actionName : actionID, ... };   // action name list
+  hasActionList = [ hasAction, ... ];   // if true, have action
   childGroups = [actionID, ... ][frame, ... ][groupID, ... ]; // list of group id
 
 
 PathObj (no action data)
   maskIdToUse = maskIdToUse;    // ID of the mask to use
   fillRule = fillRule;          // "nonzero" or "evenodd"
-  actionList = null;            // action name list
+  hasActionList = [];           // if true, have action
   fillStyle = fillStyle;        // fillColor ( context2D.fillStyle )
   lineWidth = lineWidth;        // strokeWidth ( context2D.lineWidth )
   strokeStyle = strokeStyle;    // strokeColor ( context2D.strokeStyle )
@@ -40,7 +41,7 @@ PathObj (no action data)
 PathObj (after add action data)
   maskIdToUse = maskIdToUse;    // ID of the mask to use
   fillRule = fillRule;          // "nonzero" or "evenodd"
-  actionList = { actionName : actionID, ... };   // action name list
+  hasActionList = [ hasAction, ... ];   // if true, have action
   fillStyle = [actionID, ... ][frame, ... ] = fillStyle;        // fillColor ( context2D.fillStyle )
   lineWidth = [actionID, ... ][frame, ... ] = lineWidth;        // strokeWidth ( context2D.lineWidth )
   strokeStyle = [actionID, ... ][frame, ... ] = strokeStyle;    // strokeColor ( context2D.strokeStyle )

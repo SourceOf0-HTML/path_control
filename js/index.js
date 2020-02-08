@@ -1,5 +1,5 @@
 var pathContainer = null;
-var frameTime = 1 / 30;
+var frameTime = 1 / 24;
 var fixFrameTime = frameTime;
 var totalFrames = 260;
 var frameNumber = 0;
@@ -56,7 +56,7 @@ function draw(timestamp) {
   if(typeof(timestamp) == "undefined") return;
   
   elapsed = (timestamp - prevTimestamp) / 1000;
-  console.log(elapsed, average, fixFrameTime);
+  //console.log(elapsed, average, fixFrameTime);
   average = (average + elapsed) / 2;
   prevTimestamp = timestamp;
   
@@ -116,7 +116,7 @@ window.addEventListener("load", function() {
     if(!!pathContainer) pathContainer.setFitSize(viewWidth, viewHeight);
   });
   
-  console.log("base : ", frameTime, frameTime * 10, frameTime * 0.1);
+  //console.log("base : ", frameTime, frameTime * 10, frameTime * 0.1);
   setTimeoutIDs.push(window.setTimeout(timer, fixFrameTime*1000));
 });
 

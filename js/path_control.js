@@ -1,9 +1,9 @@
 var PathCtr = {
   
-  defaultAction: "base",  // default action name
+  defaultActionName : "base",  // default action name
   initTarget: null,  // instance to be initialized
   currentFrame : 0,  // current frame
-  currentActionName : "",  // current action name
+  currentActionID : -1,  // current action ID
   binDataPosRange : 20000, // correction value of coordinates when saving to binary data
   
   isDebug : false,
@@ -24,7 +24,7 @@ var PathCtr = {
     this.fillStyle = fillStyle;        // fillColor ( context2D.fillStyle )
     this.lineWidth = lineWidth;        // strokeWidth ( context2D.lineWidth )
     this.strokeStyle = strokeStyle;    // strokeColor ( context2D.strokeStyle )
-    this.actionList = null;            // action name list
+    this.hasActionList = [];           // if true, have action
   },
   
   /**
@@ -35,7 +35,7 @@ var PathCtr = {
     this.paths = paths;               // list of PathObj
     this.childGroups = childGroups;   // list of group id
     this.maskIdToUse = maskIdToUse;   // ID of the mask to use
-    this.actionList = null;           // action name list
+    this.hasActionList = [];          // if true, have action
   },
   
   /**
@@ -51,6 +51,7 @@ var PathCtr = {
     this.groups = [];             // list of groups
     this.groupNameToIDList = {};  // list of group name and group ID
     this.masks = {};              // list of mask name and group ID
+    this.actionList = null;       // action info list
   },
   
   /**
@@ -147,9 +148,9 @@ var PathCtr = {
    * @param pathDOM : path element
    * @param style : CSSStyleDeclaration ( window.getComputedStyle(pathDOM) )
    * @param frame : frame number
-   * @param actionName : action name
+   * @param actionID : action ID
    */
-  addActionPath: function(path, pathDOM, style, frame, actionName) {
+  addActionPath: function(path, pathDOM, style, frame, actionID) {
     let fillRule = (!pathDOM)? "nonzero" : style.fillRule;
     let fillStyle = (!pathDOM)? "none" : style.fill;
     if(fillStyle == "none") {
@@ -167,7 +168,7 @@ var PathCtr = {
     let pathDataList = null;
     if(!!pathDOM) {
       pathDataList = this.makePathDataList(pathDOM.getAttribute("d"));
-    } else if(!path.actionList) {
+    } else if(!path.hasActionList[actionID]) {
       pathDataList = path.pathDataList.concat();
     } else {
       pathDataList = path.pathDataList[0][0].concat();
@@ -180,7 +181,7 @@ var PathCtr = {
       lineWidth,
       strokeStyle,
       frame,
-      actionName,
+      actionID,
     );
   },
   
@@ -234,9 +235,9 @@ var PathCtr = {
    * @param groupDOM : group element
    * @param name : group name
    * @param frame : frame number
-   * @param actionName : action name
+   * @param actionID : action ID
    */
-  addActionGroup: function(groupDOM, name, frame, actionName) {
+  addActionGroup: function(groupDOM, name, frame, actionID) {
     let targetGroup = this.initTarget.groups[this.initTarget.groupNameToIDList[name]];
     let childGroups = [];
     let dataIndex = 0;
@@ -247,7 +248,7 @@ var PathCtr = {
         let name = child.tagName;
         switch(name) {
           case "path":
-            this.addActionPath(targetGroup.paths[dataIndex++], child, window.getComputedStyle(child), frame, actionName);
+            this.addActionPath(targetGroup.paths[dataIndex++], child, window.getComputedStyle(child), frame, actionID);
             break;
           case "mask":
           case "clipPath":
@@ -264,10 +265,10 @@ var PathCtr = {
     } else {
       let children = Array.prototype.slice.call(targetGroup.paths);
       children.forEach(child=>{
-        this.addActionPath(child, null, null, frame, actionName);
+        this.addActionPath(child, null, null, frame, actionID);
       });
     }
-    targetGroup.addAction(childGroups, frame, actionName);
+    targetGroup.addAction(childGroups, frame, actionID);
   },
   
   /**
@@ -326,7 +327,7 @@ var PathCtr = {
    * @param groupsDOMList : group elements array
    * @param actionName : action name
    */
-  addActionFromSvgList: function(pathContainer, groupsDOMList, actionName = this.defaultAction) {
+  addActionFromSvgList: function(pathContainer, groupsDOMList, actionID = 0) {
     if(!pathContainer) {
       console.error("path container is not found");
       return;
@@ -381,9 +382,9 @@ var PathCtr = {
     
     groupsDOMArr.forEach((targetDom, frame)=>{
       if(frame == 0) return;
-      console.log("add action : " + frame);
+      console.log("add action : " + actionID + " - " + frame);
       Object.keys(actionGroup).forEach(key=>{
-        this.addActionGroup(targetDom.getElementById(key), key, frame, actionName);
+        this.addActionGroup(targetDom.getElementById(key), key, frame, actionID);
       });
     });
     
@@ -454,9 +455,7 @@ var PathCtr = {
       return ret;
     };
     
-    let getAction=(func)=>{
-      return getArray(getUint8, ()=>getArray(getUint16, ()=>func()));
-    };
+    let getAction=func=>getArray(getUint8, ()=>getArray(getUint16, ()=>func()));
     
     let getPathData=()=>{
       let retNum = getUint16();
@@ -485,9 +484,8 @@ var PathCtr = {
       let maskIdToUse = getUint16();
       let fillRule = (getUint8() == 0 ? "nonzero" : "evenodd");
       
-      let actionListNum = getUint8();
-      
-      if(actionListNum == 0) {
+      let hasAction = getUint8();
+      if(!hasAction) {
         let lineWidth = getFloat32();
         let fillStyle = getColor();
         let strokeStyle = getColor();
@@ -500,11 +498,6 @@ var PathCtr = {
           lineWidth,
           strokeStyle,
         );
-      }
-      
-      let actionList = {};
-      for(let i = 0; i < actionListNum; ++i) {
-        actionList[getString()] = getUint8();
       }
       
       let lineWidth = getAction(getFloat32);
@@ -520,7 +513,10 @@ var PathCtr = {
         lineWidth,
         strokeStyle,
       );
-      pathObj.actionList = actionList;
+      pathObj.lineWidth.forEach((val, i)=>(pathObj.hasActionList[i] = true));
+      pathObj.fillStyle.forEach((val, i)=>(pathObj.hasActionList[i] = true));
+      pathObj.strokeStyle.forEach((val, i)=>(pathObj.hasActionList[i] = true));
+      pathObj.pathDataList.forEach((val, i)=>(pathObj.hasActionList[i] = true));
       return pathObj;
     };
     
@@ -531,8 +527,8 @@ var PathCtr = {
       let maskIdToUse = getUint16();
       let paths = getArray(getUint16, getPath);
       
-      let actionListNum = getUint8();
-      if(actionListNum == 0) {
+      let hasAction = getUint8();
+      if(!hasAction) {
         let childGroups = getArray(getUint8, getUint16);
         
         let group = new this.GroupObj(
@@ -551,16 +547,9 @@ var PathCtr = {
         maskIdToUse
       );
       
-      let actionList = {};
-      let actionNameList = [];
-      for(let i = 0; i < actionListNum; ++i) {
-        let actionName = getString();
-        actionList[actionName] = getUint8();
-        actionNameList.push(actionName);
-      }
-      group.actionList = actionList;
-      
       group.childGroups = getAction(()=>getArray(getUint8, getUint16));
+      group.childGroups.forEach((val, i)=>(group.hasActionList[i] = true));
+      
       return group;
     };
     
@@ -569,6 +558,17 @@ var PathCtr = {
     
     pathContainer.originalWidth = pathContainer.displayWidth = getUint16();
     pathContainer.originalHeight = pathContainer.displayHeight = getUint16();
+    
+    let actionListNum = getUint8();
+    if(actionListNum > 0) {
+      pathContainer.actionList = {};
+      for(let i = 0; i < actionListNum; ++i) {
+        pathContainer.actionList[getString()] = {
+          id : getUint8(),
+          totalFrames : getUint16(),
+        };
+      }
+    }
     
     pathContainer.rootGroups = getArray(getUint8, getUint16);
     
@@ -678,7 +678,9 @@ var PathCtr = {
     let setPath=path=>{
       setUint16(path.maskIdToUse);
       setUint8(path.fillRule == "nonzero" ? 0 : 1);
-      if(!path.actionList) {
+      
+      let hasAction = (path.hasActionList.length > 0);
+      if(!hasAction) {
         setUint8(0);
         setFloat32(path.lineWidth);
         setColor(path.fillStyle);
@@ -686,11 +688,7 @@ var PathCtr = {
         setPathData(path.pathDataList);
         return;
       }
-      setUint8(Object.keys(path.actionList).length);
-      Object.keys(path.actionList).forEach(key=>{
-        setString(key);
-        setUint8(path.actionList[key]);
-      });
+      setUint8(1);
       
       setAction(path.lineWidth, setFloat32);
       setAction(path.fillStyle, setColor);
@@ -703,17 +701,13 @@ var PathCtr = {
       setUint16(group.maskIdToUse);
       setArray(group.paths, setUint16, setPath);
       
-      if(!group.actionList) {
+      let hasAction = (group.hasActionList.length > 0);
+      if(!hasAction) {
         setUint8(0);
         setArray(group.childGroups, setUint8, setUint16);
         return;
       }
-      
-      setUint8(Object.keys(group.actionList).length);
-      Object.keys(group.actionList).forEach(key=>{
-        setString(key);
-        setUint8(group.actionList[key]);
-      });
+      setUint8(1);
       
       setAction(group.childGroups, childGroups=>{
         setArray(childGroups, setUint8, setUint16);
@@ -725,6 +719,13 @@ var PathCtr = {
     
     setUint16(pathContainer.originalWidth);
     setUint16(pathContainer.originalHeight);
+    
+    setUint8(Object.keys(pathContainer.actionList).length);
+    Object.keys(pathContainer.actionList).forEach(key=>{
+      setString(key);
+      setUint8(pathContainer.actionList[key].id);
+      setUint16(pathContainer.actionList[key].totalFrames);
+    });
     
     setArray(pathContainer.rootGroups, setUint8, setUint16);
     
@@ -740,6 +741,89 @@ var PathCtr = {
     delete dv;
     return buffer.slice(0, sumLength);
   },
+  
+  /**
+   * @param fileInfoList : [ [ filePath, totalFrames, actionName ], ... ]
+   * @param completeFunc : callback when loading complete
+   */
+  svgFilesLoad: function(fileInfoList, completeFunc) {
+    if(!fileInfoList || !Array.isArray(fileInfoList) || !Array.isArray(fileInfoList[0])) {
+      console.error("fileInfoList format is woring");
+      console.log(fileInfoList);
+      return;
+    }
+    if(fileInfoList[0][2] != PathCtr.defaultActionName) {
+      console.error("action name \"" + PathCtr.defaultActionName + "\" is missing in fileInfoList");
+      return;
+    }
+    
+    let pathContainer = null;
+    let fileIndex = 0;
+    let domList = [];
+    let getFrameNum=i=>("00000".substr(0, 5 - i.toString().length) + i + ".svg");
+    
+    let loadFile=fileInfo=>{
+      let filePath = fileInfo[0];
+      let totalFrames = fileInfo[1];
+      let actionName = fileInfo[2];
+      
+      let loadFrame = 1;
+      let request = new XMLHttpRequest();
+      let loadSVG = request.onload = function(e) {
+        let target = e.target;
+        if(target.readyState != 4) return;
+        if(target.status != 200 && target.status != 0) return;
+        
+        let ret = target.responseText;
+        let div = document.createElement("div");
+        div.setAttribute("style", "display:none;");
+        div.innerHTML = ret;
+        let svg = div.firstElementChild;
+        document.body.append(div);
+        domList[parseInt(ret.match(/id="Frame_(\d+)"/)[1]) - 1] = svg;
+        div = svg = null;
+        
+        delete request;
+        if(loadFrame <= totalFrames) {
+          console.log("load file : " + loadFrame);
+          request = new XMLHttpRequest();
+          request.open("GET", filePath + getFrameNum(loadFrame++), true);
+          request.onreadystatechange = loadSVG;
+          request.send();
+          return;
+        }
+        
+        if(!pathContainer) {
+          pathContainer = PathCtr.initFromSvg(domList[0]);
+          pathContainer.actionList = {};
+        }
+        
+        let actionID = Object.keys(pathContainer.actionList).length;
+        
+        pathContainer.actionList[actionName] = {
+          id : actionID,
+          totalFrames : totalFrames,
+        };
+        
+        PathCtr.addActionFromSvgList(pathContainer, domList, actionID);
+        console.log("loading completed");
+        console.log(pathContainer);
+        
+        domList.forEach(dom=>dom.parentNode.remove());
+        domList.length = 0;
+        
+        if(++fileIndex < fileInfoList.length) {
+          loadFile(fileInfoList[fileIndex]);
+        } else {
+          completeFunc(pathContainer);
+        }
+      };
+      request.open("GET", filePath + getFrameNum(loadFrame++), true);
+      request.send();
+    };
+    
+    loadFile(fileInfoList[fileIndex]);
+  },
 };
 
 PathCtr.PathObj.prototype = {
@@ -747,30 +831,22 @@ PathCtr.PathObj.prototype = {
   /**
    * PathObj (after add action data)
    */
-  addAction: function(pathDataList, fillRule, fillStyle, lineWidth, strokeStyle, frame, actionName) {
-    if( !actionName ) {
-      console.error("please specify a action name");
-      return;
-    }
-    
-    if( !this.actionList ) {
+  addAction: function(pathDataList, fillRule, fillStyle, lineWidth, strokeStyle, frame, actionID) {
+    if( this.hasActionList.length == 0 ) {
       // init action data
       this.pathDataList = [[this.pathDataList]];  // path data array
       this.fillStyle = [[this.fillStyle]];        // fillColor ( context2D.fillStyle )
       this.lineWidth = [[this.lineWidth]];        // strokeWidth ( context2D.lineWidth )
       this.strokeStyle = [[this.strokeStyle]];    // strokeColor ( context2D.strokeStyle )
-      this.actionList = {};                       // action name list
-      this.actionList[PathCtr.defaultAction] = 0;
+      this.hasActionList[0] = true;
     }
-    if( !this.actionList.hasOwnProperty(actionName) ) {
-      let actionID = Object.keys(this.actionList).length;
-      this.actionList[actionName] = actionID;
+    if( !this.hasActionList[actionID] ) {
       this.pathDataList[actionID] = [this.pathDataList[0][0]];
       this.fillStyle[actionID] = [this.fillStyle[0][0]];
       this.lineWidth[actionID] = [this.lineWidth[0][0]];
       this.strokeStyle[actionID] = [this.strokeStyle[0][0]];
+      this.hasActionList[actionID] = true;
     }
-    let actionID = this.actionList[actionName];
     this.pathDataList[actionID][frame] = pathDataList;
     this.fillStyle[actionID][frame] = fillStyle;
     this.lineWidth[actionID][frame] = lineWidth;
@@ -832,26 +908,24 @@ PathCtr.PathObj.prototype = {
    * @param isMask : when true, draw as a mask
    */
   draw: function(displayWidth, displayHeight, context, path2D, isMask) {
-    if( !!this.actionList ) {
-      let actionID = this.actionList[PathCtr.currentActionName];
-      if( !actionID ) actionID = 0;
-      
-      frame = Math.min(PathCtr.currentFrame, this.lineWidth[actionID].length);
-      
-      this.pathDataList[actionID][frame].forEach(d=>this.drawPath(displayWidth, displayHeight, path2D, d));
-      
+    let actionID = PathCtr.currentActionID;
+    let frame = PathCtr.currentFrame;
+    
+    if( this.hasActionList.length == 0) {
+      this.pathDataList.forEach(d=>this.drawPath(displayWidth, displayHeight, path2D, d));
       if(isMask) return;
-      this.drawStroke(context, path2D, this.lineWidth[actionID][frame], this.strokeStyle[actionID][frame]);
-      this.drawFill(context, path2D, this.fillStyle[actionID][frame]);
+      this.drawStroke(context, path2D, this.lineWidth, this.strokeStyle);
+      this.drawFill(context, path2D, this.fillStyle);
       return;
+    } else if( !this.hasActionList[actionID] ) {
+      actionID = 0;
+      frame = 0;
     }
     
-    this.pathDataList.forEach(d=>this.drawPath(displayWidth, displayHeight, path2D, d));
-    
+    this.pathDataList[actionID][Math.min(frame, this.pathDataList[actionID].length)].forEach(d=>this.drawPath(displayWidth, displayHeight, path2D, d));
     if(isMask) return;
-    
-    this.drawStroke(context, path2D, this.lineWidth, this.strokeStyle);
-    this.drawFill(context, path2D, this.fillStyle);
+    this.drawStroke(context, path2D, this.lineWidth[actionID][Math.min(frame, this.lineWidth[actionID].length)], this.strokeStyle[actionID][Math.min(frame, this.strokeStyle[actionID].length)]);
+    this.drawFill(context, path2D, this.fillStyle[actionID][Math.min(frame, this.fillStyle[actionID].length)]);
   },
 }
 
@@ -859,26 +933,20 @@ PathCtr.GroupObj.prototype = {
   /**
    * GroupObj (after add action data)
    */
-  addAction: function(childGroups, frame, actionName) {
-    if( !actionName ) {
-      console.error("please specify a action name");
-      return;
-    }
+  addAction: function(childGroups, frame, actionID) {
     if( childGroups.length == 0 ) return;
-    if( !this.actionList ) {
+    if( this.hasActionList.length == 0 ) {
       if( JSON.stringify(childGroups) == JSON.stringify(this.childGroups) ) return;
       
       // init action data
       this.childGroups = [[this.childGroups]];   // list of group id
-      this.actionList = {};                      // action name list
-      this.actionList[PathCtr.defaultAction] = 0;
+      this.hasActionList[0] = true;
     }
-    if( !this.actionList.hasOwnProperty(actionName) ) {
-      let actionID = Object.keys(this.actionList).length;
-      this.actionList[actionName] = actionID;
+    if( !this.hasActionList[actionID] ) {
       this.childGroups[actionID] = [this.childGroups[0][0].concat()];
+      this.hasActionList[actionID] = true;
     }
-    this.childGroups[this.actionList[actionName]][frame] = childGroups;
+    this.childGroups[actionID][frame] = childGroups;
   },
   
   /**
@@ -886,11 +954,11 @@ PathCtr.GroupObj.prototype = {
    */
   getChildGroups: function() {
     if( this.childGroups.length == 0 ) return this.childGroups;
-    if( !this.actionList ) {
+    if( this.hasActionList.length == 0 ) {
       return this.childGroups;
     }
     
-    let actionID = this.actionList[PathCtr.currentActionName];
+    let actionID = PathCtr.currentActionID;
     
     if( this.childGroups[actionID] == null || this.childGroups[actionID][PathCtr.currentFrame] == null ) {
       return this.childGroups[0][0];
@@ -989,14 +1057,14 @@ PathCtr.PathContainer.prototype = {
    * @param frame : frame number
    * @param actionName : action name
    */
-  draw: function(frame, actionName = PathCtr.defaultAction) {
+  draw: function(frame, actionName = PathCtr.defaultActionName) {
     if(!this.rootGroups) {
       console.error("root groups is not found");
       return;
     }
     
     PathCtr.currentFrame = frame;
-    PathCtr.currentActionName = actionName;
+    PathCtr.currentActionID = Object.keys(this.actionList).indexOf(actionName);
     
     let path2D = new Path2D();
     path2D.rect(0, 0, this.displayWidth, this.displayHeight);

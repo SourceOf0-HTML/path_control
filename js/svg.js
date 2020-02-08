@@ -1,38 +1,16 @@
 var pathContainer = null;
-const frameTime = 1000 / 40;
-var totalFrames = 260;
+var frameTime = 1000 / 40;
+var totalFrames = 50;
 var frameNumber = 0;
-var domList = [];
-var loadIndex = 1;
-//var filePath = "./img/base_single/original_single_";
-var filePath = "./img/base/original_";
 
-var getFrameNum=i=>{
-  return "00000".substr(0, 5 - i.toString().length) + i + ".svg";
-};
-var request = new XMLHttpRequest();
-var loadSVG = request.onreadystatechange = function(e) {
-  let target = e.target;
-  if(target.readyState != 4) return;
-  if(target.status != 200 && target.status != 0) return;
-  let ret = target.responseText;
-  
-  let div = document.createElement("div");
-  div.setAttribute("style", "display:none;");
-  div.innerHTML = ret;
-  let svg = div.firstElementChild;
-  document.body.append(div);
-  domList[parseInt(ret.match(/id="Frame_(\d+)"/)[1]) - 1] = svg;
-  
-  if(loadIndex <= totalFrames) {
-    request = new XMLHttpRequest();
-    request.open("GET", filePath + getFrameNum(loadIndex++), true);
-    request.onreadystatechange = loadSVG;
-    request.send();
-  }
-};
-request.open("GET", filePath + getFrameNum(loadIndex++), true);
-request.send();
+function setPathContainer(data) {
+  pathContainer = data;
+}
+PathCtr.svgFilesLoad([
+  ["./img/base/original_", 260, "base"],
+  ["./img/face/original_face_", 50, "face"],
+//  ["./img/base_single/original_single_", 1120, "base"],
+], setPathContainer);
 
 window.addEventListener("load", function() {
   let canvas = document.getElementById("main-canvas");
@@ -77,23 +55,10 @@ window.addEventListener("load", function() {
     
     setTimeout(function() {
       requestAnimationFrame(draw);
-      if(!pathContainer) {
-        let loadFileNum = Object.keys(domList).length;
-        console.log("load file : " + loadFileNum);
-        if(loadFileNum < totalFrames) return;
-        
-        pathContainer = PathCtr.initFromSvg(domList[0]);
-        pathContainer.context = context;
-        PathCtr.addActionFromSvgList(pathContainer, domList);
-        pathContainer.setFitSize(width, height);
-        console.log("loading completed");
-        console.log(pathContainer);
-        
-        domList.forEach(dom=>dom.parentNode.remove());
-        return;
-      }
+      if(!pathContainer) return;
       
       context.clearRect(0, 0, width, height);
+      pathContainer.context = context;
       pathContainer.draw(frameNumber);
       frameNumber = (frameNumber + 1) % totalFrames;
       

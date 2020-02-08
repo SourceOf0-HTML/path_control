@@ -14,6 +14,14 @@ PathContainer
  groups
    length : Uint16
    GroupObj
+ actionList
+   length : Uint8
+   key
+     length : Uint8
+     String : Uint16Array
+   values
+     id : Uint8
+     totalFrames : Uint16
 
 
 GroupObj
@@ -25,13 +33,8 @@ GroupObj
  paths
    length : Uint16
    Array : PathObj
- actionList
-   length : Uint8 ( != 0 : add @ data )
-   key
-     length : Uint8 @
-     String : Uint16Array @
-   values
-     actionID : Uint8 @
+ hasAction
+   false = 0, true = 1 : Uint8 ( == true : add @ data )
  childGroups
    actionID(length) : Uint8 @
      frame(length) : Uint16 @
@@ -44,13 +47,8 @@ PathObj
    groupID : Uint16
  fillRule
    nonzero = 0, evenodd = 1 : Uint8
- actionList
-   length : Uint8 ( != 0 : add @ data )
-   key
-     length : Uint8 @
-     String : Uint16Array @
-   values
-     actionID : Uint8 @
+ hasAction
+   false = 0, true = 1 : Uint8 ( == true : add @ data )
  lineWidth
    actionID(length) : Uint8 @
      frame(length) : Uint16 @
