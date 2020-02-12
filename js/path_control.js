@@ -15,7 +15,8 @@ var PathCtr = {
   },
   
   /**
-   * PathObj constructor (no action data)
+   * PathObj (no action data)
+   * @constructor
    */
   PathObj: function(pathDataList, maskIdToUse, fillRule, fillStyle, lineWidth, strokeStyle) {
     this.maskIdToUse = maskIdToUse;    // ID of the mask to use
@@ -28,7 +29,8 @@ var PathCtr = {
   },
   
   /**
-   * GroupObj constructor
+   * GroupObj
+   * @constructor
    */
   GroupObj: function(id, paths, childGroups, maskIdToUse) {
     this.id = id;                     // g tag ID
@@ -39,7 +41,8 @@ var PathCtr = {
   },
   
   /**
-   * PathContainer constructor
+   * PathContainer
+   * @constructor
    */
   PathContainer : function() {
     this.originalWidth = 0;       // original svg width
@@ -55,8 +58,8 @@ var PathCtr = {
   },
   
   /**
-   * @param maskStr : mask attribute of element
-   * @return string of mask group ID
+   * @param {String} maskStr - mask attribute of element
+   * @return {GroupObj} - mask group
    */
   getMaskId: function(maskStr) {
     if(!maskStr) return null;
@@ -69,17 +72,17 @@ var PathCtr = {
   },
   
   /**
-   * @param dataDOM : d attribute of path element
-   * @return list of path data
+   * @param {String} dataAttribute - d attribute of path element
+   * @return {Array} - list of path data
    */
-  makePathDataList: function(dataDOM) {
+  makePathDataList: function(dataAttribute) {
     let ret = [];
     
     let data;
-    if(dataDOM.indexOf(",") < 0) {
-      data = dataDOM.split(/ /);
+    if(dataAttribute.indexOf(",") < 0) {
+      data = dataAttribute.split(/ /);
     } else {
-      data = dataDOM.replace(/([MCZ])/g,",$1,").replace(/[^,]-/g,",-").split(/[, ]/);
+      data = dataAttribute.replace(/([MCZ])/g,",$1,").replace(/[^,]-/g,",-").split(/[, ]/);
     }
     
     let baseX = this.initTarget.originalWidth;
@@ -115,9 +118,9 @@ var PathCtr = {
   },
   
   /**
-   * @param pathDOM : path element
-   * @param style   : CSSStyleDeclaration ( window.getComputedStyle(pathDOM) )
-   * @return PathObj
+   * @param {HTMLElement} pathDOM - path element
+   * @param {CSSStyleDeclaration} style - window.getComputedStyle(pathDOM)
+   * @return {PathObj}
    */
   makePath: function(pathDOM, style) {
     //PathCtr.debugPrint("makePath");
@@ -144,11 +147,11 @@ var PathCtr = {
   },
   
   /**
-   * @param path : PathObj
-   * @param pathDOM : path element
-   * @param style : CSSStyleDeclaration ( window.getComputedStyle(pathDOM) )
-   * @param frame : frame number
-   * @param actionID : action ID
+   * @param {PathObj} path
+   * @param {HTMLElement} pathDOM - path element
+   * @param {CSSStyleDeclaration} style - window.getComputedStyle(pathDOM)
+   * @param {Integer} frame - frame number
+   * @param {Integer} actionID - action ID
    */
   addActionPath: function(path, pathDOM, style, frame, actionID) {
     let fillRule = (!pathDOM)? "nonzero" : style.fillRule;
@@ -186,8 +189,8 @@ var PathCtr = {
   },
   
   /**
-   * @param groupDOM : group element
-   * @return GroupObj
+   * @param {HTMLElement} groupDOM - group element
+   * @return {GroupObj}
    */
   makeGroup: function(groupDOM) {
     let name = groupDOM.getAttribute("id");
@@ -232,10 +235,10 @@ var PathCtr = {
   },
   
   /**
-   * @param groupDOM : group element
-   * @param name : group name
-   * @param frame : frame number
-   * @param actionID : action ID
+   * @param {HTMLElement} groupDOM - group element
+   * @param {String} name - group name
+   * @param {Integer} frame - frame number
+   * @param {Integer} actionID - action ID
    */
   addActionGroup: function(groupDOM, name, frame, actionID) {
     let targetGroup = this.initTarget.groups[this.initTarget.groupNameToIDList[name]];
@@ -272,8 +275,8 @@ var PathCtr = {
   },
   
   /**
-   * @param groupsDOM : group elements
-   * @return PathContainer
+   * @param {HTMLElement} groupDOM - group element
+   * @return {PathContainer}
    */
   initFromSvg: function(groupsDOM) {
     if(!groupsDOM) {
@@ -323,9 +326,9 @@ var PathCtr = {
   },
   
   /**
-   * @param pathContainer : PathContainer
-   * @param groupsDOMList : group elements array
-   * @param actionName : action name
+   * @param {PathContainer} pathContainer
+   * @param {Array} groupsDOMList - group elements array
+   * @param {String} actionName
    */
   addActionFromSvgList: function(pathContainer, groupsDOMList, actionID = 0) {
     if(!pathContainer) {
@@ -392,8 +395,8 @@ var PathCtr = {
   },
   
   /**
-   * @param buffer : ArrayBuffer
-   * @return PathContainer
+   * @param {ArrayBuffer} buffer
+   * @return {PathContainer}
    */
   initFromBin: function(buffer) {
     if(!buffer) {
@@ -585,8 +588,8 @@ var PathCtr = {
   },
   
   /**
-   * @param pathContainer : PathContainer
-   * @return ArrayBuffer
+   * @param {PathContainer} pathContainer
+   * @return {ArrayBuffer}
    */
   dataTobin: function(pathContainer) {
     if(!pathContainer) {
@@ -743,8 +746,8 @@ var PathCtr = {
   },
   
   /**
-   * @param fileInfoList : [ [ filePath, totalFrames, actionName ], ... ]
-   * @param completeFunc : callback when loading complete
+   * @param {Array} fileInfoList - [ [ filePath, totalFrames, actionName ], ... ]
+   * @param {Function} completeFunc - callback when loading complete
    */
   svgFilesLoad: function(fileInfoList, completeFunc) {
     if(!fileInfoList || !Array.isArray(fileInfoList) || !Array.isArray(fileInfoList[0])) {
@@ -826,8 +829,8 @@ var PathCtr = {
   },
   
   /**
-   * @param filePath : binary file path
-   * @param completeFunc : callback when loading complete
+   * @param {String} filePath - binary file path
+   * @param {Function} completeFunc - callback when loading complete
    */
   binFileLoad: function(filePath, completeFunc) {
     if(!filePath) {
@@ -881,10 +884,10 @@ PathCtr.PathObj.prototype = {
   },
   
   /**
-   * @param displayWidth : display width
-   * @param displayHeight : display height
-   * @param path2D : Path2D
-   * @param d : PathData
+   * @param {Number} displayWidth - display width
+   * @param {Number} displayHeight - display height
+   * @param {Path2D} path2D
+   * @param {PathData} d
    */
   drawPath: function(displayWidth, displayHeight, path2D, d) {
     let pos = d.pos;
@@ -905,10 +908,10 @@ PathCtr.PathObj.prototype = {
   },
   
   /**
-   * @param context : CanvasRenderingContext2D ( canvas.getContext("2d") )
-   * @param path2D : Path2D
-   * @param lineWidth : strokeWidth ( context2D.lineWidth )
-   * @param displayHeight : strokeColor ( context2D.strokeStyle )
+   * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
+   * @param {Path2D} path2D
+   * @param {Number} lineWidth - strokeWidth ( context2D.lineWidth )
+   * @param {String} strokeStyle - strokeColor ( context2D.strokeStyle )
    */
   drawStroke: function(context, path2D, lineWidth, strokeStyle) {
     if( !lineWidth ) return;
@@ -918,9 +921,9 @@ PathCtr.PathObj.prototype = {
   },
   
   /**
-   * @param context : CanvasRenderingContext2D ( canvas.getContext("2d") )
-   * @param path2D : Path2D
-   * @param fillStyle : strokeColor ( context2D.strokeStyle )
+   * @param {CanvasRenderingContext2D} context -  canvas.getContext("2d")
+   * @param {Path2D} path2D
+   * @param {String} fillStyle - strokeColor ( context2D.strokeStyle )
    */
   drawFill: function(context, path2D, fillStyle) {
     context.fillStyle = fillStyle;
@@ -928,11 +931,11 @@ PathCtr.PathObj.prototype = {
   },
   
   /**
-   * @param displayWidth : display width
-   * @param displayHeight : display height
-   * @param context : CanvasRenderingContext2D ( canvas.getContext("2d") )
-   * @param path2D : Path2D
-   * @param isMask : when true, draw as a mask
+   * @param {Number} displayWidth - display width
+   * @param {Number} displayHeight - display height
+   * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
+   * @param {Path2D} path2D
+   * @param {Boolean} isMask - when true, draw as a mask
    */
   draw: function(displayWidth, displayHeight, context, path2D, isMask) {
     let actionID = PathCtr.currentActionID;
@@ -977,7 +980,7 @@ PathCtr.GroupObj.prototype = {
   },
   
   /**
-   * @return group id array
+   * @return {Array} - group id array
    */
   getChildGroups: function() {
     if( this.childGroups.length == 0 ) return this.childGroups;
@@ -998,8 +1001,8 @@ PathCtr.GroupObj.prototype = {
 PathCtr.PathContainer.prototype = {
   
   /**
-   * @param width : reference width
-   * @param height : reference height
+   * @param {Number} width - reference width
+   * @param {Number} height - reference height
    */
   setFitSize: function(width, height) {
     if(this.originalWidth > this.originalHeight) {
@@ -1012,8 +1015,8 @@ PathCtr.PathContainer.prototype = {
   },
   
   /**
-   * @param group  : GroupObj to be draw
-   * @param isMask : when true, draw as a mask
+   * @param {GroupObj} group - GroupObj to be draw
+   * @param {Boolean} isMask - when true, draw as a mask
    */
   drawGroup: function(group, isMask) {
     if(!this.context) {
@@ -1081,8 +1084,8 @@ PathCtr.PathContainer.prototype = {
   },
   
   /**
-   * @param frame : frame number
-   * @param actionName : action name
+   * @param {Integer} frame
+   * @param {String} actionName
    */
   draw: function(frame, actionName = PathCtr.defaultActionName) {
     if(!this.rootGroups) {
