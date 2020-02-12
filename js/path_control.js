@@ -824,6 +824,33 @@ var PathCtr = {
     
     loadFile(fileInfoList[fileIndex]);
   },
+  
+  /**
+   * @param filePath : binary file path
+   * @param completeFunc : callback when loading complete
+   */
+  binFileLoad: function(filePath, completeFunc) {
+    if(!filePath) {
+      console.error("filePath not found");
+      return;
+    }
+    
+    let request = new XMLHttpRequest();
+    request.onload = function(e) {
+      let target = e.target;
+      if(target.readyState != 4) return;
+      if(target.status != 200 && target.status != 0) return;
+      
+      let buffer = request.response;
+      let pathContainer = PathCtr.initFromBin(buffer);
+      console.log("loading completed");
+      
+      completeFunc(pathContainer);
+    };
+    request.open("GET", filePath, true);
+    request.responseType = "arraybuffer";
+    request.send();
+  },
 };
 
 PathCtr.PathObj.prototype = {

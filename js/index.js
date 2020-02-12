@@ -14,24 +14,14 @@ var viewHeight = 0;
 var prevTimestamp = 0;
 var elapsed = 0;
 var average = 0;
-  
 
-var request = new XMLHttpRequest();
-request.addEventListener("load", function(event) {
-  if(request.readyState != 4) return;
-  if(request.status != 200 && request.status != 0) return;
-  
-  let buffer = request.response;
-  pathContainer = PathCtr.initFromBin(buffer);
-  console.log("loading completed");
+function setPathContainer(data) {
+  pathContainer = data;
   pathContainer.context = subContext;
   pathContainer.setFitSize(viewWidth, viewHeight);
-  //console.log(pathContainer);
-  request = null;
-});
-request.open("GET", "./src/path_data.bin", true);
-request.responseType = "arraybuffer";
-request.send();
+}
+
+PathCtr.binFileLoad("./src/path_data.bin", setPathContainer);
 
 function cancelFunctions() {
   if(requestAnimationIDs.length > 2 || setTimeoutIDs.length > 2) console.log(requestAnimationIDs.length, setTimeoutIDs.length);
