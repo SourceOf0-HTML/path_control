@@ -9,7 +9,7 @@ function setPathContainer(data) {
   pathContainer.context = context;
   document.getElementById("output-btn").disabled = "";
 }
-PathCtr.svgFilesLoad([
+PathFactory.svgFilesLoad([
   ["./img/base/original_", 260, "base"],
   ["./img/face/original_face_", 50, "face"],
 //  ["./img/base_single/original_single_", 1120, "base"],
@@ -61,7 +61,7 @@ window.addEventListener("load", function() {
 function output_data() {
   if(!pathContainer) return;
   
-  let buffer = PathCtr.dataTobin(pathContainer);
+  let buffer = PathFactory.dataTobin(pathContainer);
   
   var a = document.createElement("a");
   document.body.appendChild(a);

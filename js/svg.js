@@ -6,7 +6,7 @@ var frameNumber = 0;
 function setPathContainer(data) {
   pathContainer = data;
 }
-PathCtr.svgFilesLoad([
+PathFactory.svgFilesLoad([
   ["./img/base/original_", 260, "base"],
   ["./img/face/original_face_", 50, "face"],
 //  ["./img/base_single/original_single_", 1120, "base"],

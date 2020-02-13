@@ -1,5 +1,9 @@
+
+/**
+ * PathCtr
+ * Singleton
+ */
 var PathCtr = {
-  
   defaultActionName : "base",  // default action name
   initTarget: null,  // instance to be initialized
   currentFrame : 0,  // current frame
@@ -13,12 +17,10 @@ var PathCtr = {
       console.log(arguments[i]);
     }
   },
-  
-  /**
-   * PathObj (no action data)
-   * @constructor
-   */
-  PathObj: function(pathDataList, maskIdToUse, fillRule, fillStyle, lineWidth, strokeStyle) {
+};
+
+class PathObj {
+  constructor(pathDataList, maskIdToUse, fillRule, fillStyle, lineWidth, strokeStyle) {
     this.maskIdToUse = maskIdToUse;    // ID of the mask to use
     this.pathDataList = pathDataList;  // path data array
     this.fillRule = fillRule;          // "nonzero" or "evenodd"
@@ -26,25 +28,152 @@ var PathCtr = {
     this.lineWidth = lineWidth;        // strokeWidth ( context2D.lineWidth )
     this.strokeStyle = strokeStyle;    // strokeColor ( context2D.strokeStyle )
     this.hasActionList = [];           // if true, have action
-  },
+  };
+  
+  addAction(pathDataList, fillRule, fillStyle, lineWidth, strokeStyle, frame, actionID) {
+    if( this.hasActionList.length == 0 ) {
+      // init action data
+      this.pathDataList = [[this.pathDataList]];  // path data array
+      this.fillStyle = [[this.fillStyle]];        // fillColor ( context2D.fillStyle )
+      this.lineWidth = [[this.lineWidth]];        // strokeWidth ( context2D.lineWidth )
+      this.strokeStyle = [[this.strokeStyle]];    // strokeColor ( context2D.strokeStyle )
+      this.hasActionList[0] = true;
+    }
+    if( !this.hasActionList[actionID] ) {
+      this.pathDataList[actionID] = [this.pathDataList[0][0]];
+      this.fillStyle[actionID] = [this.fillStyle[0][0]];
+      this.lineWidth[actionID] = [this.lineWidth[0][0]];
+      this.strokeStyle[actionID] = [this.strokeStyle[0][0]];
+      this.hasActionList[actionID] = true;
+    }
+    this.pathDataList[actionID][frame] = pathDataList;
+    this.fillStyle[actionID][frame] = fillStyle;
+    this.lineWidth[actionID][frame] = lineWidth;
+    this.strokeStyle[actionID][frame] = strokeStyle;
+  };
   
   /**
-   * GroupObj
-   * @constructor
+   * @param {Number} displayWidth - display width
+   * @param {Number} displayHeight - display height
+   * @param {Path2D} path2D
+   * @param {PathData} d
    */
-  GroupObj: function(id, paths, childGroups, maskIdToUse) {
+  drawPath(displayWidth, displayHeight, path2D, d) {
+    let pos = d.pos;
+    switch(d.type) {
+      case "M":
+        path2D.moveTo(pos[0]*displayWidth, pos[1]*displayHeight);
+        break;
+      case "C":
+        path2D.bezierCurveTo(pos[0]*displayWidth, pos[1]*displayHeight, pos[2]*displayWidth, pos[3]*displayHeight, pos[4]*displayWidth, pos[5]*displayHeight);
+        break;
+      case "Z":
+        path2D.closePath();
+        break;
+      default:
+        console.error("unknown type");
+        break;
+    }
+  };
+  
+  /**
+   * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
+   * @param {Path2D} path2D
+   * @param {Number} lineWidth - strokeWidth ( context2D.lineWidth )
+   * @param {String} strokeStyle - strokeColor ( context2D.strokeStyle )
+   */
+  drawStroke(context, path2D, lineWidth, strokeStyle) {
+    if( !lineWidth ) return;
+    context.lineWidth = lineWidth;
+    context.strokeStyle = strokeStyle;
+    context.stroke(path2D);
+  };
+  
+  /**
+   * @param {CanvasRenderingContext2D} context -  canvas.getContext("2d")
+   * @param {Path2D} path2D
+   * @param {String} fillStyle - strokeColor ( context2D.strokeStyle )
+   */
+  drawFill(context, path2D, fillStyle) {
+    context.fillStyle = fillStyle;
+    context.fill(path2D, this.fillRule);
+  };
+  
+  /**
+   * @param {Number} displayWidth - display width
+   * @param {Number} displayHeight - display height
+   * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
+   * @param {Path2D} path2D
+   * @param {Boolean} isMask - when true, draw as a mask
+   */
+  draw(displayWidth, displayHeight, context, path2D, isMask) {
+    let actionID = PathCtr.currentActionID;
+    let frame = PathCtr.currentFrame;
+    
+    if( this.hasActionList.length == 0) {
+      this.pathDataList.forEach(d=>this.drawPath(displayWidth, displayHeight, path2D, d));
+      if(isMask) return;
+      this.drawStroke(context, path2D, this.lineWidth, this.strokeStyle);
+      this.drawFill(context, path2D, this.fillStyle);
+      return;
+    } else if( !this.hasActionList[actionID] ) {
+      actionID = 0;
+      frame = 0;
+    }
+    
+    this.pathDataList[actionID][Math.min(frame, this.pathDataList[actionID].length)].forEach(d=>this.drawPath(displayWidth, displayHeight, path2D, d));
+    if(isMask) return;
+    this.drawStroke(context, path2D, this.lineWidth[actionID][Math.min(frame, this.lineWidth[actionID].length)], this.strokeStyle[actionID][Math.min(frame, this.strokeStyle[actionID].length)]);
+    this.drawFill(context, path2D, this.fillStyle[actionID][Math.min(frame, this.fillStyle[actionID].length)]);
+  };
+};
+
+class GroupObj {
+  constructor(id, paths, childGroups, maskIdToUse) {
     this.id = id;                     // g tag ID
     this.paths = paths;               // list of PathObj
     this.childGroups = childGroups;   // list of group id
     this.maskIdToUse = maskIdToUse;   // ID of the mask to use
     this.hasActionList = [];          // if true, have action
-  },
+  };
+  
+  addAction(childGroups, frame, actionID) {
+    if( childGroups.length == 0 ) return;
+    if( this.hasActionList.length == 0 ) {
+      if( JSON.stringify(childGroups) == JSON.stringify(this.childGroups) ) return;
+      
+      // init action data
+      this.childGroups = [[this.childGroups]];   // list of group id
+      this.hasActionList[0] = true;
+    }
+    if( !this.hasActionList[actionID] ) {
+      this.childGroups[actionID] = [this.childGroups[0][0].concat()];
+      this.hasActionList[actionID] = true;
+    }
+    this.childGroups[actionID][frame] = childGroups;
+  };
   
   /**
-   * PathContainer
-   * @constructor
+   * @return {Array} - group id array
    */
-  PathContainer : function() {
+  getChildGroups() {
+    if( this.childGroups.length == 0 ) return this.childGroups;
+    if( this.hasActionList.length == 0 ) {
+      return this.childGroups;
+    }
+    
+    let actionID = PathCtr.currentActionID;
+    
+    if( this.childGroups[actionID] == null || this.childGroups[actionID][PathCtr.currentFrame] == null ) {
+      return this.childGroups[0][0];
+    }
+    
+    return this.childGroups[actionID][PathCtr.currentFrame];
+  };
+};
+
+class PathContainer {
+  constructor() {
     this.originalWidth = 0;       // original svg width
     this.originalHeight = 0;      // original svg height
     this.displayWidth = 0;        // display width
@@ -55,8 +184,120 @@ var PathCtr = {
     this.groupNameToIDList = {};  // list of group name and group ID
     this.masks = {};              // list of mask name and group ID
     this.actionList = null;       // action info list
-  },
+  };
   
+  /**
+   * @param {Number} width - reference width
+   * @param {Number} height - reference height
+   */
+  setFitSize(width, height) {
+    if(this.originalWidth > this.originalHeight) {
+      this.displayWidth = width;
+      this.displayHeight = width * this.originalHeight/this.originalWidth;
+    } else {
+      this.displayWidth = height * this.originalWidth/this.originalHeight;
+      this.displayHeight = height;
+    }
+  };
+  
+  /**
+   * @param {GroupObj} group - GroupObj to be draw
+   * @param {Boolean} isMask - when true, draw as a mask
+   */
+  drawGroup(group, isMask) {
+    if(!this.context) {
+      console.error("context is not found");
+      return;
+    }
+    
+    let isFoundMask = false;
+    
+    if(!isMask && !!group.maskIdToUse) {
+      let mask = this.groups[group.maskIdToUse];
+      if(!!mask) {
+        isFoundMask = true;
+        this.context.save();
+        this.drawGroup(mask, true);
+      } else {
+        console.error("group is not found : " + group.maskIdToUse);
+      }
+    }
+    
+    let path2D = isMask? (new Path2D()):null;
+    let isUsed = false;
+    
+    group.paths.forEach(path=>{
+      
+      isUsed = true;
+      
+      let isFoundMaskPath = false;
+      
+      if(!isMask && !!path.maskIdToUse) {
+        let maskPath = this.groups[path.maskIdToUse];
+        if(!!maskPath) {
+          isFoundMaskPath = true;
+          this.context.save();
+          this.drawGroup(maskPath, true);
+        } else {
+          console.error("mask is not found : " + path.maskIdToUse);
+        }
+      }
+      
+      if(!isMask) {
+        path2D = new Path2D();
+      }
+      
+      path.draw(this.displayWidth, this.displayHeight, this.context, path2D, isMask);
+      
+      if(isFoundMaskPath) {
+        this.context.restore();
+      }
+    });
+    
+    group.getChildGroups().forEach(childGroup=>{
+      this.drawGroup(this.groups[childGroup], isMask);
+    });
+    
+    if(isMask && isUsed) {
+      this.context.clip(path2D);
+    }
+    
+    path2D = null;
+    
+    if(isFoundMask) {
+      this.context.restore();
+    }
+  };
+  
+  /**
+   * @param {Integer} frame
+   * @param {String} actionName
+   */
+  draw(frame, actionName = PathCtr.defaultActionName) {
+    if(!this.rootGroups) {
+      console.error("root groups is not found");
+      return;
+    }
+    
+    PathCtr.currentFrame = frame;
+    PathCtr.currentActionID = Object.keys(this.actionList).indexOf(actionName);
+    
+    let path2D = new Path2D();
+    path2D.rect(0, 0, this.displayWidth, this.displayHeight);
+    this.context.clip(path2D);
+    path2D = null;
+    
+    this.rootGroups.forEach(id=>{
+      this.drawGroup(this.groups[id], false);
+    });
+  };
+};
+
+/**
+ * PathFactory
+ * Singleton
+ */
+var PathFactory = {
   /**
    * @param {String} maskStr - mask attribute of element
    * @return {GroupObj} - mask group
@@ -64,8 +305,8 @@ var PathCtr = {
   getMaskId: function(maskStr) {
     if(!maskStr) return null;
     let maskID = maskStr.replace(/^url\(#/, "").replace(/\)$/, "");
-    if(!!this.initTarget.masks[maskID]) {
-      return this.initTarget.masks[maskID];
+    if(!!PathCtr.initTarget.masks[maskID]) {
+      return PathCtr.initTarget.masks[maskID];
     }
     console.error("unknown mask name : " + maskStr);
     return null;
@@ -85,8 +326,8 @@ var PathCtr = {
       data = dataAttribute.replace(/([MCZ])/g,",$1,").replace(/[^,]-/g,",-").split(/[, ]/);
     }
     
-    let baseX = this.initTarget.originalWidth;
-    let baseY = this.initTarget.originalHeight;
+    let baseX = PathCtr.initTarget.originalWidth;
+    let baseY = PathCtr.initTarget.originalHeight;
     let getX=()=>parseFloat(data.shift())/baseX;
     let getY=()=>parseFloat(data.shift())/baseY;
     
@@ -136,9 +377,9 @@ var PathCtr = {
       lineWidth = parseFloat(style.strokeWidth.match(/([\d\.]+)/)[1]);
       strokeStyle = "transparent";
     }
-    return new this.PathObj(
-      this.makePathDataList(pathDOM.getAttribute("d")),
-      this.getMaskId(pathDOM.getAttribute("mask")),
+    return new PathObj(
+      PathFactory.makePathDataList(pathDOM.getAttribute("d")),
+      PathFactory.getMaskId(pathDOM.getAttribute("mask")),
       style.fillRule,
       fillStyle,
       lineWidth,
@@ -212,7 +453,7 @@ var PathCtr = {
           // TODO
           break;
         case "g":
-          childGroups.push(this.initTarget.groupNameToIDList[child.getAttribute("id")]);
+          childGroups.push(PathCtr.initTarget.groupNameToIDList[child.getAttribute("id")]);
           this.makeGroup(child);
           break;
         default:
@@ -222,14 +463,14 @@ var PathCtr = {
       }
     });
     
-    let ret = new this.GroupObj(
+    let ret = new GroupObj(
       name,
       paths,
       childGroups,
-      this.getMaskId(groupDOM.getAttribute("mask"))
+      PathFactory.getMaskId(groupDOM.getAttribute("mask"))
     );
     
-    this.initTarget.groups[this.initTarget.groupNameToIDList[name]] = ret;
+    PathCtr.initTarget.groups[PathCtr.initTarget.groupNameToIDList[name]] = ret;
     
     return ret;
   },
@@ -241,7 +482,7 @@ var PathCtr = {
    * @param {Integer} actionID - action ID
    */
   addActionGroup: function(groupDOM, name, frame, actionID) {
-    let targetGroup = this.initTarget.groups[this.initTarget.groupNameToIDList[name]];
+    let targetGroup = PathCtr.initTarget.groups[PathCtr.initTarget.groupNameToIDList[name]];
     let childGroups = [];
     let dataIndex = 0;
     
@@ -257,7 +498,7 @@ var PathCtr = {
           case "clipPath":
             break;
           case "g":
-            childGroups.push(this.initTarget.groupNameToIDList[child.getAttribute("id")]);
+            childGroups.push(PathCtr.initTarget.groupNameToIDList[child.getAttribute("id")]);
             break;
           default:
             console.error("unknown element");
@@ -286,7 +527,7 @@ var PathCtr = {
     
     console.log("init");
     
-    let pathContainer = this.initTarget = new this.PathContainer();
+    let pathContainer = PathCtr.initTarget = new PathContainer();
     
     pathContainer.originalWidth = pathContainer.displayWidth = parseInt(groupsDOM.getAttribute("width").replace("px", ""));
     pathContainer.originalHeight = pathContainer.displayHeight = parseInt(groupsDOM.getAttribute("height").replace("px", ""));
@@ -320,7 +561,7 @@ var PathCtr = {
       let group = this.makeGroup(child);
       pathContainer.rootGroups.push(pathContainer.groupNameToIDList[group.id]);
     });
-    this.initTarget = null;
+    PathCtr.initTarget = null;
     
     return pathContainer;
   },
@@ -340,7 +581,7 @@ var PathCtr = {
       return;
     }
     
-    this.initTarget = pathContainer;
+    PathCtr.initTarget = pathContainer;
     
     console.log("check id");
     let actionGroup = {};
@@ -391,7 +632,7 @@ var PathCtr = {
       });
     });
     
-    this.initTarget = null;
+    PathCtr.initTarget = null;
   },
   
   /**
@@ -403,7 +644,7 @@ var PathCtr = {
       console.error("array buffer is not found");
       return null;
     }
-    let pathContainer = new this.PathContainer();
+    let pathContainer = new PathContainer();
     let dv = new DataView(buffer);
     let sumLength = 0;
     
@@ -413,7 +654,7 @@ var PathCtr = {
     let getUint16 =()=>{let ret = dv.getUint16(sumLength); sumLength += 2; return ret};
     let getUint32 =()=>{let ret = dv.getUint32(sumLength); sumLength += 4; return ret};
     let getFloat32=()=>{let ret = dv.getFloat32(sumLength); sumLength += 4; return ret};
-    let getPos    =()=>{let ret = dv.getInt16(sumLength)/this.binDataPosRange; sumLength += 2; return ret};
+    let getPos    =()=>{let ret = dv.getInt16(sumLength)/PathCtr.binDataPosRange; sumLength += 2; return ret};
     let getString=()=>{
       let num = getUint8();
       let ret = "";
@@ -493,7 +734,7 @@ var PathCtr = {
         let fillStyle = getColor();
         let strokeStyle = getColor();
         let pathDataList = getPathData();
-        return new this.PathObj(
+        return new PathObj(
           pathDataList,
           maskIdToUse,
           fillRule,
@@ -508,7 +749,7 @@ var PathCtr = {
       let strokeStyle = getAction(getColor);
       let pathDataList = getAction(getPathData);
       
-      let pathObj = new this.PathObj(
+      let pathObj = new PathObj(
         pathDataList,
         maskIdToUse,
         fillRule,
@@ -534,7 +775,7 @@ var PathCtr = {
       if(!hasAction) {
         let childGroups = getArray(getUint8, getUint16);
         
-        let group = new this.GroupObj(
+        let group = new GroupObj(
           id,
           paths,
           childGroups,
@@ -543,7 +784,7 @@ var PathCtr = {
         return group;
       }
       
-      let group = new this.GroupObj(
+      let group = new GroupObj(
         id,
         paths,
         [],
@@ -606,7 +847,7 @@ var PathCtr = {
     let setUint16 =val=>{dv.setUint16(sumLength, val); sumLength += 2};
     let setUint32 =val=>{dv.setUint32(sumLength, val); sumLength += 4};
     let setFloat32=val=>{dv.setFloat32(sumLength, val); sumLength += 4};
-    let setPos    =val=>{dv.setInt16(sumLength, val*this.binDataPosRange); sumLength += 2};
+    let setPos    =val=>{dv.setInt16(sumLength, val*PathCtr.binDataPosRange); sumLength += 2};
     let setString=str=>{
       setUint8(str.length);
       [].map.call(str, c=>setUint16(c.charCodeAt(0)));
@@ -797,7 +1038,7 @@ var PathCtr = {
         }
         
         if(!pathContainer) {
-          pathContainer = PathCtr.initFromSvg(domList[0]);
+          pathContainer = PathFactory.initFromSvg(domList[0]);
           pathContainer.actionList = {};
         }
         
@@ -808,9 +1049,9 @@ var PathCtr = {
           totalFrames : totalFrames,
         };
         
-        PathCtr.addActionFromSvgList(pathContainer, domList, actionID);
+        PathFactory.addActionFromSvgList(pathContainer, domList, actionID);
         console.log("loading completed");
-        console.log(pathContainer);
+        PathCtr.debugPrint(pathContainer);
         
         domList.forEach(dom=>dom.parentNode.remove());
         domList.length = 0;
@@ -845,265 +1086,14 @@ var PathCtr = {
       if(target.status != 200 && target.status != 0) return;
       
       let buffer = request.response;
-      let pathContainer = PathCtr.initFromBin(buffer);
+      let pathContainer = PathFactory.initFromBin(buffer);
       console.log("loading completed");
-      
+      PathCtr.debugPrint(pathContainer);
       completeFunc(pathContainer);
     };
     request.open("GET", filePath, true);
     request.responseType = "arraybuffer";
     request.send();
-  },
-};
-
-PathCtr.PathObj.prototype = {
-  
-  /**
-   * PathObj (after add action data)
-   */
-  addAction: function(pathDataList, fillRule, fillStyle, lineWidth, strokeStyle, frame, actionID) {
-    if( this.hasActionList.length == 0 ) {
-      // init action data
-      this.pathDataList = [[this.pathDataList]];  // path data array
-      this.fillStyle = [[this.fillStyle]];        // fillColor ( context2D.fillStyle )
-      this.lineWidth = [[this.lineWidth]];        // strokeWidth ( context2D.lineWidth )
-      this.strokeStyle = [[this.strokeStyle]];    // strokeColor ( context2D.strokeStyle )
-      this.hasActionList[0] = true;
-    }
-    if( !this.hasActionList[actionID] ) {
-      this.pathDataList[actionID] = [this.pathDataList[0][0]];
-      this.fillStyle[actionID] = [this.fillStyle[0][0]];
-      this.lineWidth[actionID] = [this.lineWidth[0][0]];
-      this.strokeStyle[actionID] = [this.strokeStyle[0][0]];
-      this.hasActionList[actionID] = true;
-    }
-    this.pathDataList[actionID][frame] = pathDataList;
-    this.fillStyle[actionID][frame] = fillStyle;
-    this.lineWidth[actionID][frame] = lineWidth;
-    this.strokeStyle[actionID][frame] = strokeStyle;
-  },
-  
-  /**
-   * @param {Number} displayWidth - display width
-   * @param {Number} displayHeight - display height
-   * @param {Path2D} path2D
-   * @param {PathData} d
-   */
-  drawPath: function(displayWidth, displayHeight, path2D, d) {
-    let pos = d.pos;
-    switch(d.type) {
-      case "M":
-        path2D.moveTo(pos[0]*displayWidth, pos[1]*displayHeight);
-        break;
-      case "C":
-        path2D.bezierCurveTo(pos[0]*displayWidth, pos[1]*displayHeight, pos[2]*displayWidth, pos[3]*displayHeight, pos[4]*displayWidth, pos[5]*displayHeight);
-        break;
-      case "Z":
-        path2D.closePath();
-        break;
-      default:
-        console.error("unknown type");
-        break;
-    }
-  },
-  
-  /**
-   * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
-   * @param {Path2D} path2D
-   * @param {Number} lineWidth - strokeWidth ( context2D.lineWidth )
-   * @param {String} strokeStyle - strokeColor ( context2D.strokeStyle )
-   */
-  drawStroke: function(context, path2D, lineWidth, strokeStyle) {
-    if( !lineWidth ) return;
-    context.lineWidth = lineWidth;
-    context.strokeStyle = strokeStyle;
-    context.stroke(path2D);
-  },
-  
-  /**
-   * @param {CanvasRenderingContext2D} context -  canvas.getContext("2d")
-   * @param {Path2D} path2D
-   * @param {String} fillStyle - strokeColor ( context2D.strokeStyle )
-   */
-  drawFill: function(context, path2D, fillStyle) {
-    context.fillStyle = fillStyle;
-    context.fill(path2D, this.fillRule);
-  },
-  
-  /**
-   * @param {Number} displayWidth - display width
-   * @param {Number} displayHeight - display height
-   * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
-   * @param {Path2D} path2D
-   * @param {Boolean} isMask - when true, draw as a mask
-   */
-  draw: function(displayWidth, displayHeight, context, path2D, isMask) {
-    let actionID = PathCtr.currentActionID;
-    let frame = PathCtr.currentFrame;
-    
-    if( this.hasActionList.length == 0) {
-      this.pathDataList.forEach(d=>this.drawPath(displayWidth, displayHeight, path2D, d));
-      if(isMask) return;
-      this.drawStroke(context, path2D, this.lineWidth, this.strokeStyle);
-      this.drawFill(context, path2D, this.fillStyle);
-      return;
-    } else if( !this.hasActionList[actionID] ) {
-      actionID = 0;
-      frame = 0;
-    }
-    
-    this.pathDataList[actionID][Math.min(frame, this.pathDataList[actionID].length)].forEach(d=>this.drawPath(displayWidth, displayHeight, path2D, d));
-    if(isMask) return;
-    this.drawStroke(context, path2D, this.lineWidth[actionID][Math.min(frame, this.lineWidth[actionID].length)], this.strokeStyle[actionID][Math.min(frame, this.strokeStyle[actionID].length)]);
-    this.drawFill(context, path2D, this.fillStyle[actionID][Math.min(frame, this.fillStyle[actionID].length)]);
-  },
-}
-
-PathCtr.GroupObj.prototype = {
-  /**
-   * GroupObj (after add action data)
-   */
-  addAction: function(childGroups, frame, actionID) {
-    if( childGroups.length == 0 ) return;
-    if( this.hasActionList.length == 0 ) {
-      if( JSON.stringify(childGroups) == JSON.stringify(this.childGroups) ) return;
-      
-      // init action data
-      this.childGroups = [[this.childGroups]];   // list of group id
-      this.hasActionList[0] = true;
-    }
-    if( !this.hasActionList[actionID] ) {
-      this.childGroups[actionID] = [this.childGroups[0][0].concat()];
-      this.hasActionList[actionID] = true;
-    }
-    this.childGroups[actionID][frame] = childGroups;
-  },
-  
-  /**
-   * @return {Array} - group id array
-   */
-  getChildGroups: function() {
-    if( this.childGroups.length == 0 ) return this.childGroups;
-    if( this.hasActionList.length == 0 ) {
-      return this.childGroups;
-    }
-    
-    let actionID = PathCtr.currentActionID;
-    
-    if( this.childGroups[actionID] == null || this.childGroups[actionID][PathCtr.currentFrame] == null ) {
-      return this.childGroups[0][0];
-    }
-    
-    return this.childGroups[actionID][PathCtr.currentFrame];
-  },
-}
-
-PathCtr.PathContainer.prototype = {
-  
-  /**
-   * @param {Number} width - reference width
-   * @param {Number} height - reference height
-   */
-  setFitSize: function(width, height) {
-    if(this.originalWidth > this.originalHeight) {
-      this.displayWidth = width;
-      this.displayHeight = width * this.originalHeight/this.originalWidth;
-    } else {
-      this.displayWidth = height * this.originalWidth/this.originalHeight;
-      this.displayHeight = height;
-    }
-  },
-  
-  /**
-   * @param {GroupObj} group - GroupObj to be draw
-   * @param {Boolean} isMask - when true, draw as a mask
-   */
-  drawGroup: function(group, isMask) {
-    if(!this.context) {
-      console.error("context is not found");
-      return;
-    }
-    
-    let isFoundMask = false;
-    
-    if(!isMask && !!group.maskIdToUse) {
-      let mask = this.groups[group.maskIdToUse];
-      if(!!mask) {
-        isFoundMask = true;
-        this.context.save();
-        this.drawGroup(mask, true);
-      } else {
-        console.error("group is not found : " + group.maskIdToUse);
-      }
-    }
-    
-    let path2D = isMask? (new Path2D()):null;
-    let isUsed = false;
-    
-    group.paths.forEach(path=>{
-      
-      isUsed = true;
-      
-      let isFoundMaskPath = false;
-      
-      if(!isMask && !!path.maskIdToUse) {
-        let maskPath = this.groups[path.maskIdToUse];
-        if(!!maskPath) {
-          isFoundMaskPath = true;
-          this.context.save();
-          this.drawGroup(maskPath, true);
-        } else {
-          console.error("mask is not found : " + path.maskIdToUse);
-        }
-      }
-      
-      if(!isMask) {
-        path2D = new Path2D();
-      }
-      
-      path.draw(this.displayWidth, this.displayHeight, this.context, path2D, isMask);
-      
-      if(isFoundMaskPath) {
-        this.context.restore();
-      }
-    });
-    
-    group.getChildGroups().forEach(childGroup=>{
-      this.drawGroup(this.groups[childGroup], isMask);
-    });
-    
-    if(isMask && isUsed) {
-      this.context.clip(path2D);
-    }
-    
-    path2D = null;
-    
-    if(isFoundMask) {
-      this.context.restore();
-    }
-  },
-  
-  /**
-   * @param {Integer} frame
-   * @param {String} actionName
-   */
-  draw: function(frame, actionName = PathCtr.defaultActionName) {
-    if(!this.rootGroups) {
-      console.error("root groups is not found");
-      return;
-    }
-    
-    PathCtr.currentFrame = frame;
-    PathCtr.currentActionID = Object.keys(this.actionList).indexOf(actionName);
-    
-    let path2D = new Path2D();
-    path2D.rect(0, 0, this.displayWidth, this.displayHeight);
-    this.context.clip(path2D);
-    path2D = null;
-    
-    this.rootGroups.forEach(id=>{
-      this.drawGroup(this.groups[id], false);
-    });
   },
 };
 

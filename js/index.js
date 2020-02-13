@@ -21,7 +21,7 @@ function setPathContainer(data) {
   pathContainer.setFitSize(viewWidth, viewHeight);
 }
 
-PathCtr.binFileLoad("./src/path_data.bin", setPathContainer);
+PathFactory.binFileLoad("./src/path_data.bin", setPathContainer);
 
 function cancelFunctions() {
   if(requestAnimationIDs.length > 2 || setTimeoutIDs.length > 2) console.log(requestAnimationIDs.length, setTimeoutIDs.length);
