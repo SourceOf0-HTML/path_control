@@ -39,7 +39,7 @@ class Sprite {
     ret.scaleX = this.scaleX * sprite.scaleX;
     ret.scaleY = this.scaleY * sprite.scaleY;
     ret.rotation = this.rotation + sprite.rotation;
-    return this;
+    return ret;
   };
   
   get matrix() {

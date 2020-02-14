@@ -19,6 +19,7 @@ function setPathContainer(data) {
   pathContainer = data;
   pathContainer.context = subContext;
   pathContainer.setSize(viewWidth, viewHeight);
+  pathContainer.sprite.x = 0.3;
 }
 
 PathFactory.binFileLoad("./src/path_data.bin", setPathContainer);
@@ -106,12 +107,22 @@ window.addEventListener("load", function() {
     if(!!pathContainer) pathContainer.setSize(viewWidth, viewHeight);
     update();
   });
-  /*
-  canvas.addEventListener("mousemove", function(e) {
-    pathContainer.sprite.x = e.clientX / pathContainer.pathRatio;
-    pathContainer.sprite.y = e.clientY / pathContainer.pathRatio;
-  });
-  /**/
+  
+  let groupList = ["neck", "hair", "hat_brim", "jacket", "clothes", "right_arm", "left_arm"];
+  let move =(x, y)=>{
+    let head = pathContainer.groups[pathContainer.groupNameToIDList["layer_head"]].sprite;
+    head.anchorX = head.x = 0.35;
+    head.anchorY = head.y = 0.6;
+    //head.rotation += 0.001;
+    head.rotation = Math.atan2(x - head.x - pathContainer.sprite.x, - y + head.y);
+    
+    groupList.forEach(name=>{
+      pathContainer.groups[pathContainer.groupNameToIDList[name]].sprite.setSprite(head);
+    });
+  };
+  window.addEventListener("mousemove", e=>{move(e.clientX/pathContainer.pathRatio, e.clientY/pathContainer.pathRatio)});
+  window.addEventListener("touchmove", e=>{move(e.touches[0].pageX/pathContainer.pathRatio, e.touches[0].pageY/pathContainer.pathRatio)});
+  
   //console.log("base : ", frameTime, frameTime * 10, frameTime * 0.1);
   setTimeoutIDs.push(window.setTimeout(update, fixFrameTime*1000));
 });

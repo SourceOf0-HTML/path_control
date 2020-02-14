@@ -220,8 +220,7 @@ class PathContainer {
     }
     
     let isFoundMask = false;
-    let groupSprite = sprite.comp(group);
-    
+    let groupSprite = sprite.comp(group.sprite);
     
     if(!isMask && !!group.maskIdToUse) {
       let mask = this.groups[group.maskIdToUse];
@@ -305,20 +304,6 @@ class PathContainer {
     }
     
     let getSprite=()=>(new Sprite().setSprite(this.sprite));
-    
-    let path2D = new Path2D();
-    let clipArray = getSprite().matrix.applyToArray([0, 0, 0, scaleY, scaleX, scaleY, scaleX, 0], this.pathRatio);
-    path2D.moveTo(clipArray[0], clipArray[1]);
-    path2D.lineTo(clipArray[2], clipArray[3]);
-    path2D.lineTo(clipArray[4], clipArray[5]);
-    path2D.lineTo(clipArray[6], clipArray[7]);
-    if(PathCtr.isDebug) {
-      this.context.lineWidth = 5;
-      this.context.strokeStyle = "black";
-      this.context.stroke(path2D);
-    }
-    this.context.clip(path2D);
-    path2D = null;
     
     this.rootGroups.forEach(id=>{
       this.drawGroup(this.groups[id], getSprite(), false);
@@ -1307,7 +1292,7 @@ class Sprite {
     ret.scaleX = this.scaleX * sprite.scaleX;
     ret.scaleY = this.scaleY * sprite.scaleY;
     ret.rotation = this.rotation + sprite.rotation;
-    return this;
+    return ret;
   };
   
   get matrix() {
