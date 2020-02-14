@@ -18,7 +18,7 @@ var average = 0;
 function setPathContainer(data) {
   pathContainer = data;
   pathContainer.context = subContext;
-  pathContainer.setFitSize(viewWidth, viewHeight);
+  pathContainer.setSize(viewWidth, viewHeight);
 }
 
 PathFactory.binFileLoad("./src/path_data.bin", setPathContainer);
@@ -31,12 +31,12 @@ function cancelFunctions() {
   setTimeoutIDs.length = 0;
 };
 
-function timer() {
+function update() {
   cancelFunctions();
   requestAnimationIDs.push(window.requestAnimationFrame(draw));
-  setTimeoutIDs.push(window.setTimeout(timer, fixFrameTime*1000));
+  setTimeoutIDs.push(window.setTimeout(update, fixFrameTime*1000));
 }
-  
+
 function draw(timestamp) {
   if(!canvas.parentNode) {
     cancelFunctions();
@@ -103,10 +103,16 @@ window.addEventListener("load", function() {
     viewWidth = document.documentElement.clientWidth;
     viewHeight = document.documentElement.clientHeight;
     canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + viewWidth + "px;height:" + viewHeight + "px;");
-    if(!!pathContainer) pathContainer.setFitSize(viewWidth, viewHeight);
+    if(!!pathContainer) pathContainer.setSize(viewWidth, viewHeight);
+    update();
   });
-  
+  /*
+  canvas.addEventListener("mousemove", function(e) {
+    pathContainer.sprite.x = e.clientX / pathContainer.pathRatio;
+    pathContainer.sprite.y = e.clientY / pathContainer.pathRatio;
+  });
+  /**/
   //console.log("base : ", frameTime, frameTime * 10, frameTime * 0.1);
-  setTimeoutIDs.push(window.setTimeout(timer, fixFrameTime*1000));
+  setTimeoutIDs.push(window.setTimeout(update, fixFrameTime*1000));
 });
 

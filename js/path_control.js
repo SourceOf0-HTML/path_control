@@ -1,140 +1,13 @@
 
-/**
- * PathCtr
- * Singleton
- */
-var PathCtr = {
-  defaultActionName : "base",  // default action name
-  initTarget: null,  // instance to be initialized
-  currentFrame : 0,  // current frame
-  currentActionID : -1,  // current action ID
-  binDataPosRange : 20000, // correction value of coordinates when saving to binary data
-  
-  isDebug : false,
-  debugPrint: function() {
-    if(!this.isDebug) return;
-    for(let i = 0; i < arguments.length; ++i) {
-      console.log(arguments[i]);
-    }
-  },
-};
-
-class PathObj {
-  constructor(pathDataList, maskIdToUse, fillRule, fillStyle, lineWidth, strokeStyle) {
-    this.maskIdToUse = maskIdToUse;    // ID of the mask to use
-    this.pathDataList = pathDataList;  // path data array
-    this.fillRule = fillRule;          // "nonzero" or "evenodd"
-    this.fillStyle = fillStyle;        // fillColor ( context2D.fillStyle )
-    this.lineWidth = lineWidth;        // strokeWidth ( context2D.lineWidth )
-    this.strokeStyle = strokeStyle;    // strokeColor ( context2D.strokeStyle )
-    this.hasActionList = [];           // if true, have action
-  };
-  
-  addAction(pathDataList, fillRule, fillStyle, lineWidth, strokeStyle, frame, actionID) {
-    if( this.hasActionList.length == 0 ) {
-      // init action data
-      this.pathDataList = [[this.pathDataList]];  // path data array
-      this.fillStyle = [[this.fillStyle]];        // fillColor ( context2D.fillStyle )
-      this.lineWidth = [[this.lineWidth]];        // strokeWidth ( context2D.lineWidth )
-      this.strokeStyle = [[this.strokeStyle]];    // strokeColor ( context2D.strokeStyle )
-      this.hasActionList[0] = true;
-    }
-    if( !this.hasActionList[actionID] ) {
-      this.pathDataList[actionID] = [this.pathDataList[0][0]];
-      this.fillStyle[actionID] = [this.fillStyle[0][0]];
-      this.lineWidth[actionID] = [this.lineWidth[0][0]];
-      this.strokeStyle[actionID] = [this.strokeStyle[0][0]];
-      this.hasActionList[actionID] = true;
-    }
-    this.pathDataList[actionID][frame] = pathDataList;
-    this.fillStyle[actionID][frame] = fillStyle;
-    this.lineWidth[actionID][frame] = lineWidth;
-    this.strokeStyle[actionID][frame] = strokeStyle;
-  };
-  
-  /**
-   * @param {Number} displayWidth - display width
-   * @param {Number} displayHeight - display height
-   * @param {Path2D} path2D
-   * @param {PathData} d
-   */
-  drawPath(displayWidth, displayHeight, path2D, d) {
-    let pos = d.pos;
-    switch(d.type) {
-      case "M":
-        path2D.moveTo(pos[0]*displayWidth, pos[1]*displayHeight);
-        break;
-      case "C":
-        path2D.bezierCurveTo(pos[0]*displayWidth, pos[1]*displayHeight, pos[2]*displayWidth, pos[3]*displayHeight, pos[4]*displayWidth, pos[5]*displayHeight);
-        break;
-      case "Z":
-        path2D.closePath();
-        break;
-      default:
-        console.error("unknown type");
-        break;
-    }
-  };
-  
-  /**
-   * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
-   * @param {Path2D} path2D
-   * @param {Number} lineWidth - strokeWidth ( context2D.lineWidth )
-   * @param {String} strokeStyle - strokeColor ( context2D.strokeStyle )
-   */
-  drawStroke(context, path2D, lineWidth, strokeStyle) {
-    if( !lineWidth ) return;
-    context.lineWidth = lineWidth;
-    context.strokeStyle = strokeStyle;
-    context.stroke(path2D);
-  };
-  
-  /**
-   * @param {CanvasRenderingContext2D} context -  canvas.getContext("2d")
-   * @param {Path2D} path2D
-   * @param {String} fillStyle - strokeColor ( context2D.strokeStyle )
-   */
-  drawFill(context, path2D, fillStyle) {
-    context.fillStyle = fillStyle;
-    context.fill(path2D, this.fillRule);
-  };
-  
-  /**
-   * @param {Number} displayWidth - display width
-   * @param {Number} displayHeight - display height
-   * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
-   * @param {Path2D} path2D
-   * @param {Boolean} isMask - when true, draw as a mask
-   */
-  draw(displayWidth, displayHeight, context, path2D, isMask) {
-    let actionID = PathCtr.currentActionID;
-    let frame = PathCtr.currentFrame;
-    
-    if( this.hasActionList.length == 0) {
-      this.pathDataList.forEach(d=>this.drawPath(displayWidth, displayHeight, path2D, d));
-      if(isMask) return;
-      this.drawStroke(context, path2D, this.lineWidth, this.strokeStyle);
-      this.drawFill(context, path2D, this.fillStyle);
-      return;
-    } else if( !this.hasActionList[actionID] ) {
-      actionID = 0;
-      frame = 0;
-    }
-    
-    this.pathDataList[actionID][Math.min(frame, this.pathDataList[actionID].length)].forEach(d=>this.drawPath(displayWidth, displayHeight, path2D, d));
-    if(isMask) return;
-    this.drawStroke(context, path2D, this.lineWidth[actionID][Math.min(frame, this.lineWidth[actionID].length)], this.strokeStyle[actionID][Math.min(frame, this.strokeStyle[actionID].length)]);
-    this.drawFill(context, path2D, this.fillStyle[actionID][Math.min(frame, this.fillStyle[actionID].length)]);
-  };
-};
-
 class GroupObj {
   constructor(id, paths, childGroups, maskIdToUse) {
+    this.pathContainer = PathCtr.initTarget;  // parent path container
     this.id = id;                     // g tag ID
     this.paths = paths;               // list of PathObj
     this.childGroups = childGroups;   // list of group id
     this.maskIdToUse = maskIdToUse;   // ID of the mask to use
     this.hasActionList = [];          // if true, have action
+    this.sprite = new Sprite();       // used to transform the path
   };
   
   addAction(childGroups, frame, actionID) {
@@ -172,52 +45,190 @@ class GroupObj {
   };
 };
 
+
+class Matrix {
+  /**
+   * @prop {Number} a - scale x
+   * @prop {Number} b - skew y
+   * @prop {Number} c - skew x
+   * @prop {Number} d - scale y
+   * @prop {Number} e - translate x
+   * @prop {Number} f - translate y
+   */
+  constructor() {
+    this.a = 1;
+    this.b = 0;
+    this.c = 0;
+    this.d = 1;
+    this.e = 0;
+    this.f = 0;
+  };
+  
+  reset() {
+    this.a = this.d = 1;
+    this.b = this.c = this.e = this.f = 0;
+    return this;
+  };
+  
+  /**
+   * @param {Number} x
+   * @param {Number} y
+   * @param {Number} ratioX
+   * @param {Number} ratioY
+   * @return {{x: Number, y: Number}}
+   */
+  applyToPoint(x, y, ratioX = 1, ratioY = ratioX) {
+    return {
+      x: (x * this.a + y * this.c + this.e) * ratioX,
+      y: (x * this.b + y * this.d + this.f) * ratioY
+    };
+  };
+  
+  /**
+   * @param {Array} points
+   * @return {Array}
+   */
+  applyToArray(points, ratioX = 1, ratioY = ratioX) {
+    let ret = [];
+    let pointsNum = points.length;
+    for(let i = 0; i < pointsNum; ) {
+      let p = this.applyToPoint(points[i++], points[i++]);
+      ret.push(p.x * ratioX, p.y * ratioY);
+    }
+    return ret;
+  };
+  
+  /**
+   * @param {Matrix} m
+   * @return {Matrix}
+   */
+  setMatrix(m) {
+    this.a = m.a;
+    this.b = m.b;
+    this.c = m.c;
+    this.d = m.d;
+    this.e = m.e;
+    this.f = m.f;
+    return this;
+  };
+  
+  /**
+   * @param {Number} a - scale x
+   * @param {Number} b - skew y
+   * @param {Number} c - skew x
+   * @param {Number} d - scale y
+   * @param {Number} e - translate x
+   * @param {Number} f - translate y
+   * @return {Matrix}
+   */
+  setTransform(a, b, c, d, e, f) {
+    this.a = a;
+    this.b = b;
+    this.c = c;
+    this.d = d;
+    this.e = e;
+    this.f = f;
+    return this;
+  };
+  
+  /**
+   * @param {Number} a2 - scale x
+   * @param {Number} b2 - skew y
+   * @param {Number} c2 - skew x
+   * @param {Number} d2 - scale y
+   * @param {Number} e2 - translate x
+   * @param {Number} f2 - translate y
+   * @return {Matrix}
+   */
+  transform(a2, b2, c2, d2, e2, f2) {
+    let a1 = this.a,
+        b1 = this.b,
+        c1 = this.c,
+        d1 = this.d,
+        e1 = this.e,
+        f1 = this.f;
+    this.a = a1 * a2 + c1 * b2;
+    this.b = b1 * a2 + d1 * b2;
+    this.c = a1 * c2 + c1 * d2;
+    this.d = b1 * c2 + d1 * d2;
+    this.e = a1 * e2 + c1 * f2 + e1;
+    this.f = b1 * e2 + d1 * f2 + f1;
+    return this;
+  };
+  
+  rotate(angle) {
+    let cos = Math.cos(angle);
+    let sin = Math.sin(angle);
+    return this.transform(cos, sin, -sin, cos, 0, 0);
+  };
+  
+  scale(sx, sy = sx) { return this.transform(sx, 0, 0, sy, 0, 0) };
+  scaleX(sx) { return this.transform(sx, 0, 0, 1, 0, 0) };
+  scaleY(sy) { return this.transform(1, 0, 0, sy, 0, 0) };
+  
+  skew(sx, sy) { return this.transform(1, sy, sx, 1, 0, 0) };
+  skewX(sx) { return this.transform(1, 0, sx, 1, 0, 0) };
+  skewY(sy) { return this.transform(1, sy, 0, 1, 0, 0) };
+  
+  translate(tx, ty) { return this.transform(1, 0, 0, 1, tx, ty) };
+  translateX(tx) { return this.transform(1, 0, 0, 1, tx, 0) };
+  translateY(ty) { return this.transform(1, 0, 0, 1, 0, ty) };
+};
+
+
 class PathContainer {
   constructor() {
     this.originalWidth = 0;       // original svg width
     this.originalHeight = 0;      // original svg height
     this.displayWidth = 0;        // display width
     this.displayHeight = 0;       // display height
+    this.pathRatio = 0;           // ratio of the path to draw
     this.context = null;          // CanvasRenderingContext2D ( canvas.getContext("2d") )
     this.rootGroups = [];         // root group IDs
     this.groups = [];             // list of groups
     this.groupNameToIDList = {};  // list of group name and group ID
     this.masks = {};              // list of mask name and group ID
     this.actionList = null;       // action info list
+    this.sprite = new Sprite();   // used to transform the path
   };
   
   /**
    * @param {Number} width - reference width
    * @param {Number} height - reference height
    */
-  setFitSize(width, height) {
+  setSize(width, height) {
     if(this.originalWidth > this.originalHeight) {
       this.displayWidth = width;
       this.displayHeight = width * this.originalHeight/this.originalWidth;
+      this.pathRatio = width;
     } else {
       this.displayWidth = height * this.originalWidth/this.originalHeight;
       this.displayHeight = height;
+      this.pathRatio = height;
     }
   };
   
   /**
    * @param {GroupObj} group - GroupObj to be draw
    * @param {Boolean} isMask - when true, draw as a mask
+   * @param {Sprite} sprite - used to transform the path
    */
-  drawGroup(group, isMask) {
+  drawGroup(group, sprite, isMask) {
     if(!this.context) {
       console.error("context is not found");
       return;
     }
     
     let isFoundMask = false;
+    let groupSprite = sprite.comp(group);
+    
     
     if(!isMask && !!group.maskIdToUse) {
       let mask = this.groups[group.maskIdToUse];
       if(!!mask) {
         isFoundMask = true;
         this.context.save();
-        this.drawGroup(mask, true);
+        this.drawGroup(mask, groupSprite, true);
       } else {
         console.error("group is not found : " + group.maskIdToUse);
       }
@@ -237,7 +248,7 @@ class PathContainer {
         if(!!maskPath) {
           isFoundMaskPath = true;
           this.context.save();
-          this.drawGroup(maskPath, true);
+          this.drawGroup(maskPath, groupSprite, true);
         } else {
           console.error("mask is not found : " + path.maskIdToUse);
         }
@@ -247,7 +258,7 @@ class PathContainer {
         path2D = new Path2D();
       }
       
-      path.draw(this.displayWidth, this.displayHeight, this.context, path2D, isMask);
+      path.draw(groupSprite.matrix, this.context, path2D, isMask);
       
       if(isFoundMaskPath) {
         this.context.restore();
@@ -255,7 +266,7 @@ class PathContainer {
     });
     
     group.getChildGroups().forEach(childGroup=>{
-      this.drawGroup(this.groups[childGroup], isMask);
+      this.drawGroup(this.groups[childGroup], groupSprite, isMask);
     });
     
     if(isMask && isUsed) {
@@ -282,16 +293,60 @@ class PathContainer {
     PathCtr.currentFrame = frame;
     PathCtr.currentActionID = Object.keys(this.actionList).indexOf(actionName);
     
+    let width = this.displayWidth;
+    let height = this.displayHeight;
+    let scaleX, scaleY;
+    if(width > height) {
+      scaleX = 1;
+      scaleY = height / width;
+    } else {
+      scaleX = width / height;
+      scaleY = 1;
+    }
+    
+    let getSprite=()=>(new Sprite().setSprite(this.sprite));
+    
     let path2D = new Path2D();
-    path2D.rect(0, 0, this.displayWidth, this.displayHeight);
+    let clipArray = getSprite().matrix.applyToArray([0, 0, 0, scaleY, scaleX, scaleY, scaleX, 0], this.pathRatio);
+    path2D.moveTo(clipArray[0], clipArray[1]);
+    path2D.lineTo(clipArray[2], clipArray[3]);
+    path2D.lineTo(clipArray[4], clipArray[5]);
+    path2D.lineTo(clipArray[6], clipArray[7]);
+    if(PathCtr.isDebug) {
+      this.context.lineWidth = 5;
+      this.context.strokeStyle = "black";
+      this.context.stroke(path2D);
+    }
     this.context.clip(path2D);
     path2D = null;
     
     this.rootGroups.forEach(id=>{
-      this.drawGroup(this.groups[id], false);
+      this.drawGroup(this.groups[id], getSprite(), false);
     });
   };
 };
+
+
+/**
+ * PathCtr
+ * Singleton
+ */
+var PathCtr = {
+  defaultActionName : "base",  // default action name
+  initTarget: null,  // instance to be initialized
+  currentFrame : 0,  // current frame
+  currentActionID : -1,  // current action ID
+  binDataPosRange : 20000, // correction value of coordinates when saving to binary data
+  
+  isDebug : false,
+  debugPrint: function() {
+    if(!this.isDebug) return;
+    for(let i = 0; i < arguments.length; ++i) {
+      console.log(arguments[i]);
+    }
+  },
+};
+
 
 /**
  * PathFactory
@@ -328,8 +383,9 @@ var PathFactory = {
     
     let baseX = PathCtr.initTarget.originalWidth;
     let baseY = PathCtr.initTarget.originalHeight;
-    let getX=()=>parseFloat(data.shift())/baseX;
-    let getY=()=>parseFloat(data.shift())/baseY;
+    let base = (baseX > baseY)? baseX : baseY;
+    let getX=()=>parseFloat(data.shift())/base;
+    let getY=()=>parseFloat(data.shift())/base;
     
     while(data.length > 0) {
       let type = data.shift();
@@ -644,7 +700,7 @@ var PathFactory = {
       console.error("array buffer is not found");
       return null;
     }
-    let pathContainer = new PathContainer();
+    let pathContainer = PathCtr.initTarget = new PathContainer();
     let dv = new DataView(buffer);
     let sumLength = 0;
     
@@ -824,6 +880,8 @@ var PathFactory = {
       pathContainer.groups[i] = getGroup(i);
       PathCtr.debugPrint(pathContainer.groups[i]);
     }
+    
+    PathCtr.initTarget = null;
     
     return pathContainer;
   },
@@ -1095,5 +1153,168 @@ var PathFactory = {
     request.responseType = "arraybuffer";
     request.send();
   },
+};
+
+
+class PathObj {
+  constructor(pathDataList, maskIdToUse, fillRule, fillStyle, lineWidth, strokeStyle) {
+    this.pathContainer = PathCtr.initTarget; // parent path container
+    this.maskIdToUse = maskIdToUse;    // ID of the mask to use
+    this.pathDataList = pathDataList;  // path data array
+    this.fillRule = fillRule;          // "nonzero" or "evenodd"
+    this.fillStyle = fillStyle;        // fillColor ( context2D.fillStyle )
+    this.lineWidth = lineWidth;        // strokeWidth ( context2D.lineWidth )
+    this.strokeStyle = strokeStyle;    // strokeColor ( context2D.strokeStyle )
+    this.hasActionList = [];           // if true, have action
+  };
+  
+  addAction(pathDataList, fillRule, fillStyle, lineWidth, strokeStyle, frame, actionID) {
+    if( this.hasActionList.length == 0 ) {
+      // init action data
+      this.pathDataList = [[this.pathDataList]];  // path data array
+      this.fillStyle = [[this.fillStyle]];        // fillColor ( context2D.fillStyle )
+      this.lineWidth = [[this.lineWidth]];        // strokeWidth ( context2D.lineWidth )
+      this.strokeStyle = [[this.strokeStyle]];    // strokeColor ( context2D.strokeStyle )
+      this.hasActionList[0] = true;
+    }
+    if( !this.hasActionList[actionID] ) {
+      this.pathDataList[actionID] = [this.pathDataList[0][0]];
+      this.fillStyle[actionID] = [this.fillStyle[0][0]];
+      this.lineWidth[actionID] = [this.lineWidth[0][0]];
+      this.strokeStyle[actionID] = [this.strokeStyle[0][0]];
+      this.hasActionList[actionID] = true;
+    }
+    this.pathDataList[actionID][frame] = pathDataList;
+    this.fillStyle[actionID][frame] = fillStyle;
+    this.lineWidth[actionID][frame] = lineWidth;
+    this.strokeStyle[actionID][frame] = strokeStyle;
+  };
+  
+  /**
+   * @param {Matrix} matrix - used to transform the path
+   * @param {Path2D} path2D
+   * @param {PathData} d
+   */
+  drawPath(matrix, path2D, d) {
+    let pos;
+    switch(d.type) {
+      case "M":
+        pos = matrix.applyToArray(d.pos, this.pathContainer.pathRatio);
+        path2D.moveTo(pos[0], pos[1]);
+        break;
+      case "C":
+        pos = matrix.applyToArray(d.pos, this.pathContainer.pathRatio);
+        path2D.bezierCurveTo(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
+        break;
+      case "Z":
+        path2D.closePath();
+        break;
+      default:
+        console.error("unknown type");
+        break;
+    }
+  };
+  
+  /**
+   * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
+   * @param {Path2D} path2D
+   * @param {Number} lineWidth - strokeWidth ( context2D.lineWidth )
+   * @param {String} strokeStyle - strokeColor ( context2D.strokeStyle )
+   */
+  drawStroke(context, path2D, lineWidth, strokeStyle) {
+    if( !lineWidth ) return;
+    context.lineWidth = lineWidth;
+    context.strokeStyle = strokeStyle;
+    context.stroke(path2D);
+  };
+  
+  /**
+   * @param {CanvasRenderingContext2D} context -  canvas.getContext("2d")
+   * @param {Path2D} path2D
+   * @param {String} fillStyle - strokeColor ( context2D.strokeStyle )
+   */
+  drawFill(context, path2D, fillStyle) {
+    context.fillStyle = fillStyle;
+    context.fill(path2D, this.fillRule);
+  };
+  
+  /**
+   * @param {Matrix} matrix - used to transform the path
+   * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
+   * @param {Path2D} path2D
+   * @param {Boolean} isMask - when true, draw as a mask
+   */
+  draw(matrix, context, path2D, isMask) {
+    let actionID = PathCtr.currentActionID;
+    let frame = PathCtr.currentFrame;
+    
+    if( this.hasActionList.length == 0) {
+      this.pathDataList.forEach(d=>this.drawPath(matrix, path2D, d));
+      if(isMask) return;
+      this.drawStroke(context, path2D, this.lineWidth, this.strokeStyle);
+      this.drawFill(context, path2D, this.fillStyle);
+      return;
+    } else if( !this.hasActionList[actionID] ) {
+      actionID = 0;
+      frame = 0;
+    }
+    
+    this.pathDataList[actionID][Math.min(frame, this.pathDataList[actionID].length)].forEach(d=>this.drawPath(matrix, path2D, d));
+    if(isMask) return;
+    this.drawStroke(context, path2D, this.lineWidth[actionID][Math.min(frame, this.lineWidth[actionID].length)], this.strokeStyle[actionID][Math.min(frame, this.strokeStyle[actionID].length)]);
+    this.drawFill(context, path2D, this.fillStyle[actionID][Math.min(frame, this.fillStyle[actionID].length)]);
+  };
+};
+
+
+class Sprite {
+  constructor() {
+    this.m = new Matrix();
+    this.x = 0;
+    this.y = 0;
+    this.anchorX = 0;
+    this.anchorY = 0;
+    this.scaleX = 1;
+    this.scaleY = 1;
+    this.rotation = 0;
+  };
+  
+  /**
+   * @param {Sprite} s
+   * @return {Sprite}
+   */
+  setSprite(sprite) {
+    this.x = sprite.x;
+    this.y = sprite.y;
+    this.anchorX = sprite.anchorX;
+    this.anchorY = sprite.anchorY;
+    this.scaleX = sprite.scaleX;
+    this.scaleY = sprite.scaleY;
+    this.rotation = sprite.rotation;
+    return this;
+  };
+  
+  /**
+   * @param {Sprite} s
+   * @return {Sprite}
+   */
+  comp(sprite) {
+    let ret = new Sprite();
+    ret.x = this.x + sprite.x;
+    ret.y = this.y + sprite.y;
+    ret.anchorX = this.anchorX + sprite.anchorX;
+    ret.anchorY = this.anchorY + sprite.anchorY;
+    ret.scaleX = this.scaleX * sprite.scaleX;
+    ret.scaleY = this.scaleY * sprite.scaleY;
+    ret.rotation = this.rotation + sprite.rotation;
+    return this;
+  };
+  
+  get matrix() {
+    let sx = this.scaleX;
+    let sy = this.scaleY;
+    let r = this.rotation;
+    return this.m.reset().translate(this.x, this.y).rotate(r).scale(sx, sy).translate(-this.anchorX, -this.anchorY);
+  };
 };
 

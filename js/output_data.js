@@ -3,10 +3,13 @@ var frameTime = 1000 / 40;
 var totalFrames = 260;
 var frameNumber = 0;
 var context = null;
+var viewWidth = 0;
+var viewHeight = 0;
 
 function setPathContainer(data) {
   pathContainer = data;
   pathContainer.context = context;
+  pathContainer.setSize(viewWidth, viewHeight);
   document.getElementById("output-btn").disabled = "";
 }
 PathFactory.svgFilesLoad([
@@ -30,11 +33,19 @@ window.addEventListener("load", function() {
                               window.msRequestAnimationFrame;
   let cancelAnimationFrame = window.cancelAnimationFrame ||
                               window.mozCancelAnimationFrame;
-  let width = 1280;
-  let height = 720;
-  canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + width + "px;height:" + height + "px;");
-  canvas.width = width;
-  canvas.height = height;
+  
+  viewWidth = document.documentElement.clientWidth;
+  viewHeight = document.documentElement.clientHeight;
+  canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + viewWidth + "px;height:" + viewHeight + "px;");
+  canvas.width = viewWidth;
+  canvas.height = viewHeight;
+  
+  window.addEventListener("resize", function() {
+    viewWidth = document.documentElement.clientWidth;
+    viewHeight = document.documentElement.clientHeight;
+    canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + viewWidth + "px;height:" + viewHeight + "px;");
+    if(!!pathContainer) pathContainer.setSize(viewWidth, viewHeight);
+  });
   
   let prevTimestamp = 0;
   (function draw(timestamp) {
@@ -50,7 +61,7 @@ window.addEventListener("load", function() {
       requestAnimationFrame(draw);
       if(!pathContainer) return;
       
-      context.clearRect(0, 0, width, height);
+      context.clearRect(0, 0, viewWidth, viewHeight);
       pathContainer.draw(frameNumber);
       frameNumber = (frameNumber + 1) % totalFrames;
       

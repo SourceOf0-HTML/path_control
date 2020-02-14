@@ -2,9 +2,12 @@ var pathContainer = null;
 var frameTime = 1000 / 40;
 var totalFrames = 50;
 var frameNumber = 0;
+var viewWidth = 0;
+var viewHeight = 0;
 
 function setPathContainer(data) {
   pathContainer = data;
+  pathContainer.setSize(viewWidth, viewHeight);
 }
 PathFactory.svgFilesLoad([
   ["./img/base/original_", 260, "base"],
@@ -27,20 +30,17 @@ window.addEventListener("load", function() {
   let cancelAnimationFrame = window.cancelAnimationFrame ||
                               window.mozCancelAnimationFrame;
   
-  let width = document.documentElement.clientWidth;
-  let height = document.documentElement.clientHeight;
-  
-  canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + width + "px;height:" + height + "px;");
-  canvas.width = width;
-  canvas.height = height;
+  viewWidth = document.documentElement.clientWidth;
+  viewHeight = document.documentElement.clientHeight;
+  canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + viewWidth + "px;height:" + viewHeight + "px;");
+  canvas.width = viewWidth;
+  canvas.height = viewHeight;
   
   window.addEventListener("resize", function() {
-    width = document.documentElement.clientWidth;
-    height = document.documentElement.clientHeight;
-    canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + width + "px;height:" + height + "px;");
-    canvas.width = width;
-    canvas.height = height;
-    if(!!pathContainer) pathContainer.setFitSize(width, height);
+    viewWidth = document.documentElement.clientWidth;
+    viewHeight = document.documentElement.clientHeight;
+    canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + viewWidth + "px;height:" + viewHeight + "px;");
+    if(!!pathContainer) pathContainer.setSize(viewWidth, viewHeight);
   });
   
   let prevTimestamp = 0;
@@ -57,9 +57,9 @@ window.addEventListener("load", function() {
       requestAnimationFrame(draw);
       if(!pathContainer) return;
       
-      context.clearRect(0, 0, width, height);
+      context.clearRect(0, 0, viewWidth, viewHeight);
       pathContainer.context = context;
-      pathContainer.draw(frameNumber);
+      pathContainer.draw(frameNumber, "face");
       frameNumber = (frameNumber + 1) % totalFrames;
       
     }, frameTime);
