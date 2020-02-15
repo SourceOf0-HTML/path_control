@@ -81,8 +81,9 @@ var PathFactory = {
     let lineWidth = 0;
     let strokeStyle = style.stroke;
     if(strokeStyle == "none") {
-      lineWidth = parseFloat(style.strokeWidth.match(/([\d\.]+)/)[1]);
       strokeStyle = "transparent";
+    } else {
+      lineWidth = parseFloat(style.strokeWidth.match(/([\d\.]+)/)[1]);
     }
     return new PathObj(
       PathFactory.makePathDataList(pathDOM.getAttribute("d")),
