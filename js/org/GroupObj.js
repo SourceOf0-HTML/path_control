@@ -3,6 +3,7 @@ class GroupObj extends Sprite {
   constructor(id, paths, childGroups, maskIdToUse) {
     super();
     this.pathContainer = PathCtr.initTarget;  // parent path container
+    this.visible = true;              // display when true
     this.id = id;                     // g tag ID
     this.paths = paths;               // list of PathObj
     this.childGroups = childGroups;   // list of group id
@@ -42,6 +43,79 @@ class GroupObj extends Sprite {
     }
     
     return this.childGroups[actionID][PathCtr.currentFrame];
+  };
+  
+  /**
+   * @param {Boolean} isMask - when true, draw as a mask
+   * @param {Sprite} sprite - used to transform the path
+   */
+  draw(context, sprite, isMask) {
+    if(!context) {
+      console.error("context is not found");
+      return;
+    }
+    if(!this.visible) {
+      return;
+    }
+    
+    let isFoundMask = false;
+    let groupSprite = sprite.compSprite(this);
+    
+    if(!isMask && !!this.maskIdToUse) {
+      let mask = this.pathContainer.groups[this.maskIdToUse];
+      if(!!mask) {
+        isFoundMask = true;
+        context.save();
+        mask.draw(context, groupSprite, true);
+      } else {
+        console.error("group is not found : " + this.maskIdToUse);
+      }
+    }
+    
+    let path2D = isMask? (new Path2D()):null;
+    let isUsed = false;
+    
+    this.paths.forEach(path=>{
+      
+      isUsed = true;
+      
+      let isFoundMaskPath = false;
+      
+      if(!isMask && !!path.maskIdToUse) {
+        let maskPath = this.pathContainer.groups[path.maskIdToUse];
+        if(!!maskPath) {
+          isFoundMaskPath = true;
+          context.save();
+          maskPath.draw(context, groupSprite, true);
+        } else {
+          console.error("mask is not found : " + path.maskIdToUse);
+        }
+      }
+      
+      if(!isMask) {
+        path2D = new Path2D();
+      }
+      
+      path.draw(groupSprite.matrix, context, path2D, isMask);
+      
+      if(isFoundMaskPath) {
+        context.restore();
+      }
+    });
+    
+    this.getChildGroups().forEach(childGroup=>{
+      this.pathContainer.groups[childGroup].draw(context, groupSprite, isMask);
+    });
+    
+    if(isMask && isUsed) {
+      context.clip(path2D);
+    }
+    
+    path2D = null;
+    
+    if(isFoundMask) {
+      context.restore();
+    }
   };
 };
 

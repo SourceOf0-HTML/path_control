@@ -10,7 +10,7 @@ var PathCtr = {
   currentActionID : -1,  // current action ID
   binDataPosRange : 20000, // correction value of coordinates when saving to binary data
   
-  isDebug : false,
+  isDebug : true,
   debugPrint: function() {
     if(!this.isDebug) return;
     for(let i = 0; i < arguments.length; ++i) {

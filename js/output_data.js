@@ -10,6 +10,7 @@ function setPathContainer(data) {
   pathContainer = data;
   pathContainer.context = context;
   pathContainer.setSize(viewWidth, viewHeight);
+  pathContainer.getGroup("bone").visible = false;
   document.getElementById("output-btn").disabled = "";
 }
 PathFactory.svgFilesLoad([
