@@ -1,13 +1,13 @@
 
-class GroupObj {
+class GroupObj extends Sprite {
   constructor(id, paths, childGroups, maskIdToUse) {
+    super();
     this.pathContainer = PathCtr.initTarget;  // parent path container
     this.id = id;                     // g tag ID
     this.paths = paths;               // list of PathObj
     this.childGroups = childGroups;   // list of group id
     this.maskIdToUse = maskIdToUse;   // ID of the mask to use
     this.hasActionList = [];          // if true, have action
-    this.sprite = new Sprite();       // used to transform the path
   };
   
   addAction(childGroups, frame, actionID) {

@@ -19,7 +19,7 @@ function setPathContainer(data) {
   pathContainer = data;
   pathContainer.context = subContext;
   pathContainer.setSize(viewWidth, viewHeight);
-  pathContainer.sprite.x = 0.3;
+  pathContainer.x = 0.3;
 }
 
 PathFactory.binFileLoad("./src/path_data.bin", setPathContainer);
@@ -110,14 +110,14 @@ window.addEventListener("load", function() {
   
   let groupList = ["neck", "hair", "hat_brim", "jacket", "clothes", "right_arm", "left_arm"];
   let move =(x, y)=>{
-    let head = pathContainer.groups[pathContainer.groupNameToIDList["layer_head"]].sprite;
+    let head = pathContainer.groups[pathContainer.groupNameToIDList["layer_head"]];
     head.anchorX = head.x = 0.35;
     head.anchorY = head.y = 0.6;
     //head.rotation += 0.001;
-    head.rotation = Math.atan2(x - head.x - pathContainer.sprite.x, - y + head.y);
+    head.rotation = Math.atan2(x - head.x - pathContainer.x, - y + head.y);
     
     groupList.forEach(name=>{
-      pathContainer.groups[pathContainer.groupNameToIDList[name]].sprite.setSprite(head);
+      pathContainer.groups[pathContainer.groupNameToIDList[name]].setSprite(head);
     });
   };
   window.addEventListener("mousemove", e=>{move(e.clientX/pathContainer.pathRatio, e.clientY/pathContainer.pathRatio)});

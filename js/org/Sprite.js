@@ -30,7 +30,7 @@ class Sprite {
    * @param {Sprite} s
    * @return {Sprite}
    */
-  comp(sprite) {
+  compSprite(sprite) {
     let ret = new Sprite();
     ret.x = this.x + sprite.x;
     ret.y = this.y + sprite.y;

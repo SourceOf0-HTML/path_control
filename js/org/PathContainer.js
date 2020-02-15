@@ -1,6 +1,7 @@
 
-class PathContainer {
+class PathContainer extends Sprite {
   constructor() {
+    super();
     this.originalWidth = 0;       // original svg width
     this.originalHeight = 0;      // original svg height
     this.displayWidth = 0;        // display width
@@ -12,7 +13,6 @@ class PathContainer {
     this.groupNameToIDList = {};  // list of group name and group ID
     this.masks = {};              // list of mask name and group ID
     this.actionList = null;       // action info list
-    this.sprite = new Sprite();   // used to transform the path
   };
   
   /**
@@ -43,7 +43,7 @@ class PathContainer {
     }
     
     let isFoundMask = false;
-    let groupSprite = sprite.comp(group.sprite);
+    let groupSprite = sprite.compSprite(group);
     
     if(!isMask && !!group.maskIdToUse) {
       let mask = this.groups[group.maskIdToUse];
@@ -126,7 +126,7 @@ class PathContainer {
       scaleY = 1;
     }
     
-    let getSprite=()=>(new Sprite().setSprite(this.sprite));
+    let getSprite=()=>(new Sprite().setSprite(this));
     
     this.rootGroups.forEach(id=>{
       this.drawGroup(this.groups[id], getSprite(), false);
