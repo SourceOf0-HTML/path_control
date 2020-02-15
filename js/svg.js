@@ -10,7 +10,8 @@ function setPathContainer(data) {
   pathContainer.setSize(viewWidth, viewHeight);
 }
 PathFactory.svgFilesLoad([
-  ["./img/base/original_", 260, "base"],
+//  ["./img/base/original_", 260, "base"],
+  ["./img/base_bone/original_bone_", 260, "base"],
   ["./img/face/original_face_", 50, "face"],
 //  ["./img/base_single/original_single_", 1120, "base"],
 ], setPathContainer);
@@ -37,8 +38,8 @@ window.addEventListener("load", function() {
   canvas.height = viewHeight;
   
   window.addEventListener("resize", function() {
-    viewWidth = document.documentElement.clientWidth;
-    viewHeight = document.documentElement.clientHeight;
+    canvas.width = viewWidth = document.documentElement.clientWidth;
+    canvas.height = viewHeight = document.documentElement.clientHeight;
     canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + viewWidth + "px;height:" + viewHeight + "px;");
     if(!!pathContainer) pathContainer.setSize(viewWidth, viewHeight);
   });

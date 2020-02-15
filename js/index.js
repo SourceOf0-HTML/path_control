@@ -113,7 +113,6 @@ window.addEventListener("load", function() {
     let head = pathContainer.groups[pathContainer.groupNameToIDList["layer_head"]];
     head.anchorX = head.x = 0.35;
     head.anchorY = head.y = 0.6;
-    //head.rotation += 0.001;
     head.rotation = Math.atan2(x - head.x - pathContainer.x, - y + head.y);
     
     groupList.forEach(name=>{
