@@ -25,7 +25,7 @@ function setPathContainer(data) {
 PathFactory.binFileLoad("./src/path_data.bin", setPathContainer);
 
 function cancelFunctions() {
-  if(requestAnimationIDs.length > 2 || setTimeoutIDs.length > 2) console.log(requestAnimationIDs.length, setTimeoutIDs.length);
+  if(requestAnimationIDs.length > 1 || setTimeoutIDs.length > 1) console.log(requestAnimationIDs.length, setTimeoutIDs.length);
   requestAnimationIDs.forEach(window.cancelAnimationFrame);
   requestAnimationIDs.length = 0;
   setTimeoutIDs.forEach(window.clearTimeout);
@@ -105,7 +105,7 @@ window.addEventListener("load", function() {
     viewHeight = document.documentElement.clientHeight;
     canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + viewWidth + "px;height:" + viewHeight + "px;");
     if(!!pathContainer) pathContainer.setSize(viewWidth, viewHeight);
-    update();
+    //update();
   });
   
   let groupList = ["neck", "hair", "hat_brim", "jacket", "clothes", "right_arm", "left_arm"];

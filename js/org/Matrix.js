@@ -1,20 +1,12 @@
 
 class Matrix {
-  /**
-   * @prop {Number} a - scale x
-   * @prop {Number} b - skew y
-   * @prop {Number} c - skew x
-   * @prop {Number} d - scale y
-   * @prop {Number} e - translate x
-   * @prop {Number} f - translate y
-   */
   constructor() {
-    this.a = 1;
-    this.b = 0;
-    this.c = 0;
-    this.d = 1;
-    this.e = 0;
-    this.f = 0;
+    this.a = 1;  // scale x
+    this.b = 0;  // skew y
+    this.c = 0;  // skew x
+    this.d = 1;  // scale y
+    this.e = 0;  // translate x
+    this.f = 0;  // translate y
   };
   
   reset() {
@@ -63,6 +55,22 @@ class Matrix {
     this.e = m.e;
     this.f = m.f;
     return this;
+  };
+  
+  /**
+   * @param {Matrix} m2
+   * @param {Number} t - interpolation [0.0, 1.0]
+   * @return {Matrix} - new Matrix
+   */
+  interpolate(m2, t) {
+    let m = new Matrix();
+    m.a = this.a + (m2.a - this.a) * t;
+    m.b = this.b + (m2.b - this.b) * t;
+    m.c = this.c + (m2.c - this.c) * t;
+    m.d = this.d + (m2.d - this.d) * t;
+    m.e = this.e + (m2.e - this.e) * t;
+    m.f = this.f + (m2.f - this.f) * t;
+    return m;
   };
   
   /**

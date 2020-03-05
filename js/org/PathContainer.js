@@ -65,7 +65,7 @@ class PathContainer extends Sprite {
     let getSprite=()=>(new Sprite().setSprite(this));
     
     this.rootGroups.forEach(id=>{
-      this.groups[id].draw(this.context, getSprite(), false);
+      this.groups[id].draw(this, this.context, getSprite(), false);
     });
   };
 };

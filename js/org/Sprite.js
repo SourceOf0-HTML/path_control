@@ -28,7 +28,7 @@ class Sprite {
   
   /**
    * @param {Sprite} s
-   * @return {Sprite}
+   * @return {Sprite} - new Sprite
    */
   compSprite(sprite) {
     let ret = new Sprite();

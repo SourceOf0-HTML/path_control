@@ -1,5 +1,5 @@
 var pathContainer = null;
-var frameTime = 1000 / 40;
+var frameTime = 1000 / 24;
 var totalFrames = 260;
 var frameNumber = 0;
 var context = null;
@@ -10,7 +10,7 @@ function setPathContainer(data) {
   pathContainer = data;
   pathContainer.context = context;
   pathContainer.setSize(viewWidth, viewHeight);
-  pathContainer.getGroup("bone").visible = false;
+  //pathContainer.getGroup("bone").visible = false;
   document.getElementById("output-btn").disabled = "";
 }
 PathFactory.svgFilesLoad([

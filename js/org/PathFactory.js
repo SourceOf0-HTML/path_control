@@ -120,8 +120,6 @@ var PathFactory = {
     let pathDataList = null;
     if(!!pathDOM) {
       pathDataList = this.makePathDataList(pathDOM.getAttribute("d"));
-    } else if(!path.hasActionList[actionID]) {
-      pathDataList = path.pathDataList.concat();
     } else {
       pathDataList = path.pathDataList[0][0].concat();
     }

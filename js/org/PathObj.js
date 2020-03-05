@@ -1,7 +1,6 @@
 
 class PathObj {
   constructor(pathDataList, maskIdToUse, fillRule, fillStyle, lineWidth, strokeStyle) {
-    this.pathContainer = PathCtr.initTarget; // parent path container
     this.maskIdToUse = maskIdToUse;    // ID of the mask to use
     this.pathDataList = pathDataList;  // path data array
     this.fillRule = fillRule;          // "nonzero" or "evenodd"
@@ -18,7 +17,6 @@ class PathObj {
       this.fillStyle = [[this.fillStyle]];        // fillColor ( context2D.fillStyle )
       this.lineWidth = [[this.lineWidth]];        // strokeWidth ( context2D.lineWidth )
       this.strokeStyle = [[this.strokeStyle]];    // strokeColor ( context2D.strokeStyle )
-      this.hasActionList[0] = true;
     }
     if( !this.hasActionList[actionID] ) {
       this.pathDataList[actionID] = [this.pathDataList[0][0]];
@@ -34,19 +32,20 @@ class PathObj {
   };
   
   /**
+   * @param {PathContainer} pathContainer
    * @param {Matrix} matrix - used to transform the path
    * @param {Path2D} path2D
    * @param {PathData} d
    */
-  drawPath(matrix, path2D, d) {
+  drawPath(pathContainer, matrix, path2D, d) {
     let pos;
     switch(d.type) {
       case "M":
-        pos = matrix.applyToArray(d.pos, this.pathContainer.pathRatio);
+        pos = matrix.applyToArray(d.pos, pathContainer.pathRatio);
         path2D.moveTo(pos[0], pos[1]);
         break;
       case "C":
-        pos = matrix.applyToArray(d.pos, this.pathContainer.pathRatio);
+        pos = matrix.applyToArray(d.pos, pathContainer.pathRatio);
         path2D.bezierCurveTo(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
         break;
       case "Z":
@@ -82,12 +81,13 @@ class PathObj {
   };
   
   /**
+   * @param {PathContainer} pathContainer
    * @param {Matrix} matrix - used to transform the path
    * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
    * @param {Path2D} path2D
    * @param {Boolean} isMask - when true, draw as a mask
    */
-  draw(matrix, context, path2D, isMask) {
+  draw(pathContainer, matrix, context, path2D, isMask) {
     let actionID = PathCtr.currentActionID;
     let frame = PathCtr.currentFrame;
     
@@ -102,7 +102,7 @@ class PathObj {
       frame = 0;
     }
     
-    this.pathDataList[actionID][Math.min(frame, this.pathDataList[actionID].length)].forEach(d=>this.drawPath(matrix, path2D, d));
+    this.pathDataList[actionID][Math.min(frame, this.pathDataList[actionID].length)].forEach(d=>this.drawPath(pathContainer, matrix, path2D, d));
     if(isMask) return;
     this.drawStroke(context, path2D, this.lineWidth[actionID][Math.min(frame, this.lineWidth[actionID].length)], this.strokeStyle[actionID][Math.min(frame, this.strokeStyle[actionID].length)]);
     this.drawFill(context, path2D, this.fillStyle[actionID][Math.min(frame, this.fillStyle[actionID].length)]);

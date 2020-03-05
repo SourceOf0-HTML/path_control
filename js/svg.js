@@ -1,5 +1,5 @@
 var pathContainer = null;
-var frameTime = 1000 / 40;
+var frameTime = 1000 / 24;
 var totalFrames = 50;
 var frameNumber = 0;
 var viewWidth = 0;
