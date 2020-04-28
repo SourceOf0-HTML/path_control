@@ -5,14 +5,16 @@
  */
 var PathCtr = {
   defaultActionName : "base",  // default action name
+  defaultBoneName : "bone",  // default main bone name
   initTarget: null,  // instance to be initialized
   currentFrame : 0,  // current frame
   currentActionID : -1,  // current action ID
   binDataPosRange : 20000, // correction value of coordinates when saving to binary data
   
-  isDebug : false,
+  isDebug : true,
   debugPrint: function() {
     if(!this.isDebug) return;
+    //console.log("Func : " + this.debugPrint.caller.name);
     for(let i = 0; i < arguments.length; ++i) {
       console.log(arguments[i]);
     }
@@ -276,6 +278,8 @@ class PathObj {
    */
   drawStroke(context, path2D, lineWidth, strokeStyle) {
     if( !lineWidth ) return;
+    context.lineJoin = "round";
+    context.lineCap = "round";
     context.lineWidth = lineWidth;
     context.strokeStyle = strokeStyle;
     context.stroke(path2D);
@@ -322,7 +326,7 @@ class PathObj {
 
 
 class GroupObj extends Sprite {
-  constructor(id, paths, childGroups, maskIdToUse, hasAction) {
+  constructor(id, paths, childGroups, hasAction, maskIdToUse) {
     super();
     this.visible = true;              // display when true
     this.id = id;                     // g tag ID
@@ -442,6 +446,38 @@ class GroupObj extends Sprite {
     if(isFoundMask) {
       context.restore();
     }
+  };
+};
+
+
+class BoneObj extends GroupObj {
+  constructor(id, paths, childGroups, hasAction) {
+    super(id, paths, childGroups, hasAction, "");
+  };
+  
+  /**
+   * @param {PathContainer} pathContainer
+   * @param {Sprite} sprite - used to transform the path
+   */
+  draw(pathContainer, context, sprite) {
+    if(!context) {
+      console.error("context is not found");
+      return;
+    }
+    if(!this.visible) {
+      return;
+    }
+    
+    let groupSprite = sprite.compSprite(this);
+    this.paths.forEach(path=>{
+      let path2D = new Path2D();
+      path.draw(pathContainer, groupSprite.matrix, context, path2D, false);
+      path2D = null;
+    });
+    
+    this.getChildGroups().forEach(childGroup=>{
+      pathContainer.groups[childGroup].draw(pathContainer, context, groupSprite, false);
+    });
   };
 };
 
@@ -688,12 +724,23 @@ var PathFactory = {
       }
     });
     
-    let ret = new GroupObj(
-      name,
-      paths,
-      childGroups,
-      PathFactory.getMaskId(groupDOM.getAttribute("mask"))
-    );
+    let ret;
+    if(name == PathCtr.defaultBoneName) {
+      ret = new BoneObj(
+        name,
+        paths,
+        childGroups,
+        false,
+      );
+    } else {
+      ret = new GroupObj(
+        name,
+        paths,
+        childGroups,
+        false,
+        PathFactory.getMaskId(groupDOM.getAttribute("mask"))
+      );
+    }
     
     PathCtr.initTarget.groups[PathCtr.initTarget.groupNameToIDList[name]] = ret;
     
@@ -990,36 +1037,36 @@ var PathFactory = {
     };
     
     let getGroup=i=>{
-      let id = getString();
-      pathContainer.groupNameToIDList[id] = i;
+      let name = getString();
+      pathContainer.groupNameToIDList[name] = i;
       
       let maskIdToUse = getUint16();
       let paths = getArray(getUint16, getPath);
       
-      let hasAction = getUint8();
-      if(!hasAction) {
-        let childGroups = getArray(getUint8, getUint16);
-        
-        let group = new GroupObj(
-          id,
-          paths,
-          childGroups,
-          maskIdToUse
-        );
-        return group;
+      let hasAction = (getUint8() > 0);
+      let childGroups;
+      if(hasAction) {
+        childGroups = getAction(()=>getArray(getUint8, getUint16));
+      } else {
+        childGroups = getArray(getUint8, getUint16);
       }
       
-      let group = new GroupObj(
-        id,
-        paths,
-        [],
-        maskIdToUse
-      );
-      
-      group.childGroups = getAction(()=>getArray(getUint8, getUint16));
-      group.childGroups.forEach((val, i)=>(group.hasActionList[i] = true));
-      
-      return group;
+      if(name == PathCtr.defaultBoneName) {
+        return new BoneObj(
+          name,
+          paths,
+          childGroups,
+          hasAction
+        );
+      } else {
+        return new GroupObj(
+          name,
+          paths,
+          childGroups,
+          hasAction,
+          maskIdToUse
+        );
+      }
     };
     
     
@@ -1140,7 +1187,6 @@ var PathFactory = {
             break;
           default:
             console.error("unknown type");
-            console.log(d);
             break;
         }
       });
@@ -1151,20 +1197,19 @@ var PathFactory = {
       setUint8(path.fillRule == "nonzero" ? 0 : 1);
       
       let hasAction = (path.hasActionList.length > 0);
-      if(!hasAction) {
+      if(hasAction) {
+        setUint8(1);
+        setAction(path.lineWidth, setFloat32);
+        setAction(path.fillStyle, setColor);
+        setAction(path.strokeStyle, setColor);
+        setAction(path.pathDataList, setPathData);
+      } else {
         setUint8(0);
         setFloat32(path.lineWidth);
         setColor(path.fillStyle);
         setColor(path.strokeStyle);
         setPathData(path.pathDataList);
-        return;
       }
-      setUint8(1);
-      
-      setAction(path.lineWidth, setFloat32);
-      setAction(path.fillStyle, setColor);
-      setAction(path.strokeStyle, setColor);
-      setAction(path.pathDataList, setPathData);
     };
     
     let setGroup=group=>{
@@ -1173,16 +1218,15 @@ var PathFactory = {
       setArray(group.paths, setUint16, setPath);
       
       let hasAction = (group.hasActionList.length > 0);
-      if(!hasAction) {
+      if(hasAction) {
+        setUint8(1);
+        setAction(group.childGroups, childGroups=>{
+          setArray(childGroups, setUint8, setUint16);
+        });
+      } else {
         setUint8(0);
         setArray(group.childGroups, setUint8, setUint16);
-        return;
       }
-      setUint8(1);
-      
-      setAction(group.childGroups, childGroups=>{
-        setArray(childGroups, setUint8, setUint16);
-      });
     };
     
     
@@ -1211,6 +1255,13 @@ var PathFactory = {
     
     delete dv;
     return buffer.slice(0, sumLength);
+  },
+  
+  /**
+   * @param {Array} fileInfoList - [ [ filePath, totalFrames, actionName ], ... ]
+   * @param {Function} completeFunc - callback when loading complete
+   */
+  svgFilesLoad: function(fileInfoList, completeFunc) {
   },
   
   /**
@@ -1286,6 +1337,7 @@ var PathFactory = {
         if(++fileIndex < fileInfoList.length) {
           loadFile(fileInfoList[fileIndex]);
         } else {
+          
           completeFunc(pathContainer);
         }
       };

@@ -1,6 +1,6 @@
 
 class GroupObj extends Sprite {
-  constructor(id, paths, childGroups, maskIdToUse, hasAction) {
+  constructor(id, paths, childGroups, hasAction, maskIdToUse) {
     super();
     this.visible = true;              // display when true
     this.id = id;                     // g tag ID

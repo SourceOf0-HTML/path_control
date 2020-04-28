@@ -169,12 +169,23 @@ var PathFactory = {
       }
     });
     
-    let ret = new GroupObj(
-      name,
-      paths,
-      childGroups,
-      PathFactory.getMaskId(groupDOM.getAttribute("mask"))
-    );
+    let ret;
+    if(name == PathCtr.defaultBoneName) {
+      ret = new BoneObj(
+        name,
+        paths,
+        childGroups,
+        false,
+      );
+    } else {
+      ret = new GroupObj(
+        name,
+        paths,
+        childGroups,
+        false,
+        PathFactory.getMaskId(groupDOM.getAttribute("mask"))
+      );
+    }
     
     PathCtr.initTarget.groups[PathCtr.initTarget.groupNameToIDList[name]] = ret;
     
@@ -471,36 +482,36 @@ var PathFactory = {
     };
     
     let getGroup=i=>{
-      let id = getString();
-      pathContainer.groupNameToIDList[id] = i;
+      let name = getString();
+      pathContainer.groupNameToIDList[name] = i;
       
       let maskIdToUse = getUint16();
       let paths = getArray(getUint16, getPath);
       
-      let hasAction = getUint8();
-      if(!hasAction) {
-        let childGroups = getArray(getUint8, getUint16);
-        
-        let group = new GroupObj(
-          id,
-          paths,
-          childGroups,
-          maskIdToUse
-        );
-        return group;
+      let hasAction = (getUint8() > 0);
+      let childGroups;
+      if(hasAction) {
+        childGroups = getAction(()=>getArray(getUint8, getUint16));
+      } else {
+        childGroups = getArray(getUint8, getUint16);
       }
       
-      let group = new GroupObj(
-        id,
-        paths,
-        [],
-        maskIdToUse
-      );
-      
-      group.childGroups = getAction(()=>getArray(getUint8, getUint16));
-      group.childGroups.forEach((val, i)=>(group.hasActionList[i] = true));
-      
-      return group;
+      if(name == PathCtr.defaultBoneName) {
+        return new BoneObj(
+          name,
+          paths,
+          childGroups,
+          hasAction
+        );
+      } else {
+        return new GroupObj(
+          name,
+          paths,
+          childGroups,
+          hasAction,
+          maskIdToUse
+        );
+      }
     };
     
     
@@ -621,7 +632,6 @@ var PathFactory = {
             break;
           default:
             console.error("unknown type");
-            console.log(d);
             break;
         }
       });
@@ -632,20 +642,19 @@ var PathFactory = {
       setUint8(path.fillRule == "nonzero" ? 0 : 1);
       
       let hasAction = (path.hasActionList.length > 0);
-      if(!hasAction) {
+      if(hasAction) {
+        setUint8(1);
+        setAction(path.lineWidth, setFloat32);
+        setAction(path.fillStyle, setColor);
+        setAction(path.strokeStyle, setColor);
+        setAction(path.pathDataList, setPathData);
+      } else {
         setUint8(0);
         setFloat32(path.lineWidth);
         setColor(path.fillStyle);
         setColor(path.strokeStyle);
         setPathData(path.pathDataList);
-        return;
       }
-      setUint8(1);
-      
-      setAction(path.lineWidth, setFloat32);
-      setAction(path.fillStyle, setColor);
-      setAction(path.strokeStyle, setColor);
-      setAction(path.pathDataList, setPathData);
     };
     
     let setGroup=group=>{
@@ -654,16 +663,15 @@ var PathFactory = {
       setArray(group.paths, setUint16, setPath);
       
       let hasAction = (group.hasActionList.length > 0);
-      if(!hasAction) {
+      if(hasAction) {
+        setUint8(1);
+        setAction(group.childGroups, childGroups=>{
+          setArray(childGroups, setUint8, setUint16);
+        });
+      } else {
         setUint8(0);
         setArray(group.childGroups, setUint8, setUint16);
-        return;
       }
-      setUint8(1);
-      
-      setAction(group.childGroups, childGroups=>{
-        setArray(childGroups, setUint8, setUint16);
-      });
     };
     
     
@@ -692,6 +700,13 @@ var PathFactory = {
     
     delete dv;
     return buffer.slice(0, sumLength);
+  },
+  
+  /**
+   * @param {Array} fileInfoList - [ [ filePath, totalFrames, actionName ], ... ]
+   * @param {Function} completeFunc - callback when loading complete
+   */
+  svgFilesLoad: function(fileInfoList, completeFunc) {
   },
   
   /**
@@ -767,6 +782,7 @@ var PathFactory = {
         if(++fileIndex < fileInfoList.length) {
           loadFile(fileInfoList[fileIndex]);
         } else {
+          
           completeFunc(pathContainer);
         }
       };

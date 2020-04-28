@@ -65,6 +65,8 @@ class PathObj {
    */
   drawStroke(context, path2D, lineWidth, strokeStyle) {
     if( !lineWidth ) return;
+    context.lineJoin = "round";
+    context.lineCap = "round";
     context.lineWidth = lineWidth;
     context.strokeStyle = strokeStyle;
     context.stroke(path2D);
