@@ -1,13 +1,8 @@
-var pathContainer = null;
-var frameTime = 1000 / 24;
-var totalFrames = 50;
-var frameNumber = 0;
-var viewWidth = 0;
-var viewHeight = 0;
 
 function setPathContainer(data) {
-  pathContainer = data;
-  pathContainer.setSize(viewWidth, viewHeight);
+  PathCtr.pathContainer = data;
+  PathCtr.pathContainer.context = PathCtr.subContext;
+  PathCtr.pathContainer.setSize(PathCtr.viewWidth, PathCtr.viewHeight);
 }
 PathFactory.svgFilesLoad([
 //  ["./resource/base/original_", 260, "base"],
@@ -17,53 +12,5 @@ PathFactory.svgFilesLoad([
 ], setPathContainer);
 
 window.addEventListener("load", function() {
-  let canvas = document.getElementById("main-canvas");
-  
-  if(!canvas.parentNode) return;
-  
-  let context = canvas.getContext("2d");
-  if(!context) return;
-  
-  let requestAnimationFrame = window.requestAnimationFrame ||
-                              window.mozRequestAnimationFrame ||
-                              window.webkitRequestAnimationFrame ||
-                              window.msRequestAnimationFrame;
-  let cancelAnimationFrame = window.cancelAnimationFrame ||
-                              window.mozCancelAnimationFrame;
-  
-  viewWidth = document.documentElement.clientWidth;
-  viewHeight = document.documentElement.clientHeight;
-  canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + viewWidth + "px;height:" + viewHeight + "px;");
-  canvas.width = viewWidth;
-  canvas.height = viewHeight;
-  
-  window.addEventListener("resize", function() {
-    canvas.width = viewWidth = document.documentElement.clientWidth;
-    canvas.height = viewHeight = document.documentElement.clientHeight;
-    canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + viewWidth + "px;height:" + viewHeight + "px;");
-    if(!!pathContainer) pathContainer.setSize(viewWidth, viewHeight);
-  });
-  
-  let prevTimestamp = 0;
-  (function draw(timestamp) {
-    let elapsed = (timestamp - prevTimestamp) / 1000;
-    prevTimestamp = timestamp;
-    //console.log(elapsed, frameTime / 1000);
-    
-    if(!canvas.parentNode) {
-      return cancelAnimationFrame(draw);
-    }
-    
-    setTimeout(function() {
-      requestAnimationFrame(draw);
-      if(!pathContainer) return;
-      
-      context.clearRect(0, 0, viewWidth, viewHeight);
-      pathContainer.context = context;
-      pathContainer.draw(frameNumber, "face");
-      frameNumber = (frameNumber + 1) % totalFrames;
-      
-    }, frameTime);
-  })();
+  PathCtr.init();
 });
-
