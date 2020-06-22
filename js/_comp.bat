@@ -12,3 +12,11 @@ type org\BoneObj.js >> %OUTPUT_FILE%
 type org\PathContainer.js >> %OUTPUT_FILE%
 type org\PathFactory.js >> %OUTPUT_FILE%
 
+
+set DEBUG_FILE=path_control_debug.js
+
+del %DEBUG_FILE%
+
+type %OUTPUT_FILE% >> %DEBUG_FILE%
+type org\DebugPath.js >> %DEBUG_FILE%
+

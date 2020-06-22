@@ -108,20 +108,6 @@ window.addEventListener("load", function() {
     //update();
   });
   
-  let groupList = ["neck", "hair", "hat_brim", "jacket", "clothes", "right_arm", "left_arm"];
-  let move =(x, y)=>{
-    let head = pathContainer.getGroup("layer_head");
-    head.anchorX = head.x = 0.35;
-    head.anchorY = head.y = 0.6;
-    head.rotation = Math.atan2(x - head.x - pathContainer.x, - y + head.y);
-    
-    groupList.forEach(name=>{
-      pathContainer.getGroup(name).setSprite(head);
-    });
-  };
-  window.addEventListener("mousemove", e=>{move(e.clientX/pathContainer.pathRatio, e.clientY/pathContainer.pathRatio)});
-  window.addEventListener("touchmove", e=>{move(e.touches[0].pageX/pathContainer.pathRatio, e.touches[0].pageY/pathContainer.pathRatio)});
-  
   //console.log("base : ", frameTime, frameTime * 10, frameTime * 0.1);
   setTimeoutIDs.push(window.setTimeout(update, fixFrameTime*1000));
 });

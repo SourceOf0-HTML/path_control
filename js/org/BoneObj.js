@@ -13,7 +13,7 @@ class BoneObj extends GroupObj {
       console.error("context is not found");
       return;
     }
-    if(!this.visible) {
+    if(typeof DebugPath === "undefined" || !DebugPath.isShowBones || !this.visible) {
       return;
     }
     
