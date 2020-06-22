@@ -707,13 +707,6 @@ var PathFactory = {
    * @param {Function} completeFunc - callback when loading complete
    */
   svgFilesLoad: function(fileInfoList, completeFunc) {
-  },
-  
-  /**
-   * @param {Array} fileInfoList - [ [ filePath, totalFrames, actionName ], ... ]
-   * @param {Function} completeFunc - callback when loading complete
-   */
-  svgFilesLoad: function(fileInfoList, completeFunc) {
     if(!fileInfoList || !Array.isArray(fileInfoList) || !Array.isArray(fileInfoList[0])) {
       console.error("fileInfoList format is woring");
       console.log(fileInfoList);
