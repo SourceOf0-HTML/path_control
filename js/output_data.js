@@ -1,11 +1,3 @@
-var pathContainer = null;
-var frameTime = 1000 / 24;
-var totalFrames = 260;
-var frameNumber = 0;
-var context = null;
-var viewWidth = 0;
-var viewHeight = 0;
-
 function setPathContainer(data) {
   PathCtr.pathContainer = data;
   PathCtr.pathContainer.context = PathCtr.subContext;
@@ -17,7 +9,7 @@ function setPathContainer(data) {
     DebugPath.addEvents(PathCtr.pathContainer);
   }
 }
-PathFactory.svgFilesLoad([
+SVGLoader.load([
 //  ["./resource/base/original_", 260, "base"],
   ["./resource/base_bone/original_bone_", 260, "base"],
   ["./resource/face/original_face_", 50, "face"],
@@ -32,7 +24,7 @@ window.addEventListener("load", function() {
 function output_data() {
   if(!PathCtr.pathContainer) return;
   
-  let buffer = PathFactory.dataTobin(PathCtr.pathContainer);
+  let buffer = SVGLoader.toBin(PathCtr.pathContainer);
   
   var a = document.createElement("a");
   document.body.appendChild(a);

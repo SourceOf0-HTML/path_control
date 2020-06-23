@@ -1,9 +1,8 @@
-
 /**
- * PathFactory
+ * SVGLoader
  * Singleton
  */
-var PathFactory = {
+var SVGLoader = {
   /**
    * @param {String} maskStr - mask attribute of element
    * @return {GroupObj} - mask group
@@ -86,8 +85,8 @@ var PathFactory = {
       lineWidth = parseFloat(style.strokeWidth.match(/([\d\.]+)/)[1]);
     }
     return new PathObj(
-      PathFactory.makePathDataList(pathDOM.getAttribute("d")),
-      PathFactory.getMaskId(pathDOM.getAttribute("mask")),
+      this.makePathDataList(pathDOM.getAttribute("d")),
+      this.getMaskId(pathDOM.getAttribute("mask")),
       style.fillRule,
       fillStyle,
       lineWidth,
@@ -183,7 +182,7 @@ var PathFactory = {
         paths,
         childGroups,
         false,
-        PathFactory.getMaskId(groupDOM.getAttribute("mask"))
+        this.getMaskId(groupDOM.getAttribute("mask"))
       );
     }
     
@@ -236,7 +235,7 @@ var PathFactory = {
    * @param {HTMLElement} groupDOM - group element
    * @return {PathContainer}
    */
-  initFromSvg: function(groupsDOM) {
+  init: function(groupsDOM) {
     if(!groupsDOM) {
       console.error("groups dom is not found");
       return null;
@@ -288,7 +287,7 @@ var PathFactory = {
    * @param {Array} groupsDOMList - group elements array
    * @param {String} actionName
    */
-  addActionFromSvgList: function(pathContainer, groupsDOMList, actionID = 0) {
+  addActionFromList: function(pathContainer, groupsDOMList, actionID = 0) {
     if(!pathContainer) {
       console.error("path container is not found");
       return;
@@ -353,205 +352,94 @@ var PathFactory = {
   },
   
   /**
-   * @param {ArrayBuffer} buffer
-   * @return {PathContainer}
+   * @param {Array} fileInfoList - [ [ filePath, totalFrames, actionName ], ... ]
+   * @param {Function} completeFunc - callback when loading complete
    */
-  initFromBin: function(buffer) {
-    if(!buffer) {
-      console.error("array buffer is not found");
-      return null;
+  load: function(fileInfoList, completeFunc) {
+    if(!fileInfoList || !Array.isArray(fileInfoList) || !Array.isArray(fileInfoList[0])) {
+      console.error("fileInfoList format is woring");
+      console.log(fileInfoList);
+      return;
     }
-    let pathContainer = PathCtr.initTarget = new PathContainer();
-    let dv = new DataView(buffer);
-    let sumLength = 0;
-    
-    // -- prepare getting function --
-    
-    let getUint8  =()=>{let ret = dv.getUint8(sumLength); sumLength += 1; return ret};
-    let getUint16 =()=>{let ret = dv.getUint16(sumLength); sumLength += 2; return ret};
-    let getUint32 =()=>{let ret = dv.getUint32(sumLength); sumLength += 4; return ret};
-    let getFloat32=()=>{let ret = dv.getFloat32(sumLength); sumLength += 4; return ret};
-    let getPos    =()=>{let ret = dv.getInt16(sumLength)/PathCtr.binDataPosRange; sumLength += 2; return ret};
-    let getString=()=>{
-      let num = getUint8();
-      let ret = "";
-      for(let i = 0; i < num; ++i) {
-        ret += String.fromCharCode(getUint16());
-      }
-      return ret;
-    };
-    let getColor=()=>{
-      if(getUint8() == 0) {
-        return "transparent";
-      }
-      return "rgb(" + getUint8() + ", " + getUint8() + ", " + getUint8() + ")";
-    };
-    
-    let getArray=(lengFunc, getFunc)=>{
-      let ret = [];
-      let num = lengFunc();
-      for(let i = 0; i < num;) {
-        let count = getUint16();
-        if(count == 0) {
-          count = getUint16();
-          if(count == 0) {
-            console.error("data format error");
-            break;
-          }
-          i += count;
-          continue;
-        }
-        let val = getFunc();
-        if(Array.isArray(val)) {
-          for(let j = 0; j < count; ++j) {
-            ret[i + j] = val.concat();
-          }
-        } else {
-          for(let j = 0; j < count; ++j) {
-            ret[i + j] = val;
-          }
-        }
-        i += count;
-      }
-      return ret;
-    };
-    
-    let getAction=func=>getArray(getUint8, ()=>getArray(getUint16, ()=>func()));
-    
-    let getPathData=()=>{
-      let retNum = getUint16();
-      let ret = [];
-      for(let i = 0; i < retNum; ++i) {
-        let type = getUint8();
-        switch(type) {
-          case 0:  // M
-            ret.push({type:"M", pos:[getPos(), getPos()]});
-            break;
-          case 1:  // C
-            ret.push({type:"C", pos:[getPos(), getPos(), getPos(), getPos(), getPos(), getPos()]});
-            break;
-          case 2:  // Z
-            ret.push({type:"Z"});
-            break;
-          default:
-            console.error("unknown type : " + type);
-            break;
-        }
-      }
-      return ret;
+    if(fileInfoList[0][2] != PathCtr.defaultActionName) {
+      console.error("action name \"" + PathCtr.defaultActionName + "\" is missing in fileInfoList");
+      return;
     }
     
-    let getPath=()=>{
-      let maskIdToUse = getUint16();
-      let fillRule = (getUint8() == 0 ? "nonzero" : "evenodd");
-      
-      let hasAction = getUint8();
-      if(!hasAction) {
-        let lineWidth = getFloat32();
-        let fillStyle = getColor();
-        let strokeStyle = getColor();
-        let pathDataList = getPathData();
-        return new PathObj(
-          pathDataList,
-          maskIdToUse,
-          fillRule,
-          fillStyle,
-          lineWidth,
-          strokeStyle,
-        );
-      }
-      
-      let lineWidth = getAction(getFloat32);
-      let fillStyle = getAction(getColor);
-      let strokeStyle = getAction(getColor);
-      let pathDataList = getAction(getPathData);
-      
-      let pathObj = new PathObj(
-        pathDataList,
-        maskIdToUse,
-        fillRule,
-        fillStyle,
-        lineWidth,
-        strokeStyle,
-      );
-      pathObj.lineWidth.forEach((val, i)=>(pathObj.hasActionList[i] = true));
-      pathObj.fillStyle.forEach((val, i)=>(pathObj.hasActionList[i] = true));
-      pathObj.strokeStyle.forEach((val, i)=>(pathObj.hasActionList[i] = true));
-      pathObj.pathDataList.forEach((val, i)=>(pathObj.hasActionList[i] = true));
-      return pathObj;
-    };
+    let pathContainer = null;
+    let fileIndex = 0;
+    let domList = [];
+    let getFrameNum=i=>("00000".substr(0, 5 - i.toString().length) + i + ".svg");
     
-    let getGroup=i=>{
-      let name = getString();
-      pathContainer.groupNameToIDList[name] = i;
+    let loadFile=fileInfo=>{
+      let filePath = fileInfo[0];
+      let totalFrames = fileInfo[1];
+      let actionName = fileInfo[2];
       
-      let maskIdToUse = getUint16();
-      let paths = getArray(getUint16, getPath);
-      
-      let hasAction = (getUint8() > 0);
-      let childGroups;
-      if(hasAction) {
-        childGroups = getAction(()=>getArray(getUint8, getUint16));
-      } else {
-        childGroups = getArray(getUint8, getUint16);
-      }
-      
-      if(name == PathCtr.defaultBoneName) {
-        return new BoneObj(
-          name,
-          paths,
-          childGroups,
-          hasAction
-        );
-      } else {
-        return new GroupObj(
-          name,
-          paths,
-          childGroups,
-          hasAction,
-          maskIdToUse
-        );
-      }
-    };
-    
-    
-    // --acquisition processing--
-    
-    pathContainer.originalWidth = pathContainer.displayWidth = getUint16();
-    pathContainer.originalHeight = pathContainer.displayHeight = getUint16();
-    
-    let actionListNum = getUint8();
-    if(actionListNum > 0) {
-      pathContainer.actionList = {};
-      for(let i = 0; i < actionListNum; ++i) {
-        pathContainer.actionList[getString()] = {
-          id : getUint8(),
-          totalFrames : getUint16(),
+      let loadFrame = 1;
+      let request = new XMLHttpRequest();
+      let loadSVG = request.onload = function(e) {
+        let target = e.target;
+        if(target.readyState != 4) return;
+        if(target.status != 200 && target.status != 0) return;
+        
+        let ret = target.responseText;
+        let div = document.createElement("div");
+        div.setAttribute("style", "display:none;");
+        div.innerHTML = ret;
+        let svg = div.firstElementChild;
+        document.body.append(div);
+        domList[parseInt(ret.match(/id="Frame_(\d+)"/)[1]) - 1] = svg;
+        div = svg = null;
+        
+        delete request;
+        if(loadFrame <= totalFrames) {
+          console.log("load file : " + loadFrame);
+          request = new XMLHttpRequest();
+          request.open("GET", filePath + getFrameNum(loadFrame++), true);
+          request.onreadystatechange = loadSVG;
+          request.send();
+          return;
+        }
+        
+        if(!pathContainer) {
+          pathContainer = SVGLoader.init(domList[0]);
+          pathContainer.actionList = {};
+        }
+        
+        let actionID = Object.keys(pathContainer.actionList).length;
+        
+        pathContainer.actionList[actionName] = {
+          id : actionID,
+          totalFrames : totalFrames,
         };
-      }
-    }
+        
+        SVGLoader.addActionFromList(pathContainer, domList, actionID);
+        console.log("loading completed");
+        PathCtr.debugPrint(pathContainer);
+        
+        domList.forEach(dom=>dom.parentNode.remove());
+        domList.length = 0;
+        
+        if(++fileIndex < fileInfoList.length) {
+          loadFile(fileInfoList[fileIndex]);
+        } else {
+          
+          completeFunc(pathContainer);
+        }
+      };
+      request.open("GET", filePath + getFrameNum(loadFrame++), true);
+      request.send();
+    };
     
-    pathContainer.rootGroups = getArray(getUint8, getUint16);
-    
-    let groupsNum = getUint16();
-    for(let i = 0; i < groupsNum; ++i) {
-      PathCtr.debugPrint("count : " + i);
-      PathCtr.debugPrint(i);
-      PathCtr.debugPrint(sumLength);
-      pathContainer.groups[i] = getGroup(i);
-      PathCtr.debugPrint(pathContainer.groups[i]);
-    }
-    
-    PathCtr.initTarget = null;
-    
-    return pathContainer;
+    loadFile(fileInfoList[fileIndex]);
   },
   
   /**
    * @param {PathContainer} pathContainer
    * @return {ArrayBuffer}
    */
-  dataTobin: function(pathContainer) {
+  toBin: function(pathContainer) {
     if(!pathContainer) {
       console.error("path container is not found");
       return null;
@@ -701,116 +589,4 @@ var PathFactory = {
     delete dv;
     return buffer.slice(0, sumLength);
   },
-  
-  /**
-   * @param {Array} fileInfoList - [ [ filePath, totalFrames, actionName ], ... ]
-   * @param {Function} completeFunc - callback when loading complete
-   */
-  svgFilesLoad: function(fileInfoList, completeFunc) {
-    if(!fileInfoList || !Array.isArray(fileInfoList) || !Array.isArray(fileInfoList[0])) {
-      console.error("fileInfoList format is woring");
-      console.log(fileInfoList);
-      return;
-    }
-    if(fileInfoList[0][2] != PathCtr.defaultActionName) {
-      console.error("action name \"" + PathCtr.defaultActionName + "\" is missing in fileInfoList");
-      return;
-    }
-    
-    let pathContainer = null;
-    let fileIndex = 0;
-    let domList = [];
-    let getFrameNum=i=>("00000".substr(0, 5 - i.toString().length) + i + ".svg");
-    
-    let loadFile=fileInfo=>{
-      let filePath = fileInfo[0];
-      let totalFrames = fileInfo[1];
-      let actionName = fileInfo[2];
-      
-      let loadFrame = 1;
-      let request = new XMLHttpRequest();
-      let loadSVG = request.onload = function(e) {
-        let target = e.target;
-        if(target.readyState != 4) return;
-        if(target.status != 200 && target.status != 0) return;
-        
-        let ret = target.responseText;
-        let div = document.createElement("div");
-        div.setAttribute("style", "display:none;");
-        div.innerHTML = ret;
-        let svg = div.firstElementChild;
-        document.body.append(div);
-        domList[parseInt(ret.match(/id="Frame_(\d+)"/)[1]) - 1] = svg;
-        div = svg = null;
-        
-        delete request;
-        if(loadFrame <= totalFrames) {
-          console.log("load file : " + loadFrame);
-          request = new XMLHttpRequest();
-          request.open("GET", filePath + getFrameNum(loadFrame++), true);
-          request.onreadystatechange = loadSVG;
-          request.send();
-          return;
-        }
-        
-        if(!pathContainer) {
-          pathContainer = PathFactory.initFromSvg(domList[0]);
-          pathContainer.actionList = {};
-        }
-        
-        let actionID = Object.keys(pathContainer.actionList).length;
-        
-        pathContainer.actionList[actionName] = {
-          id : actionID,
-          totalFrames : totalFrames,
-        };
-        
-        PathFactory.addActionFromSvgList(pathContainer, domList, actionID);
-        console.log("loading completed");
-        PathCtr.debugPrint(pathContainer);
-        
-        domList.forEach(dom=>dom.parentNode.remove());
-        domList.length = 0;
-        
-        if(++fileIndex < fileInfoList.length) {
-          loadFile(fileInfoList[fileIndex]);
-        } else {
-          
-          completeFunc(pathContainer);
-        }
-      };
-      request.open("GET", filePath + getFrameNum(loadFrame++), true);
-      request.send();
-    };
-    
-    loadFile(fileInfoList[fileIndex]);
-  },
-  
-  /**
-   * @param {String} filePath - binary file path
-   * @param {Function} completeFunc - callback when loading complete
-   */
-  binFileLoad: function(filePath, completeFunc) {
-    if(!filePath) {
-      console.error("filePath not found");
-      return;
-    }
-    
-    let request = new XMLHttpRequest();
-    request.onload = function(e) {
-      let target = e.target;
-      if(target.readyState != 4) return;
-      if(target.status != 200 && target.status != 0) return;
-      
-      let buffer = request.response;
-      let pathContainer = PathFactory.initFromBin(buffer);
-      console.log("loading completed");
-      PathCtr.debugPrint(pathContainer);
-      completeFunc(pathContainer);
-    };
-    request.open("GET", filePath, true);
-    request.responseType = "arraybuffer";
-    request.send();
-  },
 };
-
