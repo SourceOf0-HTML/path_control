@@ -1,7 +1,4 @@
-function setPathContainer(data) {
-  PathCtr.pathContainer = data;
-  PathCtr.pathContainer.context = PathCtr.subContext;
-  PathCtr.pathContainer.setSize(PathCtr.viewWidth, PathCtr.viewHeight);
+function setPathContainer() {
   PathCtr.pathContainer.x = 0.3;
   
   if(typeof DebugPath !== "undefined") {

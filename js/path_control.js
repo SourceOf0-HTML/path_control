@@ -40,6 +40,12 @@ var PathCtr = {
     this.setTimeoutIDs.length = 0;
   },
   
+  loadComplete: function(pathContainer) {
+    this.pathContainer = pathContainer;
+    this.pathContainer.context = this.subContext;
+    this.pathContainer.setSize(this.viewWidth, this.viewHeight);
+  },
+  
   init: function() {
     let container = document.getElementById(this.defaultCanvasContainerID);
     if(!container) {
@@ -878,7 +884,7 @@ var BinaryLoader = {
    * @param {String} filePath - binary file path
    * @param {Function} completeFunc - callback when loading complete
    */
-  load: function(filePath, completeFunc) {
+  load: function(filePath, completeFunc = null) {
     if(!filePath) {
       console.error("filePath not found");
       return;
@@ -894,7 +900,11 @@ var BinaryLoader = {
       let pathContainer = BinaryLoader.init(buffer);
       console.log("loading completed");
       PathCtr.debugPrint(pathContainer);
-      completeFunc(pathContainer);
+      
+      PathCtr.loadComplete(pathContainer);
+      if(!!completeFunc) {
+        completeFunc();
+      }
     };
     request.open("GET", filePath, true);
     request.responseType = "arraybuffer";

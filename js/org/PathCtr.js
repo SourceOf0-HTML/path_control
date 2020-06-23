@@ -40,6 +40,12 @@ var PathCtr = {
     this.setTimeoutIDs.length = 0;
   },
   
+  loadComplete: function(pathContainer) {
+    this.pathContainer = pathContainer;
+    this.pathContainer.context = this.subContext;
+    this.pathContainer.setSize(this.viewWidth, this.viewHeight);
+  },
+  
   init: function() {
     let container = document.getElementById(this.defaultCanvasContainerID);
     if(!container) {

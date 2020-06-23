@@ -1,8 +1,4 @@
-function setPathContainer(data) {
-  PathCtr.pathContainer = data;
-  PathCtr.pathContainer.context = PathCtr.subContext;
-  PathCtr.pathContainer.setSize(PathCtr.viewWidth, PathCtr.viewHeight);
-  
+function setPathContainer() {
   document.getElementById("output-btn").disabled = "";
   
   if(typeof DebugPath !== "undefined") {

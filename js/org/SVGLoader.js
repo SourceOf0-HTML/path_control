@@ -355,7 +355,7 @@ var SVGLoader = {
    * @param {Array} fileInfoList - [ [ filePath, totalFrames, actionName ], ... ]
    * @param {Function} completeFunc - callback when loading complete
    */
-  load: function(fileInfoList, completeFunc) {
+  load: function(fileInfoList, completeFunc = null) {
     if(!fileInfoList || !Array.isArray(fileInfoList) || !Array.isArray(fileInfoList[0])) {
       console.error("fileInfoList format is woring");
       console.log(fileInfoList);
@@ -424,8 +424,10 @@ var SVGLoader = {
         if(++fileIndex < fileInfoList.length) {
           loadFile(fileInfoList[fileIndex]);
         } else {
-          
-          completeFunc(pathContainer);
+          PathCtr.loadComplete(pathContainer);
+          if(!!completeFunc) {
+            completeFunc();
+          }
         }
       };
       request.open("GET", filePath + getFrameNum(loadFrame++), true);
