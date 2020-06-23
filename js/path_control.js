@@ -30,7 +30,7 @@ var PathCtr = {
   requestAnimationIDs: [],
   setTimeoutIDs: [],
   
-  cancelFunctions: function() {
+  cancelRequestAnimation: function() {
     if(this.requestAnimationIDs.length > 1 || this.setTimeoutIDs.length > 1) {
       console.log("requestAnimationIDs:" + this.requestAnimationIDs.length + ", " + setTimeoutIDs.length);
     }
@@ -94,7 +94,7 @@ var PathCtr = {
     
     let draw =(timestamp)=> {
       if(!canvas.parentNode) {
-        this.cancelFunctions();
+        this.cancelRequestAnimation();
         return;
       }
       
@@ -131,7 +131,7 @@ var PathCtr = {
     };
     
     let update =()=> {
-      this.cancelFunctions();
+      this.cancelRequestAnimation();
       this.requestAnimationIDs.push(window.requestAnimationFrame(draw));
       this.setTimeoutIDs.push(window.setTimeout(update, fixFrameTime*1000));
     };
