@@ -217,8 +217,8 @@ var BinaryLoader = {
       
       let buffer = request.response;
       let pathContainer = BinaryLoader.init(buffer);
-      console.log("loading completed");
-      PathCtr.debugPrint(pathContainer);
+      PathCtr.loadState("loading completed");
+      PathCtr.loadState(pathContainer);
       
       PathCtr.loadComplete(pathContainer);
       if(!!completeFunc) {

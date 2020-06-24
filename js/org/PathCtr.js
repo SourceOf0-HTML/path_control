@@ -4,10 +4,18 @@
  * Singleton
  */
 var PathCtr = {
-  isDebug: false,
+  isOutputDebugPrint: false,
   debugPrint: function() {
-    if(!this.isDebug) return;
+    if(!this.isOutputDebugPrint) return;
     //console.log("Func : " + this.debugPrint.caller.name);
+    for(let i = 0; i < arguments.length; ++i) {
+      console.log(arguments[i]);
+    }
+  },
+  
+  isOutputLoadState: true,
+  loadState: function() {
+    if(!this.isOutputLoadState) return;
     for(let i = 0; i < arguments.length; ++i) {
       console.log(arguments[i]);
     }
@@ -32,7 +40,7 @@ var PathCtr = {
   
   cancelRequestAnimation: function() {
     if(this.requestAnimationIDs.length > 1 || this.setTimeoutIDs.length > 1) {
-      console.log("requestAnimationIDs:" + this.requestAnimationIDs.length + ", " + setTimeoutIDs.length);
+      PathCtr.debugPrint("requestAnimationIDs:" + this.requestAnimationIDs.length + ", " + setTimeoutIDs.length);
     }
     this.requestAnimationIDs.forEach(window.cancelAnimationFrame);
     this.requestAnimationIDs.length = 0;

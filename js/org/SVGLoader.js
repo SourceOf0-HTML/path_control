@@ -241,7 +241,7 @@ var SVGLoader = {
       return null;
     }
     
-    console.log("init");
+    PathCtr.loadState("init");
     
     let pathContainer = PathCtr.initTarget = new PathContainer();
     
@@ -299,7 +299,7 @@ var SVGLoader = {
     
     PathCtr.initTarget = pathContainer;
     
-    console.log("check id");
+    PathCtr.loadState("check id");
     let actionGroup = {};
     let groupsDOMArr = Array.prototype.slice.call(groupsDOMList);
     let baseDom = groupsDOMArr[0];
@@ -329,8 +329,8 @@ var SVGLoader = {
       });
     });
     
-    console.log(pathContainer);
-    console.log("check diff");
+    PathCtr.loadState(pathContainer);
+    PathCtr.loadState("check diff");
     groupsDOMArr.forEach(targetDom=>{
       Object.keys(pathContainer.groupNameToIDList).forEach(name=>{
         let base = baseDom.getElementById(name);
@@ -342,7 +342,7 @@ var SVGLoader = {
     
     groupsDOMArr.forEach((targetDom, frame)=>{
       if(frame == 0) return;
-      console.log("add action : " + actionID + " - " + frame);
+      PathCtr.loadState("add action : " + actionID + " - " + frame);
       Object.keys(actionGroup).forEach(key=>{
         this.addActionGroup(targetDom.getElementById(key), key, frame, actionID);
       });
@@ -394,7 +394,7 @@ var SVGLoader = {
         
         delete request;
         if(loadFrame <= totalFrames) {
-          console.log("load file : " + loadFrame);
+          PathCtr.loadState("load file : " + loadFrame);
           request = new XMLHttpRequest();
           request.open("GET", filePath + getFrameNum(loadFrame++), true);
           request.onreadystatechange = loadSVG;
@@ -415,8 +415,8 @@ var SVGLoader = {
         };
         
         SVGLoader.addActionFromList(pathContainer, domList, actionID);
-        console.log("loading completed");
-        PathCtr.debugPrint(pathContainer);
+        PathCtr.loadState("loading completed");
+        PathCtr.loadState(pathContainer);
         
         domList.forEach(dom=>dom.parentNode.remove());
         domList.length = 0;
@@ -582,7 +582,7 @@ var SVGLoader = {
     let groupsNum = pathContainer.groups.length;
     setUint16(groupsNum);
     pathContainer.groups.forEach(group=>{
-      console.log("count : " + groupsNum--);
+      PathCtr.loadState("count : " + groupsNum--);
       PathCtr.debugPrint(sumLength);
       setGroup(group);
       PathCtr.debugPrint(group);

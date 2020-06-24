@@ -4,10 +4,18 @@
  * Singleton
  */
 var PathCtr = {
-  isDebug: false,
+  isOutputDebugPrint: false,
   debugPrint: function() {
-    if(!this.isDebug) return;
+    if(!this.isOutputDebugPrint) return;
     //console.log("Func : " + this.debugPrint.caller.name);
+    for(let i = 0; i < arguments.length; ++i) {
+      console.log(arguments[i]);
+    }
+  },
+  
+  isOutputLoadState: true,
+  loadState: function() {
+    if(!this.isOutputLoadState) return;
     for(let i = 0; i < arguments.length; ++i) {
       console.log(arguments[i]);
     }
@@ -32,7 +40,7 @@ var PathCtr = {
   
   cancelRequestAnimation: function() {
     if(this.requestAnimationIDs.length > 1 || this.setTimeoutIDs.length > 1) {
-      console.log("requestAnimationIDs:" + this.requestAnimationIDs.length + ", " + setTimeoutIDs.length);
+      PathCtr.debugPrint("requestAnimationIDs:" + this.requestAnimationIDs.length + ", " + setTimeoutIDs.length);
     }
     this.requestAnimationIDs.forEach(window.cancelAnimationFrame);
     this.requestAnimationIDs.length = 0;
@@ -592,11 +600,11 @@ class BoneObj extends GroupObj {
    */
   setJSONData(pathContainer, data) {
     if(!pathContainer || !data) return;
-    console.log("BONE:" + this.id);
+    PathCtr.loadState("BONE:" + this.id);
     
     if("parent" in data && data.parent in pathContainer.groupNameToIDList) {
       this.parentID = pathContainer.groupNameToIDList[data.parent];
-      console.log("parentID:" + this.parentID);
+      PathCtr.loadState("parentID:" + this.parentID);
     }
     
     this.flexi.length = 0;
@@ -606,17 +614,17 @@ class BoneObj extends GroupObj {
           this.flexi.push(pathContainer.groupNameToIDList[name]);
         }
       });
-      console.log("flexi:" + this.flexi.toString());
+      PathCtr.loadState("flexi:" + this.flexi.toString());
     }
     
     if("feedback" in data && (typeof data.feedback === "boolean")) {
       this.feedback = data.feedback;
-      console.log("feedback:" + this.feedback);
+      PathCtr.loadState("feedback:" + this.feedback);
     }
     
     if("strength" in data && Number.isFinite(data.strength)) {
       this.strength = data.strength;
-      console.log("strength:" + this.strength);
+      PathCtr.loadState("strength:" + this.strength);
     }
   };
   
@@ -938,8 +946,8 @@ var BinaryLoader = {
       
       let buffer = request.response;
       let pathContainer = BinaryLoader.init(buffer);
-      console.log("loading completed");
-      PathCtr.debugPrint(pathContainer);
+      PathCtr.loadState("loading completed");
+      PathCtr.loadState(pathContainer);
       
       PathCtr.loadComplete(pathContainer);
       if(!!completeFunc) {

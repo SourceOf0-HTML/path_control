@@ -4,10 +4,18 @@
  * Singleton
  */
 var PathCtr = {
-  isDebug: false,
+  isOutputDebugPrint: false,
   debugPrint: function() {
-    if(!this.isDebug) return;
+    if(!this.isOutputDebugPrint) return;
     //console.log("Func : " + this.debugPrint.caller.name);
+    for(let i = 0; i < arguments.length; ++i) {
+      console.log(arguments[i]);
+    }
+  },
+  
+  isOutputLoadState: true,
+  loadState: function() {
+    if(!this.isOutputLoadState) return;
     for(let i = 0; i < arguments.length; ++i) {
       console.log(arguments[i]);
     }
@@ -32,7 +40,7 @@ var PathCtr = {
   
   cancelRequestAnimation: function() {
     if(this.requestAnimationIDs.length > 1 || this.setTimeoutIDs.length > 1) {
-      console.log("requestAnimationIDs:" + this.requestAnimationIDs.length + ", " + setTimeoutIDs.length);
+      PathCtr.debugPrint("requestAnimationIDs:" + this.requestAnimationIDs.length + ", " + setTimeoutIDs.length);
     }
     this.requestAnimationIDs.forEach(window.cancelAnimationFrame);
     this.requestAnimationIDs.length = 0;
@@ -592,11 +600,11 @@ class BoneObj extends GroupObj {
    */
   setJSONData(pathContainer, data) {
     if(!pathContainer || !data) return;
-    console.log("BONE:" + this.id);
+    PathCtr.loadState("BONE:" + this.id);
     
     if("parent" in data && data.parent in pathContainer.groupNameToIDList) {
       this.parentID = pathContainer.groupNameToIDList[data.parent];
-      console.log("parentID:" + this.parentID);
+      PathCtr.loadState("parentID:" + this.parentID);
     }
     
     this.flexi.length = 0;
@@ -606,17 +614,17 @@ class BoneObj extends GroupObj {
           this.flexi.push(pathContainer.groupNameToIDList[name]);
         }
       });
-      console.log("flexi:" + this.flexi.toString());
+      PathCtr.loadState("flexi:" + this.flexi.toString());
     }
     
     if("feedback" in data && (typeof data.feedback === "boolean")) {
       this.feedback = data.feedback;
-      console.log("feedback:" + this.feedback);
+      PathCtr.loadState("feedback:" + this.feedback);
     }
     
     if("strength" in data && Number.isFinite(data.strength)) {
       this.strength = data.strength;
-      console.log("strength:" + this.strength);
+      PathCtr.loadState("strength:" + this.strength);
     }
   };
   
@@ -938,8 +946,8 @@ var BinaryLoader = {
       
       let buffer = request.response;
       let pathContainer = BinaryLoader.init(buffer);
-      console.log("loading completed");
-      PathCtr.debugPrint(pathContainer);
+      PathCtr.loadState("loading completed");
+      PathCtr.loadState(pathContainer);
       
       PathCtr.loadComplete(pathContainer);
       if(!!completeFunc) {
@@ -1195,7 +1203,7 @@ var SVGLoader = {
       return null;
     }
     
-    console.log("init");
+    PathCtr.loadState("init");
     
     let pathContainer = PathCtr.initTarget = new PathContainer();
     
@@ -1253,7 +1261,7 @@ var SVGLoader = {
     
     PathCtr.initTarget = pathContainer;
     
-    console.log("check id");
+    PathCtr.loadState("check id");
     let actionGroup = {};
     let groupsDOMArr = Array.prototype.slice.call(groupsDOMList);
     let baseDom = groupsDOMArr[0];
@@ -1283,8 +1291,8 @@ var SVGLoader = {
       });
     });
     
-    console.log(pathContainer);
-    console.log("check diff");
+    PathCtr.loadState(pathContainer);
+    PathCtr.loadState("check diff");
     groupsDOMArr.forEach(targetDom=>{
       Object.keys(pathContainer.groupNameToIDList).forEach(name=>{
         let base = baseDom.getElementById(name);
@@ -1296,7 +1304,7 @@ var SVGLoader = {
     
     groupsDOMArr.forEach((targetDom, frame)=>{
       if(frame == 0) return;
-      console.log("add action : " + actionID + " - " + frame);
+      PathCtr.loadState("add action : " + actionID + " - " + frame);
       Object.keys(actionGroup).forEach(key=>{
         this.addActionGroup(targetDom.getElementById(key), key, frame, actionID);
       });
@@ -1348,7 +1356,7 @@ var SVGLoader = {
         
         delete request;
         if(loadFrame <= totalFrames) {
-          console.log("load file : " + loadFrame);
+          PathCtr.loadState("load file : " + loadFrame);
           request = new XMLHttpRequest();
           request.open("GET", filePath + getFrameNum(loadFrame++), true);
           request.onreadystatechange = loadSVG;
@@ -1369,8 +1377,8 @@ var SVGLoader = {
         };
         
         SVGLoader.addActionFromList(pathContainer, domList, actionID);
-        console.log("loading completed");
-        PathCtr.debugPrint(pathContainer);
+        PathCtr.loadState("loading completed");
+        PathCtr.loadState(pathContainer);
         
         domList.forEach(dom=>dom.parentNode.remove());
         domList.length = 0;
@@ -1536,7 +1544,7 @@ var SVGLoader = {
     let groupsNum = pathContainer.groups.length;
     setUint16(groupsNum);
     pathContainer.groups.forEach(group=>{
-      console.log("count : " + groupsNum--);
+      PathCtr.loadState("count : " + groupsNum--);
       PathCtr.debugPrint(sumLength);
       setGroup(group);
       PathCtr.debugPrint(group);
@@ -1558,8 +1566,6 @@ var BoneLoader = {
   load: function(filePath, pathContainer) {
     let request = new XMLHttpRequest();
     
-    console.log(pathContainer);
-    
     request.onload = function(e) {
       let target = e.target;
       if(target.readyState != 4) return;
@@ -1578,6 +1584,9 @@ var BoneLoader = {
         }
         bone.setJSONData(pathContainer, ret[id]);
       });
+      
+      PathCtr.loadState("bones JSON load complete.");
+      PathCtr.loadState(pathContainer);
     }
     request.open("GET", filePath, true);
     request.send();

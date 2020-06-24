@@ -10,8 +10,6 @@ var BoneLoader = {
   load: function(filePath, pathContainer) {
     let request = new XMLHttpRequest();
     
-    console.log(pathContainer);
-    
     request.onload = function(e) {
       let target = e.target;
       if(target.readyState != 4) return;
@@ -30,6 +28,9 @@ var BoneLoader = {
         }
         bone.setJSONData(pathContainer, ret[id]);
       });
+      
+      PathCtr.loadState("bones JSON load complete.");
+      PathCtr.loadState(pathContainer);
     }
     request.open("GET", filePath, true);
     request.send();
