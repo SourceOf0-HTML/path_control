@@ -13,14 +13,27 @@ class PathContainer extends Sprite {
     this.groups = [];             // list of groups
     this.groupNameToIDList = {};  // list of group name and group ID
     this.masks = {};              // list of mask name and group ID
+    this.bones = [];              // list of bone ID
     this.actionList = null;       // action info list
   };
   
   /**
    * @param {String} name
+   * @return {GroupObj}
    */
   getGroup(name) {
     return this.groups[this.groupNameToIDList[name]];
+  };
+  
+  /**
+   * @param {String} name
+   * @return {BoneObj}
+   */
+  getBone(name) {
+    let id = this.groupNameToIDList[name];
+    if(this.bones.includes(id)) {
+      return this.groups[id];
+    }
   };
   
   /**

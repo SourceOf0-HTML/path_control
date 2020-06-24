@@ -176,6 +176,7 @@ var SVGLoader = {
         childGroups,
         false,
       );
+      PathCtr.initTarget.bones.push(PathCtr.initTarget.groupNameToIDList[name]);
     } else {
       ret = new GroupObj(
         name,

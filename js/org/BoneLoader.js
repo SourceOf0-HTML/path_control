@@ -17,13 +17,9 @@ var BoneLoader = {
       
       let ret = JSON.parse(target.responseText);
       Object.keys(ret).forEach(id=>{
-        let bone = pathContainer.getGroup(id);
+        let bone = pathContainer.getBone(id);
         if(!bone) {
           console.error("bone is not found : " + id);
-          return;
-        }
-        if(!bone.setJSONData) {
-          console.error(id + " is not bone");
           return;
         }
         bone.setJSONData(pathContainer, ret[id]);

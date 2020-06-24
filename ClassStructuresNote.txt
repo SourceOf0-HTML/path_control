@@ -9,6 +9,7 @@ PathContainer
   groups = [ <GroupObj>, ... ];                     // list of groups
   groupNameToIDList = { groupName : groupID, ... }; // list of group name and group ID
   masks = { maskName : groupID };                   // list of mask name and group ID
+  bones = [ groupID, ... ];                         // list of bone ID
   actionList = { actionName : { id : actionID, totalFrames : totalFrames } };  // action info list
 
 

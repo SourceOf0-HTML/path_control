@@ -670,14 +670,27 @@ class PathContainer extends Sprite {
     this.groups = [];             // list of groups
     this.groupNameToIDList = {};  // list of group name and group ID
     this.masks = {};              // list of mask name and group ID
+    this.bones = [];              // list of bone ID
     this.actionList = null;       // action info list
   };
   
   /**
    * @param {String} name
+   * @return {GroupObj}
    */
   getGroup(name) {
     return this.groups[this.groupNameToIDList[name]];
+  };
+  
+  /**
+   * @param {String} name
+   * @return {BoneObj}
+   */
+  getBone(name) {
+    let id = this.groupNameToIDList[name];
+    if(this.bones.includes(id)) {
+      return this.groups[id];
+    }
   };
   
   /**
@@ -877,7 +890,7 @@ var BinaryLoader = {
         childGroups = getArray(getUint8, getUint16);
       }
       
-      if(name == PathCtr.defaultBoneName) {
+      if(name.startsWith(PathCtr.defaultBoneName)) {
         return new BoneObj(
           name,
           paths,
@@ -920,6 +933,9 @@ var BinaryLoader = {
       PathCtr.debugPrint(i);
       PathCtr.debugPrint(sumLength);
       pathContainer.groups[i] = getGroup(i);
+      if(BoneObj.prototype.isPrototypeOf(pathContainer.groups[i])) {
+        pathContainer.bones.push(i);
+      }
       PathCtr.debugPrint(pathContainer.groups[i]);
     }
     

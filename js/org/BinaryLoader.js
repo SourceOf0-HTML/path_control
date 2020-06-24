@@ -148,7 +148,7 @@ var BinaryLoader = {
         childGroups = getArray(getUint8, getUint16);
       }
       
-      if(name == PathCtr.defaultBoneName) {
+      if(name.startsWith(PathCtr.defaultBoneName)) {
         return new BoneObj(
           name,
           paths,
@@ -191,6 +191,9 @@ var BinaryLoader = {
       PathCtr.debugPrint(i);
       PathCtr.debugPrint(sumLength);
       pathContainer.groups[i] = getGroup(i);
+      if(BoneObj.prototype.isPrototypeOf(pathContainer.groups[i])) {
+        pathContainer.bones.push(i);
+      }
       PathCtr.debugPrint(pathContainer.groups[i]);
     }
     
