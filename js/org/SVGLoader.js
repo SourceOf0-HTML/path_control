@@ -169,7 +169,7 @@ var SVGLoader = {
     });
     
     let ret;
-    if(name == PathCtr.defaultBoneName) {
+    if(name.startsWith(PathCtr.defaultBoneName)) {
       ret = new BoneObj(
         name,
         paths,

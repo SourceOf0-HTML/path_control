@@ -1,4 +1,6 @@
 function setPathContainer() {
+  BoneLoader.load("./resource/bones.json", PathCtr.pathContainer);
+  
   document.getElementById("output-btn").disabled = "";
   
   if(typeof DebugPath !== "undefined") {

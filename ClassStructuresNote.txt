@@ -12,6 +12,12 @@ PathContainer
   actionList = { actionName : { id : actionID, totalFrames : totalFrames } };  // action info list
 
 
+BoneObj
+  this.parentID = id; // parent bone id
+  this.flexi = [ id, ... ];  // ID of a flexi-bonded target
+  this.feedback = receiveFeedback;  // receive feedback from other bones
+  this.strength = 0;  // scope of influence of bone
+
 GroupObj (no action data)
   id = id;   // g tag ID
   maskIdToUse = maskIdToUse;  // ID of the mask to use

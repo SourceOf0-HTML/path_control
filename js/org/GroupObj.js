@@ -50,6 +50,7 @@ class GroupObj extends Sprite {
   
   /**
    * @param {PathContainer} pathContainer
+   * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
    * @param {Boolean} isMask - when true, draw as a mask
    * @param {Sprite} sprite - used to transform the path
    */
