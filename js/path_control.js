@@ -391,6 +391,10 @@ class PathObj {
         pos = matrix.applyToArray(d.pos, pathContainer.pathRatio);
         path2D.moveTo(pos[0], pos[1]);
         break;
+      case "L":
+        pos = matrix.applyToArray(d.pos, pathContainer.pathRatio);
+        path2D.lineTo(pos[0], pos[1]);
+        break;
       case "C":
         pos = matrix.applyToArray(d.pos, pathContainer.pathRatio);
         path2D.bezierCurveTo(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
@@ -592,6 +596,7 @@ class BoneObj extends GroupObj {
     this.flexi = [];
     this.feedback = false;
     this.strength = 0;
+    this.TWO_PI = Math.PI*2;
   };
   
   /**
@@ -645,6 +650,8 @@ class BoneObj extends GroupObj {
     let groupSprite = sprite.compSprite(this);
     this.paths.forEach(path=>{
       let path2D = new Path2D();
+      //let pos = groupSprite.matrix.applyToArray(path.pathDataList[0].pos, pathContainer.pathRatio);
+      //path.arc(pos[0], pos[1], 2, 0, this.TWO_PI);
       path.draw(pathContainer, groupSprite.matrix, context, path2D, false);
       path2D = null;
     });
@@ -821,10 +828,13 @@ var BinaryLoader = {
           case 0:  // M
             ret.push({type:"M", pos:[getPos(), getPos()]});
             break;
-          case 1:  // C
+          case 1:  // L
+            ret.push({type:"L", pos:[getPos(), getPos()]});
+            break;
+          case 2:  // C
             ret.push({type:"C", pos:[getPos(), getPos(), getPos(), getPos(), getPos(), getPos()]});
             break;
-          case 2:  // Z
+          case 3:  // Z
             ret.push({type:"Z"});
             break;
           default:

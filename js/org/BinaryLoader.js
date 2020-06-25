@@ -79,10 +79,13 @@ var BinaryLoader = {
           case 0:  // M
             ret.push({type:"M", pos:[getPos(), getPos()]});
             break;
-          case 1:  // C
+          case 1:  // L
+            ret.push({type:"L", pos:[getPos(), getPos()]});
+            break;
+          case 2:  // C
             ret.push({type:"C", pos:[getPos(), getPos(), getPos(), getPos(), getPos(), getPos()]});
             break;
-          case 2:  // Z
+          case 3:  // Z
             ret.push({type:"Z"});
             break;
           default:

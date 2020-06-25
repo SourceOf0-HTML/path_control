@@ -44,6 +44,10 @@ class PathObj {
         pos = matrix.applyToArray(d.pos, pathContainer.pathRatio);
         path2D.moveTo(pos[0], pos[1]);
         break;
+      case "L":
+        pos = matrix.applyToArray(d.pos, pathContainer.pathRatio);
+        path2D.lineTo(pos[0], pos[1]);
+        break;
       case "C":
         pos = matrix.applyToArray(d.pos, pathContainer.pathRatio);
         path2D.bezierCurveTo(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);

@@ -391,6 +391,10 @@ class PathObj {
         pos = matrix.applyToArray(d.pos, pathContainer.pathRatio);
         path2D.moveTo(pos[0], pos[1]);
         break;
+      case "L":
+        pos = matrix.applyToArray(d.pos, pathContainer.pathRatio);
+        path2D.lineTo(pos[0], pos[1]);
+        break;
       case "C":
         pos = matrix.applyToArray(d.pos, pathContainer.pathRatio);
         path2D.bezierCurveTo(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
@@ -592,6 +596,7 @@ class BoneObj extends GroupObj {
     this.flexi = [];
     this.feedback = false;
     this.strength = 0;
+    this.TWO_PI = Math.PI*2;
   };
   
   /**
@@ -645,6 +650,8 @@ class BoneObj extends GroupObj {
     let groupSprite = sprite.compSprite(this);
     this.paths.forEach(path=>{
       let path2D = new Path2D();
+      //let pos = groupSprite.matrix.applyToArray(path.pathDataList[0].pos, pathContainer.pathRatio);
+      //path.arc(pos[0], pos[1], 2, 0, this.TWO_PI);
       path.draw(pathContainer, groupSprite.matrix, context, path2D, false);
       path2D = null;
     });
@@ -821,10 +828,13 @@ var BinaryLoader = {
           case 0:  // M
             ret.push({type:"M", pos:[getPos(), getPos()]});
             break;
-          case 1:  // C
+          case 1:  // L
+            ret.push({type:"L", pos:[getPos(), getPos()]});
+            break;
+          case 2:  // C
             ret.push({type:"C", pos:[getPos(), getPos(), getPos(), getPos(), getPos(), getPos()]});
             break;
-          case 2:  // Z
+          case 3:  // Z
             ret.push({type:"Z"});
             break;
           default:
@@ -1113,6 +1123,109 @@ var SVGLoader = {
   },
   
   /**
+   * @param {String} dataAttribute - d attribute of path element
+   * @return {Array} - list of path data
+   */
+  makeBonePathDataList: function(dataAttribute) {
+    let ret = [];
+    
+    let data;
+    if(dataAttribute.indexOf(",") < 0) {
+      data = dataAttribute.split(/ /);
+    } else {
+      data = dataAttribute.replace(/([MCZ])/g,",$1,").replace(/[^,]-/g,",-").split(/[, ]/);
+    }
+    
+    let baseX = PathCtr.initTarget.originalWidth;
+    let baseY = PathCtr.initTarget.originalHeight;
+    let base = (baseX > baseY)? baseX : baseY;
+    let getX=()=>parseFloat(data.shift())/base;
+    let getY=()=>parseFloat(data.shift())/base;
+    
+    let posData = [];
+    while(data.length > 0 && posData.length < 3) {
+      let type = data.shift();
+      switch(type) {
+        case "M":
+          posData.push([getX(), getY()]);
+          break;
+        case "C":
+          data.shift();
+          data.shift();
+          data.shift();
+          data.shift();
+          posData.push([getX(), getY()]);
+          break;
+        case "":
+          // do nothing.
+          break;
+        default:
+          console.error("unknown type : " + type);
+          console.log(type);
+          break;
+      }
+    }
+    
+    let dist1X = posData[1][0] - posData[0][0];
+    let dist1Y = posData[1][1] - posData[0][1];
+    let dist1 = dist1X * dist1X + dist1Y * dist1Y;
+    
+    let dist2X = posData[2][0] - posData[0][0];
+    let dist2Y = posData[2][1] - posData[0][1];
+    let dist2 = dist2X * dist2X + dist2Y * dist2Y;
+    
+    if(dist1 > dist2) {
+      ret.push({type:"M", pos:[posData[0][0] + dist2X/2, posData[0][1] + dist2Y/2]});
+      ret.push({type:"L", pos:[posData[1][0], posData[1][1]]});
+    } else {
+      ret.push({type:"M", pos:[posData[0][0] + dist1X/2, posData[0][1] + dist1Y/2]});
+      ret.push({type:"L", pos:[posData[2][0], posData[2][1]]});
+    }
+    
+    return ret;
+  },
+  
+  /**
+   * @param {HTMLElement} pathDOM - path element
+   * @return {PathObj}
+   */
+  makeBonePath: function(pathDOM) {
+    return new PathObj(
+      this.makeBonePathDataList(pathDOM.getAttribute("d")),
+      this.getMaskId(pathDOM.getAttribute("mask")),
+      "nonzero",
+      "transparent",
+      2,
+      "rgb(0, 255, 0)",
+    );
+  },
+  
+  /**
+   * @param {PathObj} path
+   * @param {HTMLElement} pathDOM - path element
+   * @param {Integer} frame - frame number
+   * @param {Integer} actionID - action ID
+   */
+  addBoneActionPath: function(path, pathDOM, frame, actionID) {
+    let pathDataList = null;
+    if(!!pathDOM) {
+      pathDataList = this.makeBonePathDataList(pathDOM.getAttribute("d"));
+    } else {
+      pathDataList = path.pathDataList[0][0].concat();
+    }
+    
+    path.addAction(
+      pathDataList,
+      "nonzero",
+      "transparent",
+      2,
+      "rgb(0, 255, 0)",
+      frame,
+      actionID,
+    );
+  },
+  
+  /**
    * @param {HTMLElement} groupDOM - group element
    * @return {GroupObj}
    */
@@ -1121,13 +1234,18 @@ var SVGLoader = {
     let paths = [];
     let childGroups = [];
     let children = Array.prototype.slice.call(groupDOM.children);
+    let isBone = name.startsWith(PathCtr.defaultBoneName);
     
     children.forEach(child=>{
       let tagName = child.tagName;
       PathCtr.debugPrint("make group : " + name + " : " + tagName);
       switch(tagName) {
         case "path":
-          paths.push( this.makePath(child, window.getComputedStyle(child)) );
+          if(isBone) {
+            paths.push( this.makeBonePath(child) );
+          } else {
+            paths.push( this.makePath(child, window.getComputedStyle(child)) );
+          }
           break;
         case "mask":
           // do nothing.
@@ -1147,7 +1265,7 @@ var SVGLoader = {
     });
     
     let ret;
-    if(name.startsWith(PathCtr.defaultBoneName)) {
+    if(isBone) {
       ret = new BoneObj(
         name,
         paths,
@@ -1177,9 +1295,11 @@ var SVGLoader = {
    * @param {Integer} actionID - action ID
    */
   addActionGroup: function(groupDOM, name, frame, actionID) {
-    let targetGroup = PathCtr.initTarget.groups[PathCtr.initTarget.groupNameToIDList[name]];
+    let id = PathCtr.initTarget.groupNameToIDList[name];
+    let targetGroup = PathCtr.initTarget.groups[id];
     let childGroups = [];
     let dataIndex = 0;
+    let isBone = PathCtr.initTarget.bones.includes(id);
     
     if(!!groupDOM) {
       let children = Array.prototype.slice.call(groupDOM.children);
@@ -1187,7 +1307,11 @@ var SVGLoader = {
         let name = child.tagName;
         switch(name) {
           case "path":
-            this.addActionPath(targetGroup.paths[dataIndex++], child, window.getComputedStyle(child), frame, actionID);
+            if(isBone) {
+              this.addBoneActionPath(targetGroup.paths[dataIndex++], child, frame, actionID);
+            } else {
+              this.addActionPath(targetGroup.paths[dataIndex++], child, window.getComputedStyle(child), frame, actionID);
+            }
             break;
           case "mask":
           case "clipPath":
@@ -1490,14 +1614,19 @@ var SVGLoader = {
             setPos(d.pos[0]);
             setPos(d.pos[1]);
             break;
-          case "C":
+          case "L":
             setUint8(1);
+            setPos(d.pos[0]);
+            setPos(d.pos[1]);
+            break;
+          case "C":
+            setUint8(2);
             for(let i = 0; i < 6; ++i) {
               setPos(d.pos[i]);
             }
             break;
           case "Z":
-            setUint8(2);
+            setUint8(3);
             break;
           default:
             console.error("unknown type");
