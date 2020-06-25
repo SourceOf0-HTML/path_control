@@ -76,7 +76,7 @@ PathObj
 
 PathData
  type
-   M = 0, C = 1, Z = 2 : Uint8
+   M = 0, L = 1, C = 2, Z = 3 : Uint8
  pos
    Array : Float32Array ( length: M = 2, C = 6, Z = 0 )
 
