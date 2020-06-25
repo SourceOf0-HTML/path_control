@@ -56,7 +56,7 @@ class PathContainer extends Sprite {
    * @param {Integer} frame
    * @param {String} actionName
    */
-  draw(frame, actionName = PathCtr.defaultActionName) {
+  update(frame, actionName = PathCtr.defaultActionName) {
     if(!this.visible || !this.rootGroups) {
       return;
     }
@@ -75,10 +75,18 @@ class PathContainer extends Sprite {
       scaleY = 1;
     }
     
-    let getSprite=()=>(new Sprite().setSprite(this));
+    this.rootGroups.forEach(id=>{
+      this.groups[id].update(this, (new Sprite().setSprite(this)), false);
+    });
+  };
+  
+  draw() {
+    if(!this.visible || !this.rootGroups) {
+      return;
+    }
     
     this.rootGroups.forEach(id=>{
-      this.groups[id].draw(this, this.context, getSprite(), false);
+      this.groups[id].draw(this, this.context, false);
     });
   };
 };

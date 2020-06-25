@@ -124,8 +124,10 @@ var PathCtr = {
       canvas.width = subCanvas.width = this.viewWidth;
       canvas.height = subCanvas.height = this.viewHeight;
       
+      this.pathContainer.update(frameNumber);
+      
       this.subContext.clearRect(0, 0, this.viewWidth, this.viewHeight);
-      this.pathContainer.draw(frameNumber);
+      this.pathContainer.draw();
       frameNumber = (frameNumber + 1) % totalFrames;
       
       this.context.clearRect(0, 0, this.viewWidth, this.viewHeight);
@@ -144,14 +146,14 @@ var PathCtr = {
       }
     };
     
-    let update =()=> {
+    let timer =()=> {
       this.cancelRequestAnimation();
       this.requestAnimationIDs.push(window.requestAnimationFrame(draw));
-      this.setTimeoutIDs.push(window.setTimeout(update, fixFrameTime*1000));
+      this.setTimeoutIDs.push(window.setTimeout(timer, fixFrameTime*1000));
     };
     
     //this.debugPrint("base : ", frameTime, frameTime * 10, frameTime * 0.1);
-    this.setTimeoutIDs.push(window.setTimeout(update, fixFrameTime*1000));
+    this.setTimeoutIDs.push(window.setTimeout(timer, fixFrameTime*1000));
   },
 };
 

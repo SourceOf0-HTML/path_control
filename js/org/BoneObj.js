@@ -45,9 +45,8 @@ class BoneObj extends GroupObj {
   /**
    * @param {PathContainer} pathContainer
    * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
-   * @param {Sprite} sprite - used to transform the path
    */
-  draw(pathContainer, context, sprite) {
+  draw(pathContainer, context) {
     if(!context) {
       console.error("context is not found");
       return;
@@ -56,15 +55,16 @@ class BoneObj extends GroupObj {
       return;
     }
     
-    let groupSprite = sprite.compSprite(this);
     this.paths.forEach(path=>{
       let path2D = new Path2D();
-      path.draw(pathContainer, groupSprite.matrix, context, path2D, false);
+      let pos = path.resultPath.pathData[0].pos;
+      path2D.arc(pos[0], pos[1], 2, 0, Math.PI*2);
+      path.draw(pathContainer, context, path2D, false);
       path2D = null;
     });
     
     this.getChildGroups().forEach(childGroup=>{
-      pathContainer.groups[childGroup].draw(pathContainer, context, groupSprite, false);
+      pathContainer.groups[childGroup].draw(pathContainer, context, false);
     });
   };
 };

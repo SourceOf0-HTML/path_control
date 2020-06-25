@@ -8,6 +8,7 @@ class PathObj {
     this.lineWidth = lineWidth;        // strokeWidth ( context2D.lineWidth )
     this.strokeStyle = strokeStyle;    // strokeColor ( context2D.strokeStyle )
     this.hasActionList = [];           // if true, have action
+    this.resultPath = {};              // path data for drawing
   };
   
   addAction(pathDataList, fillRule, fillStyle, lineWidth, strokeStyle, frame, actionID) {
@@ -34,84 +35,89 @@ class PathObj {
   /**
    * @param {PathContainer} pathContainer
    * @param {Matrix} matrix - used to transform the path
-   * @param {Path2D} path2D
-   * @param {PathData} d
    */
-  drawPath(pathContainer, matrix, path2D, d) {
-    let pos;
-    switch(d.type) {
-      case "M":
-        pos = matrix.applyToArray(d.pos, pathContainer.pathRatio);
-        path2D.moveTo(pos[0], pos[1]);
-        break;
-      case "L":
-        pos = matrix.applyToArray(d.pos, pathContainer.pathRatio);
-        path2D.lineTo(pos[0], pos[1]);
-        break;
-      case "C":
-        pos = matrix.applyToArray(d.pos, pathContainer.pathRatio);
-        path2D.bezierCurveTo(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
-        break;
-      case "Z":
-        path2D.closePath();
-        break;
-      default:
-        console.error("unknown type");
-        break;
-    }
-  };
-  
-  /**
-   * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
-   * @param {Path2D} path2D
-   * @param {Number} lineWidth - strokeWidth ( context2D.lineWidth )
-   * @param {String} strokeStyle - strokeColor ( context2D.strokeStyle )
-   */
-  drawStroke(context, path2D, lineWidth, strokeStyle) {
-    if( !lineWidth ) return;
-    context.lineJoin = "round";
-    context.lineCap = "round";
-    context.lineWidth = lineWidth;
-    context.strokeStyle = strokeStyle;
-    context.stroke(path2D);
-  };
-  
-  /**
-   * @param {CanvasRenderingContext2D} context -  canvas.getContext("2d")
-   * @param {Path2D} path2D
-   * @param {String} fillStyle - strokeColor ( context2D.strokeStyle )
-   */
-  drawFill(context, path2D, fillStyle) {
-    context.fillStyle = fillStyle;
-    context.fill(path2D, this.fillRule);
-  };
-  
-  /**
-   * @param {PathContainer} pathContainer
-   * @param {Matrix} matrix - used to transform the path
-   * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
-   * @param {Path2D} path2D
-   * @param {Boolean} isMask - when true, draw as a mask
-   */
-  draw(pathContainer, matrix, context, path2D, isMask) {
+  update(pathContainer, matrix) {
     let actionID = PathCtr.currentActionID;
     let frame = PathCtr.currentFrame;
+    let updatePath =d=> {
+      let pos;
+      switch(d.type) {
+        case "M":
+          this.resultPath.pathData.push({type:"M", pos:matrix.applyToArray(d.pos, pathContainer.pathRatio)});
+          break;
+        case "L":
+          this.resultPath.pathData.push({type:"L", pos:matrix.applyToArray(d.pos, pathContainer.pathRatio)});
+          break;
+        case "C":
+          this.resultPath.pathData.push({type:"C", pos:matrix.applyToArray(d.pos, pathContainer.pathRatio)});
+          break;
+        case "Z":
+          this.resultPath.pathData.push({type:"Z"});
+          break;
+        default:
+          console.error("unknown type");
+          break;
+      }
+    };
+    
+    this.resultPath = {
+      pathData: []
+    };
     
     if( this.hasActionList.length == 0) {
-      this.pathDataList.forEach(d=>this.drawPath(matrix, path2D, d));
-      if(isMask) return;
-      this.drawStroke(context, path2D, this.lineWidth, this.strokeStyle);
-      this.drawFill(context, path2D, this.fillStyle);
+      this.pathDataList.forEach(updatePath);
+      this.resultPath.lineWidth = this.lineWidth;
+      this.resultPath.strokeStyle = this.strokeStyle;
+      this.resultPath.fillStyle = this.fillStyle;
       return;
     } else if( !this.hasActionList[actionID] ) {
       actionID = 0;
       frame = 0;
     }
     
-    this.pathDataList[actionID][Math.min(frame, this.pathDataList[actionID].length)].forEach(d=>this.drawPath(pathContainer, matrix, path2D, d));
+    this.pathDataList[actionID][Math.min(frame, this.pathDataList[actionID].length)].forEach(updatePath);
+    this.resultPath.lineWidth = this.lineWidth[actionID][Math.min(frame, this.lineWidth[actionID].length)];
+    this.resultPath.strokeStyle = this.strokeStyle[actionID][Math.min(frame, this.strokeStyle[actionID].length)];
+    this.resultPath.fillStyle = this.fillStyle[actionID][Math.min(frame, this.fillStyle[actionID].length)];
+  };
+  
+  /**
+   * @param {PathContainer} pathContainer
+   * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
+   * @param {Path2D} path2D
+   * @param {Boolean} isMask - when true, draw as a mask
+   */
+  draw(pathContainer, context, path2D, isMask) {
+    this.resultPath.pathData.forEach(d=>{
+      let pos = d.pos;
+      switch(d.type) {
+        case "M":
+          path2D.moveTo(pos[0], pos[1]);
+          break;
+        case "L":
+          path2D.lineTo(pos[0], pos[1]);
+          break;
+        case "C":
+          path2D.bezierCurveTo(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
+          break;
+        case "Z":
+          path2D.closePath();
+          break;
+        default:
+          console.error("unknown type");
+          break;
+      }
+    });
     if(isMask) return;
-    this.drawStroke(context, path2D, this.lineWidth[actionID][Math.min(frame, this.lineWidth[actionID].length)], this.strokeStyle[actionID][Math.min(frame, this.strokeStyle[actionID].length)]);
-    this.drawFill(context, path2D, this.fillStyle[actionID][Math.min(frame, this.fillStyle[actionID].length)]);
+    if(!!this.resultPath.lineWidth) {
+      context.lineJoin = "round";
+      context.lineCap = "round";
+      context.lineWidth = this.resultPath.lineWidth;
+      context.strokeStyle = this.resultPath.strokeStyle;
+      context.stroke(path2D);
+    }
+    context.fillStyle = this.resultPath.fillStyle;
+    context.fill(path2D, this.fillRule);
   };
 };
 

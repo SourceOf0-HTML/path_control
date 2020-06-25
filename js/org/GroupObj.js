@@ -48,13 +48,29 @@ class GroupObj extends Sprite {
     return this.childGroups[actionID][PathCtr.currentFrame];
   };
   
+  
+  /**
+   * @param {PathContainer} pathContainer
+   * @param {Sprite} sprite - used to transform the path
+   */
+  update(pathContainer, sprite) {
+    let groupSprite = sprite.compSprite(this);
+    
+    this.paths.forEach(path=>{
+      path.update(pathContainer, groupSprite.matrix);
+    });
+    
+    this.getChildGroups().forEach(childGroup=>{
+      pathContainer.groups[childGroup].update(pathContainer, groupSprite);
+    });
+  };
+  
   /**
    * @param {PathContainer} pathContainer
    * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
    * @param {Boolean} isMask - when true, draw as a mask
-   * @param {Sprite} sprite - used to transform the path
    */
-  draw(pathContainer, context, sprite, isMask) {
+  draw(pathContainer, context, isMask) {
     if(!context) {
       console.error("context is not found");
       return;
@@ -64,14 +80,13 @@ class GroupObj extends Sprite {
     }
     
     let isFoundMask = false;
-    let groupSprite = sprite.compSprite(this);
     
     if(!isMask && !!this.maskIdToUse) {
       let mask = pathContainer.groups[this.maskIdToUse];
       if(!!mask) {
         isFoundMask = true;
         context.save();
-        mask.draw(pathContainer, context, groupSprite, true);
+        mask.draw(pathContainer, context, true);
       } else {
         console.error("group is not found : " + this.maskIdToUse);
       }
@@ -91,7 +106,7 @@ class GroupObj extends Sprite {
         if(!!maskPath) {
           isFoundMaskPath = true;
           context.save();
-          maskPath.draw(pathContainer, context, groupSprite, true);
+          maskPath.draw(pathContainer, context, true);
         } else {
           console.error("mask is not found : " + path.maskIdToUse);
         }
@@ -101,7 +116,7 @@ class GroupObj extends Sprite {
         path2D = new Path2D();
       }
       
-      path.draw(pathContainer, groupSprite.matrix, context, path2D, isMask);
+      path.draw(pathContainer, context, path2D, isMask);
       
       if(isFoundMaskPath) {
         context.restore();
@@ -109,7 +124,7 @@ class GroupObj extends Sprite {
     });
     
     this.getChildGroups().forEach(childGroup=>{
-      pathContainer.groups[childGroup].draw(pathContainer, context, groupSprite, isMask);
+      pathContainer.groups[childGroup].draw(pathContainer, context, isMask);
     });
     
     if(isMask && isUsed) {

@@ -43,6 +43,12 @@ PathObj (no action data)
   lineWidth = lineWidth;        // strokeWidth ( context2D.lineWidth )
   strokeStyle = strokeStyle;    // strokeColor ( context2D.strokeStyle )
   pathDataList = pathDataList;  // path data array
+  this.resultPath = {           // path data for drawing
+    pathData: [],
+    fillStyle: fillStyle,
+    lineWidth: lineWidth,
+    strokeStyle: strokeStyle,
+  };
 
 
 PathObj (after add action data)
