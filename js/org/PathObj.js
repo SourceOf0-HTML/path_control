@@ -56,16 +56,15 @@ class PathObj {
     let actionID = PathCtr.currentActionID;
     let frame = PathCtr.currentFrame;
     let updatePath =d=> {
-      let pos;
       switch(d.type) {
         case "M":
-          this.resultPath.pathData.push({type:"M", pos:matrix.applyToArray(d.pos, pathContainer.pathRatio)});
+          this.resultPath.pathData.push({type:"M", pos:matrix.applyToArray(d.pos)});
           break;
         case "L":
-          this.resultPath.pathData.push({type:"L", pos:matrix.applyToArray(d.pos, pathContainer.pathRatio)});
+          this.resultPath.pathData.push({type:"L", pos:matrix.applyToArray(d.pos)});
           break;
         case "C":
-          this.resultPath.pathData.push({type:"C", pos:matrix.applyToArray(d.pos, pathContainer.pathRatio)});
+          this.resultPath.pathData.push({type:"C", pos:matrix.applyToArray(d.pos)});
           break;
         case "Z":
           this.resultPath.pathData.push({type:"Z"});
@@ -106,15 +105,16 @@ class PathObj {
   draw(pathContainer, context, path2D, isMask) {
     this.resultPath.pathData.forEach(d=>{
       let pos = d.pos;
+      let ratio = pathContainer.pathRatio;
       switch(d.type) {
         case "M":
-          path2D.moveTo(pos[0], pos[1]);
+          path2D.moveTo(pos[0]*ratio, pos[1]*ratio);
           break;
         case "L":
-          path2D.lineTo(pos[0], pos[1]);
+          path2D.lineTo(pos[0]*ratio, pos[1]*ratio);
           break;
         case "C":
-          path2D.bezierCurveTo(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
+          path2D.bezierCurveTo(pos[0]*ratio, pos[1]*ratio, pos[2]*ratio, pos[3]*ratio, pos[4]*ratio, pos[5]*ratio);
           break;
         case "Z":
           path2D.closePath();

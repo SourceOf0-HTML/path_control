@@ -405,16 +405,15 @@ class PathObj {
     let actionID = PathCtr.currentActionID;
     let frame = PathCtr.currentFrame;
     let updatePath =d=> {
-      let pos;
       switch(d.type) {
         case "M":
-          this.resultPath.pathData.push({type:"M", pos:matrix.applyToArray(d.pos, pathContainer.pathRatio)});
+          this.resultPath.pathData.push({type:"M", pos:matrix.applyToArray(d.pos)});
           break;
         case "L":
-          this.resultPath.pathData.push({type:"L", pos:matrix.applyToArray(d.pos, pathContainer.pathRatio)});
+          this.resultPath.pathData.push({type:"L", pos:matrix.applyToArray(d.pos)});
           break;
         case "C":
-          this.resultPath.pathData.push({type:"C", pos:matrix.applyToArray(d.pos, pathContainer.pathRatio)});
+          this.resultPath.pathData.push({type:"C", pos:matrix.applyToArray(d.pos)});
           break;
         case "Z":
           this.resultPath.pathData.push({type:"Z"});
@@ -455,15 +454,16 @@ class PathObj {
   draw(pathContainer, context, path2D, isMask) {
     this.resultPath.pathData.forEach(d=>{
       let pos = d.pos;
+      let ratio = pathContainer.pathRatio;
       switch(d.type) {
         case "M":
-          path2D.moveTo(pos[0], pos[1]);
+          path2D.moveTo(pos[0]*ratio, pos[1]*ratio);
           break;
         case "L":
-          path2D.lineTo(pos[0], pos[1]);
+          path2D.lineTo(pos[0]*ratio, pos[1]*ratio);
           break;
         case "C":
-          path2D.bezierCurveTo(pos[0], pos[1], pos[2], pos[3], pos[4], pos[5]);
+          path2D.bezierCurveTo(pos[0]*ratio, pos[1]*ratio, pos[2]*ratio, pos[3]*ratio, pos[4]*ratio, pos[5]*ratio);
           break;
         case "Z":
           path2D.closePath();
@@ -697,7 +697,9 @@ class BoneObj extends GroupObj {
     this.paths.forEach(path=>{
       let path2D = new Path2D();
       let pos = path.resultPath.pathData[0].pos;
-      path2D.arc(pos[0], pos[1], 2, 0, Math.PI*2);
+      let ratio = pathContainer.pathRatio;
+      
+      path2D.arc(pos[0]*ratio, pos[1]*ratio, 2, 0, Math.PI*2);
       path.draw(pathContainer, context, path2D, false);
       path2D = null;
     });
@@ -773,17 +775,6 @@ class PathContainer extends Sprite {
     
     PathCtr.currentFrame = frame;
     PathCtr.currentActionID = Object.keys(this.actionList).indexOf(actionName);
-    
-    let width = this.displayWidth;
-    let height = this.displayHeight;
-    let scaleX, scaleY;
-    if(width > height) {
-      scaleX = 1;
-      scaleY = height / width;
-    } else {
-      scaleX = width / height;
-      scaleY = 1;
-    }
     
     this.rootGroups.forEach(id=>{
       this.groups[id].update(this, (new Sprite().setSprite(this)), false);

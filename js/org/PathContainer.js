@@ -64,17 +64,6 @@ class PathContainer extends Sprite {
     PathCtr.currentFrame = frame;
     PathCtr.currentActionID = Object.keys(this.actionList).indexOf(actionName);
     
-    let width = this.displayWidth;
-    let height = this.displayHeight;
-    let scaleX, scaleY;
-    if(width > height) {
-      scaleX = 1;
-      scaleY = height / width;
-    } else {
-      scaleX = width / height;
-      scaleY = 1;
-    }
-    
     this.rootGroups.forEach(id=>{
       this.groups[id].update(this, (new Sprite().setSprite(this)), false);
     });
