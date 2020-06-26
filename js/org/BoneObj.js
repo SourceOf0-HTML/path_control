@@ -6,6 +6,16 @@ class BoneObj extends GroupObj {
     this.flexi = [];
     this.feedback = false;
     this.strength = 0;
+    
+    if(!!paths && paths.length > 0) {
+      let pathDataList = paths[0].getPathDataList();
+      this.defPos = {
+        x1: pathDataList[0].pos[0],
+        y1: pathDataList[0].pos[1],
+        x2: pathDataList[1].pos[0],
+        y2: pathDataList[1].pos[1],
+      };
+    }
   };
   
   /**

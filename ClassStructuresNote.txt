@@ -13,19 +13,12 @@ PathContainer
   actionList = { actionName : { id : actionID, totalFrames : totalFrames } };  // action info list
 
 
-BoneObj
-  this.parentID = id; // parent bone id
-  this.flexi = [ id, ... ];  // ID of a flexi-bonded target
-  this.feedback = receiveFeedback;  // receive feedback from other bones
-  this.strength = 0;  // scope of influence of bone
-
 GroupObj (no action data)
   id = id;   // g tag ID
   maskIdToUse = maskIdToUse;  // ID of the mask to use
   paths = [<PathObj>, ... ];  // list of PathObj
   hasActionList = [];   // if true, have action
   childGroups = [groupID, ... ];   // list of group id
-
 
 GroupObj (after add action data)
   id = id;   // g tag ID
@@ -50,7 +43,6 @@ PathObj (no action data)
     strokeStyle: strokeStyle,
   };
 
-
 PathObj (after add action data)
   maskIdToUse = maskIdToUse;    // ID of the mask to use
   fillRule = fillRule;          // "nonzero" or "evenodd"
@@ -59,4 +51,13 @@ PathObj (after add action data)
   lineWidth = [actionID, ... ][frame, ... ] = lineWidth;        // strokeWidth ( context2D.lineWidth )
   strokeStyle = [actionID, ... ][frame, ... ] = strokeStyle;    // strokeColor ( context2D.strokeStyle )
   pathDataList = [actionID, ... ][frame, ... ] = pathDataList;  // path data array
+
+
+BoneObj - extends GroupObj
+  this.parentID = id; // parent bone id
+  this.flexi = [ id, ... ];  // ID of a flexi-bonded target
+  this.feedback = receiveFeedback;  // receive feedback from other bones
+  this.strength = 0;  // scope of influence of bone
+  this.defPos = { x1, y1, x2, y2 }  // default bone pos
+
 

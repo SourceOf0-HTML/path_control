@@ -33,6 +33,22 @@ class PathObj {
   };
   
   /**
+   * @param {Integer} frame - frame number
+   * @param {Integer} actionID - action ID
+   * @return {Array} - pathDataList
+   */
+  getPathDataList(frame = 0, actionID = 0) {
+    if( this.hasActionList.length == 0 ) {
+      return this.pathDataList;
+    }
+    if( !this.hasActionList[actionID] ) {
+      actionID = 0;
+      frame = 0;
+    }
+    return this.pathDataList[actionID][Math.min(frame, this.pathDataList[actionID].length)];
+  };
+  
+  /**
    * @param {PathContainer} pathContainer
    * @param {Matrix} matrix - used to transform the path
    */

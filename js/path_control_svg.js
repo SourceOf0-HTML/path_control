@@ -357,7 +357,6 @@ class PathObj {
     this.lineWidth = lineWidth;        // strokeWidth ( context2D.lineWidth )
     this.strokeStyle = strokeStyle;    // strokeColor ( context2D.strokeStyle )
     this.hasActionList = [];           // if true, have action
-    
     this.resultPath = {};              // path data for drawing
   };
   
@@ -380,6 +379,22 @@ class PathObj {
     this.fillStyle[actionID][frame] = fillStyle;
     this.lineWidth[actionID][frame] = lineWidth;
     this.strokeStyle[actionID][frame] = strokeStyle;
+  };
+  
+  /**
+   * @param {Integer} frame - frame number
+   * @param {Integer} actionID - action ID
+   * @return {Array} - pathDataList
+   */
+  getPathDataList(frame = 0, actionID = 0) {
+    if( this.hasActionList.length == 0 ) {
+      return this.pathDataList;
+    }
+    if( !this.hasActionList[actionID] ) {
+      actionID = 0;
+      frame = 0;
+    }
+    return this.pathDataList[actionID][Math.min(frame, this.pathDataList[actionID].length)];
   };
   
   /**
@@ -620,6 +635,16 @@ class BoneObj extends GroupObj {
     this.flexi = [];
     this.feedback = false;
     this.strength = 0;
+    
+    if(!!paths && paths.length > 0) {
+      let pathDataList = paths[0].getPathDataList();
+      this.defPos = {
+        x1: pathDataList[0].pos[0],
+        y1: pathDataList[0].pos[1],
+        x2: pathDataList[1].pos[0],
+        y2: pathDataList[1].pos[1],
+      };
+    }
   };
   
   /**
