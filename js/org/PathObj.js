@@ -54,7 +54,7 @@ class PathObj {
    * @param {PathContainer} pathContainer
    * @param {Matrix} matrix - used to transform the path
    */
-  update(actionID, frame, pathContainer, matrix) {
+  update(frame, actionID, pathContainer, matrix) {
     let updatePath =d=> {
       switch(d.type) {
         case "M":

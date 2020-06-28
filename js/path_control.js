@@ -428,7 +428,7 @@ class PathObj {
    * @param {PathContainer} pathContainer
    * @param {Matrix} matrix - used to transform the path
    */
-  update(actionID, frame, pathContainer, matrix) {
+  update(frame, actionID, pathContainer, matrix) {
     let updatePath =d=> {
       switch(d.type) {
         case "M":
@@ -544,21 +544,19 @@ class GroupObj extends Sprite {
   };
   
   /**
+   * @param {Integer} frame - frame number
+   * @param {Integer} actionID - action ID
    * @return {Array} - group id array
    */
-  getChildGroups() {
+  getChildGroups(frame, actionID) {
     if( this.childGroups.length == 0 ) return this.childGroups;
     if( this.hasActionList.length == 0 ) {
       return this.childGroups;
     }
-    
-    let actionID = PathCtr.currentActionID;
-    
-    if( this.childGroups[actionID] == null || this.childGroups[actionID][PathCtr.currentFrame] == null ) {
+    if( this.childGroups[actionID] == null || this.childGroups[actionID][frame] == null ) {
       return this.childGroups[0][0];
     }
-    
-    return this.childGroups[actionID][PathCtr.currentFrame];
+    return this.childGroups[actionID][frame];
   };
   
   /**
@@ -573,13 +571,13 @@ class GroupObj extends Sprite {
    * @param {Sprite} sprite - used to transform the path
    */
   update(pathContainer, sprite) {
+    let actionID = PathCtr.currentActionID;
+    let frame = PathCtr.currentFrame;
     let groupSprite = sprite.compSprite(this);
     this.paths.forEach(path=>{
-      let actionID = PathCtr.currentActionID;
-      let frame = PathCtr.currentFrame;
-      path.update(actionID, frame, pathContainer, groupSprite.matrix);
+      path.update(frame, actionID, pathContainer, groupSprite.matrix);
     });
-    this.getChildGroups().forEach(childGroup=>{
+    this.getChildGroups(frame, actionID).forEach(childGroup=>{
       pathContainer.groups[childGroup].update(pathContainer, groupSprite);
     });
   };
@@ -642,7 +640,9 @@ class GroupObj extends Sprite {
       }
     });
     
-    this.getChildGroups().forEach(childGroup=>{
+    let actionID = PathCtr.currentActionID;
+    let frame = PathCtr.currentFrame;
+    this.getChildGroups(frame, actionID).forEach(childGroup=>{
       pathContainer.groups[childGroup].draw(pathContainer, context, isMask);
     });
     
@@ -724,8 +724,6 @@ class BoneObj extends GroupObj {
     
     if(!this.defState) return;
     
-    this.effectState.reset();
-    
     let pathDataList = this.paths[0].getPathDataList(PathCtr.currentFrame, PathCtr.currentActionID);
     if(pathDataList.length == 2) {
       let defX = this.defState.x;
@@ -781,7 +779,9 @@ class BoneObj extends GroupObj {
       path2D = null;
     });
     
-    this.getChildGroups().forEach(childGroup=>{
+    let actionID = PathCtr.currentActionID;
+    let frame = PathCtr.currentFrame;
+    this.getChildGroups(frame, actionID).forEach(childGroup=>{
       pathContainer.groups[childGroup].draw(pathContainer, context, false);
     });
   };

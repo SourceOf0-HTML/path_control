@@ -64,8 +64,6 @@ class BoneObj extends GroupObj {
     
     if(!this.defState) return;
     
-    this.effectState.reset();
-    
     let pathDataList = this.paths[0].getPathDataList(PathCtr.currentFrame, PathCtr.currentActionID);
     if(pathDataList.length == 2) {
       let defX = this.defState.x;
@@ -121,7 +119,9 @@ class BoneObj extends GroupObj {
       path2D = null;
     });
     
-    this.getChildGroups().forEach(childGroup=>{
+    let actionID = PathCtr.currentActionID;
+    let frame = PathCtr.currentFrame;
+    this.getChildGroups(frame, actionID).forEach(childGroup=>{
       pathContainer.groups[childGroup].draw(pathContainer, context, false);
     });
   };
