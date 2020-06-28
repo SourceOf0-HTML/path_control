@@ -48,6 +48,12 @@ class GroupObj extends Sprite {
     return this.childGroups[actionID][PathCtr.currentFrame];
   };
   
+  /**
+   * @param {PathContainer} pathContainer
+   */
+  preprocessing(pathContainer) {
+    this.reset();
+  };
   
   /**
    * @param {PathContainer} pathContainer
@@ -55,11 +61,11 @@ class GroupObj extends Sprite {
    */
   update(pathContainer, sprite) {
     let groupSprite = sprite.compSprite(this);
-    
     this.paths.forEach(path=>{
-      path.update(pathContainer, groupSprite.matrix);
+      let actionID = PathCtr.currentActionID;
+      let frame = PathCtr.currentFrame;
+      path.update(actionID, frame, pathContainer, groupSprite.matrix);
     });
-    
     this.getChildGroups().forEach(childGroup=>{
       pathContainer.groups[childGroup].update(pathContainer, groupSprite);
     });

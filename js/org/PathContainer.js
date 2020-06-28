@@ -64,6 +64,12 @@ class PathContainer extends Sprite {
     PathCtr.currentFrame = frame;
     PathCtr.currentActionID = Object.keys(this.actionList).indexOf(actionName);
     
+    this.groups.forEach(group=>{
+      group.preprocessing(this);
+    });
+    this.bones.forEach(id=>{
+      this.groups[id].calc(this);
+    });
     this.rootGroups.forEach(id=>{
       this.groups[id].update(this, (new Sprite().setSprite(this)), false);
     });

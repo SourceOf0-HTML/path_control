@@ -11,6 +11,16 @@ class Sprite {
     this.rotation = 0;
   };
   
+  reset() {
+    this.x = 0;
+    this.y = 0;
+    this.anchorX = 0;
+    this.anchorY = 0;
+    this.scaleX = 1;
+    this.scaleY = 1;
+    this.rotation = 0;
+  };
+  
   /**
    * @param {Sprite} s
    * @return {Sprite}
@@ -22,6 +32,21 @@ class Sprite {
     this.anchorY = sprite.anchorY;
     this.scaleX = sprite.scaleX;
     this.scaleY = sprite.scaleY;
+    this.rotation = sprite.rotation;
+    return this;
+  };
+  
+  /**
+   * @param {Sprite} s
+   * @return {Sprite}
+   */
+  addSprite(sprite) {
+    this.x +=sprite.x;
+    this.y += sprite.y;
+    this.anchorX += sprite.anchorX;
+    this.anchorY += sprite.anchorY;
+    this.scaleX *= sprite.scaleX;
+    this.scaleY *= sprite.scaleY;
     this.rotation = sprite.rotation;
     return this;
   };

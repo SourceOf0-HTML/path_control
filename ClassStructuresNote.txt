@@ -58,6 +58,6 @@ BoneObj - extends GroupObj
   this.flexi = [ id, ... ];  // ID of a flexi-bonded target
   this.feedback = receiveFeedback;  // receive feedback from other bones
   this.strength = 0;  // scope of influence of bone
-  this.defPos = { x1, y1, x2, y2 }  // default bone pos
+  this.defState = { x0, y0, x1, y1, angle }  // default bone state
 
 

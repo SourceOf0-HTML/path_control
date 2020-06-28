@@ -49,12 +49,12 @@ class PathObj {
   };
   
   /**
+   * @param {Integer} frame - frame number
+   * @param {Integer} actionID - action ID
    * @param {PathContainer} pathContainer
    * @param {Matrix} matrix - used to transform the path
    */
-  update(pathContainer, matrix) {
-    let actionID = PathCtr.currentActionID;
-    let frame = PathCtr.currentFrame;
+  update(actionID, frame, pathContainer, matrix) {
     let updatePath =d=> {
       switch(d.type) {
         case "M":

@@ -6,14 +6,18 @@ class BoneObj extends GroupObj {
     this.flexi = [];
     this.feedback = false;
     this.strength = 0;
+    this.effectState = new Sprite();
     
     if(!!paths && paths.length > 0) {
       let pathDataList = paths[0].getPathDataList();
-      this.defPos = {
-        x1: pathDataList[0].pos[0],
-        y1: pathDataList[0].pos[1],
-        x2: pathDataList[1].pos[0],
-        y2: pathDataList[1].pos[1],
+      let x0 = pathDataList[0].pos[0];
+      let y0 = pathDataList[0].pos[1];
+      let x1 = pathDataList[1].pos[0];
+      let y1 = pathDataList[1].pos[1];
+      this.defState = {
+        x0, y0,
+        x1, y1,
+        angle: Math.atan2(y1-y0, x1-x0),
       };
     }
   };
@@ -54,6 +58,49 @@ class BoneObj extends GroupObj {
   
   /**
    * @param {PathContainer} pathContainer
+   */
+  preprocessing(pathContainer) {
+    this.reset();
+    
+    if(!this.defState) return;
+    
+    this.effectState.reset();
+    
+    let pathDataList = this.paths[0].getPathDataList(PathCtr.currentFrame, PathCtr.currentActionID);
+    if(pathDataList.length == 2) {
+      let defX = this.defState.x;
+      let defY = this.defState.y;
+      let x0 = pathDataList[0].pos[0];
+      let y0 = pathDataList[0].pos[1];
+      let x1 = pathDataList[1].pos[0];
+      let y1 = pathDataList[1].pos[1];
+      this.effectState.x = x0;
+      this.effectState.y = y0;
+      this.effectState.anchorX = this.defState.x0;
+      this.effectState.anchorY = this.defState.y0;
+      this.effectState.rotation = Math.atan2(y1-y0, x1-x0) - this.defState.angle;
+    }
+  };
+  
+  /**
+   * @param {PathContainer} pathContainer
+   */
+  calc(pathContainer) {
+    if(!this.defState) return;
+    
+    if(this.parentID >= 0) {
+      let group = pathContainer.groups[this.parentID];
+      this.addSprite(group.effectState);
+    }
+    
+    this.flexi.forEach(id=>{
+      let group = pathContainer.groups[id];
+      group.addSprite(this.effectState);
+    });
+  };
+  
+  /**
+   * @param {PathContainer} pathContainer
    * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
    */
   draw(pathContainer, context) {
@@ -68,7 +115,8 @@ class BoneObj extends GroupObj {
     this.paths.forEach(path=>{
       let path2D = new Path2D();
       let pos = path.resultPath.pathData[0].pos;
-      path2D.arc(pos[0], pos[1], 2, 0, Math.PI*2);
+      let ratio = pathContainer.pathRatio;
+      path2D.arc(pos[0]*ratio, pos[1]*ratio, 2, 0, Math.PI*2);
       path.draw(pathContainer, context, path2D, false);
       path2D = null;
     });
