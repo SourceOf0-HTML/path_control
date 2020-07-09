@@ -6,7 +6,7 @@ function setPathContainer() {
   }
 }
 
-BinaryLoader.load("./src/path_data.bin", setPathContainer);
+BinaryLoader.load("./resource/path_data.bin", setPathContainer);
 
 window.addEventListener("load", function() {
   PathCtr.init();

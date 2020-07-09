@@ -1,0 +1,73 @@
+{
+  "bones": {
+    "bone1_clothes": {
+      "parent": "",
+      "strength": 0.05
+    },
+    
+    "bone2_clothes": {
+      "parent": "bone1_clothes",
+      "strength": 0.05
+    },
+    
+    "bone3_neck": {
+      "parent": "bone2_clothes",
+      "strength": 0.05
+    },
+    
+    "bone4_head": {
+      "parent": "bone3_neck",
+      "strength": 0.1
+    },
+    
+    "bone5_left_arm": {
+      "parent": "bone2_clothes",
+      "strength": 0.05
+    },
+    
+    "bone6_left_arm": {
+      "parent": "bone5_left_arm",
+      "strength": 0.05
+    },
+    
+    "bone7_right_arm": {
+      "parent": "bone2_clothes",
+      "strength": 0.05
+    },
+    
+    "bone8_right_arm": {
+      "parent": "bone7_right_arm",
+      "strength": 0.05
+    },
+    
+    "bone9_left_leg": {
+      "parent": "bone1_clothes",
+      "isParentPin": true,
+      "strength": 0.05
+    },
+    
+    "bone10_right_leg": {
+      "parent": "bone1_clothes",
+      "isParentPin": true,
+      "strength": 0.05
+    },
+    
+    "bone11_hair": {
+      "parent": "bone4_head",
+      "strength": 0.05
+    }
+  },
+  
+  "flexi": {
+    "clothes": ["bone1_clothes", "bone2_clothes"],
+    "jacket": ["bone1_clothes", "bone2_clothes"],
+    "neck": ["bone3_neck"],
+    "layer_head": ["bone4_head"],
+    "hat_brim": ["bone4_head"],
+    "left_arm": ["bone5_left_arm", "bone6_left_arm"],
+    "right_arm": ["bone7_right_arm", "bone8_right_arm"],
+    "layer_left_leg": ["bone9_left_leg"],
+    "layer_right_leg": ["bone10_right_leg"],
+    "hair": ["bone11_hair"]
+  }
+}
