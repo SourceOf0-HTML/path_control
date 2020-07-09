@@ -9,12 +9,12 @@ type org\GroupObj.js >> %OUTPUT_FILE%
 type org\BoneObj.js >> %OUTPUT_FILE%
 type org\PathContainer.js >> %OUTPUT_FILE%
 type org\BinaryLoader.js >> %OUTPUT_FILE%
+type org\BoneLoader.js >> %OUTPUT_FILE%
 
 set SVG_FILE=path_control_svg.js
 del %SVG_FILE%
 type %OUTPUT_FILE% >> %SVG_FILE%
 type org\SVGLoader.js >> %SVG_FILE%
-type org\BoneLoader.js >> %SVG_FILE%
 
 set DEBUG_FILE=path_control_debug.js
 del %DEBUG_FILE%

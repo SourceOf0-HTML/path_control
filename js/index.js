@@ -1,5 +1,5 @@
 function setPathContainer() {
-  PathCtr.pathContainer.x = 0.3;
+  BoneLoader.load("./resource/bones.json", PathCtr.pathContainer);
   
   if(typeof DebugPath !== "undefined") {
     DebugPath.addEvents(PathCtr.pathContainer);
