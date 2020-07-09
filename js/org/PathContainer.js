@@ -64,14 +64,14 @@ class PathContainer extends Sprite {
     PathCtr.currentFrame = frame;
     PathCtr.currentActionID = Object.keys(this.actionList).indexOf(actionName);
     
+    this.bones.forEach(id=>{
+      this.groups[id].control(this);
+    });
     this.groups.forEach(group=>{
       group.preprocessing(this);
     });
-    this.bones.forEach(id=>{
-      this.groups[id].calc(this);
-    });
     this.rootGroups.forEach(id=>{
-      this.groups[id].update(this, (new Sprite().setSprite(this)), false);
+      this.groups[id].update(this, (new Sprite().setSprite(this)));
     });
   };
   
@@ -79,10 +79,20 @@ class PathContainer extends Sprite {
     if(!this.visible || !this.rootGroups) {
       return;
     }
+    if(!this.context) {
+      console.error("context is not found");
+      return;
+    }
     
     this.rootGroups.forEach(id=>{
-      this.groups[id].draw(this, this.context, false);
+      this.groups[id].draw(this, this.context);
     });
+    
+    if(typeof DebugPath !== "undefined" && DebugPath.isDebugDraw()) {
+      this.rootGroups.forEach(id=>{
+        this.groups[id].debugDraw(this, this.context);
+      });
+    }
   };
 };
 

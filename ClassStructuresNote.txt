@@ -15,6 +15,7 @@ PathContainer
 
 GroupObj (no action data)
   id = id;   // g tag ID
+  flexi = [ id, ... ];  // ID of a flexi-bonded target
   maskIdToUse = maskIdToUse;  // ID of the mask to use
   paths = [<PathObj>, ... ];  // list of PathObj
   hasActionList = [];   // if true, have action
@@ -22,6 +23,7 @@ GroupObj (no action data)
 
 GroupObj (after add action data)
   id = id;   // g tag ID
+  flexi = [ id, ... ];  // ID of a flexi-bonded target
   maskIdToUse = maskIdToUse;   // ID of the mask to use
   paths = [<PathObj>, ... ];  // list of PathObj
   hasActionList = [ hasAction, ... ];   // if true, have action
@@ -54,10 +56,13 @@ PathObj (after add action data)
 
 
 BoneObj - extends GroupObj
-  this.parentID = id; // parent bone id
-  this.flexi = [ id, ... ];  // ID of a flexi-bonded target
-  this.feedback = receiveFeedback;  // receive feedback from other bones
-  this.strength = 0;  // scope of influence of bone
-  this.defState = { x0, y0, x1, y1, angle }  // default bone state
+  parentID = id;                  // parent bone id
+  isParentPin = isParentPin;      // parent bone is pin bone
+  feedback = receiveFeedback;     // receive feedback from other bones
+  strength = strength;            // scope of influence of bone
+  effectSprite = <Sprite>;        // actual effect sprite
+  isReady = isReady;              // can be used for calculation
+  defState = { x0, y0, x1, y1, distance, angle }      // default bone state
+  currentState = { x0, y0, x1, y1, distance, angle }  // current bone state
 
 

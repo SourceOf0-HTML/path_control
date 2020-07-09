@@ -4,33 +4,51 @@
  */
 var DebugPath = {
   isShowBones: false,
+  bonePointSize: 2,
+  boneLineSize: 2,
+  boneColor: "rgb(0, 255, 0)",
+  strengthPointColor: "rgba(0, 255, 0, 0.005)",
+  strengthLineColor: "rgba(0, 255, 0, 0.2)",
+  
+  isShowPoints: false,
+  pointSize: 2,
+  pointColor: "rgb(255, 0, 0)",
+  
+  isShowControls: false,
+  controlSize: 1,
+  controlColor: "rgb(255, 255, 0)",
+  
   
   /**
    * @param {PathContainer} pathContainer
    */
   addEvents: function(pathContainer) {
-    /*
-    let groupList = ["layer_head", "neck", "hair", "hat_brim", "jacket", "clothes", "right_arm", "left_arm"];
+    
     let move =(x, y)=>{
       let bone = pathContainer.getGroup("bone1_clothes");
-      bone.anchorX = bone.x = 0.35;
-      bone.anchorY = bone.y = 0.6;
-      bone.rotation = Math.atan2(x - bone.x - pathContainer.x, - y + bone.y);
-      
-      groupList.forEach(name=>{
-        pathContainer.getGroup(name).setSprite(bone);
-      });
+      let x0 = 0.35;
+      let y0 = 0.6;
+      bone.rotation = Math.atan2(x - x0 - pathContainer.x, - y + y0);
     };
     window.addEventListener("mousemove", e=>{move(e.clientX/pathContainer.pathRatio, e.clientY/pathContainer.pathRatio)});
     window.addEventListener("touchmove", e=>{move(e.touches[0].pageX/pathContainer.pathRatio, e.touches[0].pageY/pathContainer.pathRatio)});
-    */
+    
     window.addEventListener("keyup", function(e) {
-      let keyCode = e.keyCode;
-      switch(keyCode) {
-        case 66:  // B
+      switch(e.code) {
+        case "KeyB":
           DebugPath.isShowBones = !DebugPath.isShowBones;
+          break;
+        case "KeyC":
+          DebugPath.isShowControls = !DebugPath.isShowControls;
+          break;
+        case "KeyP":
+          DebugPath.isShowPoints = !DebugPath.isShowPoints;
           break;
       }
     });
+  },
+  
+  isDebugDraw: function() {
+    return this.isShowBones || this.isShowPoints || this.isShowControls;
   },
 }

@@ -124,7 +124,7 @@ var PathCtr = {
       canvas.width = subCanvas.width = this.viewWidth;
       canvas.height = subCanvas.height = this.viewHeight;
       
-      this.pathContainer.update(frameNumber);
+      this.pathContainer.update(frameNumber, "walk");
       
       this.subContext.clearRect(0, 0, this.viewWidth, this.viewHeight);
       this.pathContainer.draw();
@@ -190,6 +190,8 @@ class Matrix {
   
   /**
    * @param {Array} points
+   * @param {Number} ratioX
+   * @param {Number} ratioY
    * @return {Array}
    */
   applyToArray(points, ratioX = 1, ratioY = ratioX) {
@@ -229,6 +231,21 @@ class Matrix {
     m.d = this.d + (m2.d - this.d) * t;
     m.e = this.e + (m2.e - this.e) * t;
     m.f = this.f + (m2.f - this.f) * t;
+    return m;
+  };
+  
+  /**
+   * @param {Number} t
+   * @return {Matrix} - new Matrix
+   */
+  mult(t) {
+    let m = new Matrix();
+    m.a = this.a * t;
+    m.b = this.b * t;
+    m.c = this.c * t;
+    m.d = this.d * t;
+    m.e = this.e * t;
+    m.f = this.f * t;
     return m;
   };
   
@@ -319,6 +336,21 @@ class Sprite {
   };
   
   /**
+   * @return {Sprite}
+   */
+  clone() {
+    let sprite = new Sprite();
+    sprite.x = this.x;
+    sprite.y = this.y;
+    sprite.anchorX = this.anchorX;
+    sprite.anchorY = this.anchorY;
+    sprite.scaleX = this.scaleX;
+    sprite.scaleY = this.scaleY;
+    sprite.rotation = this.rotation;
+    return sprite;
+  };
+  
+  /**
    * @param {Sprite} s
    * @return {Sprite}
    */
@@ -364,7 +396,7 @@ class Sprite {
     return ret;
   };
   
-  get matrix() {
+  getMatrix() {
     let sx = this.scaleX;
     let sy = this.scaleY;
     let r = this.rotation;
@@ -429,6 +461,10 @@ class PathObj {
    * @param {Matrix} matrix - used to transform the path
    */
   update(frame, actionID, pathContainer, matrix) {
+    this.resultPath = {
+      pathData: []
+    };
+    
     let updatePath =d=> {
       switch(d.type) {
         case "M":
@@ -447,10 +483,6 @@ class PathObj {
           console.error("unknown type");
           break;
       }
-    };
-    
-    this.resultPath = {
-      pathData: []
     };
     
     if( this.hasActionList.length == 0) {
@@ -509,6 +541,53 @@ class PathObj {
     context.fillStyle = this.resultPath.fillStyle;
     context.fill(path2D, this.fillRule);
   };
+  
+  /**
+   * @param {PathContainer} pathContainer
+   * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
+   */
+  debugDraw(pathContainer, context) {
+    let tau = Math.PI*2;
+    
+    let showPos =(x, y)=> {
+      if(!DebugPath.isShowPoints) return;
+      let path2D = new Path2D();
+      path2D.arc(x, y, DebugPath.pointSize, 0, tau);
+      context.fillStyle = DebugPath.pointColor;
+      context.fill(path2D, "nonzero");
+    };
+    
+    let showControl =(x0, y0, x1, y1)=> {
+      if(!DebugPath.isShowControls) return;
+      let path2D = new Path2D();
+      path2D.arc(x0, y0, DebugPath.controlSize, 0, tau);
+      path2D.arc(x1, y1, DebugPath.controlSize, 0, tau);
+      context.fillStyle = DebugPath.controlColor;
+      context.fill(path2D, "nonzero");
+    };
+    
+    this.resultPath.pathData.forEach(d=>{
+      let pos = d.pos;
+      let ratio = pathContainer.pathRatio;
+      switch(d.type) {
+        case "M":
+          showPos(pos[0]*ratio, pos[1]*ratio);
+          break;
+        case "L":
+          showPos(pos[0]*ratio, pos[1]*ratio);
+          break;
+        case "C":
+          showControl(pos[0]*ratio, pos[1]*ratio, pos[2]*ratio, pos[3]*ratio);
+          showPos(pos[4]*ratio, pos[5]*ratio);
+          break;
+        case "Z":
+          break;
+        default:
+          console.error("unknown type");
+          break;
+      }
+    });
+  };
 };
 
 
@@ -521,6 +600,7 @@ class GroupObj extends Sprite {
     this.childGroups = childGroups;   // list of group id
     this.maskIdToUse = maskIdToUse;   // ID of the mask to use
     this.hasActionList = [];          // if true, have action
+    this.flexi = [];                  // ID of a flexi-bonded target
     
     if(hasAction) {
       this.childGroups.forEach((val, i)=>(this.hasActionList[i] = true));
@@ -541,6 +621,28 @@ class GroupObj extends Sprite {
       this.hasActionList[actionID] = true;
     }
     this.childGroups[actionID][frame] = childGroups;
+  };
+  
+  /**
+   * @param {PathContainer} pathContainer
+   * @param {Array} nameList - bone name list
+   */
+  setFlexiBones(pathContainer, nameList) {
+    if(!nameList || !Array.isArray(nameList) || nameList.length == 0) return;
+    PathCtr.loadState("GROUP:" + this.id);
+    
+    this.flexi.length = 0;
+    
+    nameList.forEach(name=> {
+      if(name in pathContainer.groupNameToIDList) {
+        let id = pathContainer.groupNameToIDList[name];
+        if(pathContainer.bones.includes(id)) {
+          //this.flexi.unshift(id);
+          this.flexi.push(id);
+        }
+      }
+    });
+    PathCtr.loadState("flexi:" + this.flexi.toString());
   };
   
   /**
@@ -570,16 +672,64 @@ class GroupObj extends Sprite {
    * @param {PathContainer} pathContainer
    * @param {Sprite} sprite - used to transform the path
    */
-  update(pathContainer, sprite) {
+  update(pathContainer, sprite, flexiIDList = []) {
     let actionID = PathCtr.currentActionID;
     let frame = PathCtr.currentFrame;
+    //let actionID = 0;
+    //let frame = 0;
     let groupSprite = sprite.compSprite(this);
+    let flexi = flexiIDList.concat(this.flexi);
+    let groupMatrix = groupSprite.getMatrix();
+    
     this.paths.forEach(path=>{
-      path.update(frame, actionID, pathContainer, groupSprite.matrix);
+      path.update(frame, actionID, pathContainer, groupMatrix);
     });
     this.getChildGroups(frame, actionID).forEach(childGroup=>{
-      pathContainer.groups[childGroup].update(pathContainer, groupSprite);
+      pathContainer.groups[childGroup].update(pathContainer, groupSprite, flexi);
     });
+    
+    this.paths.forEach(path=>{
+      path.resultPath.pathData.forEach(d=>{
+        if(!d.pos || d.pos.length == 0) return;
+        let points = d.pos;
+        let pointsNum = points.length;
+        for(let i = 0; i < pointsNum; i += 2) {
+          let x = points[i];
+          let y = points[i+1];
+          
+          if(flexi.length == 1) {
+            let id = flexi[0];
+            if(pathContainer.groups[id].strength == 0) continue;
+            let pos = pathContainer.groups[id].effectSprite.getMatrix().applyToPoint(x, y);
+            points[i] = pos.x;
+            points[i+1] = pos.y;
+            continue;
+          }
+          
+          let ratioList = [];
+          flexi.forEach(id=>{
+            ratioList.push(pathContainer.groups[id].calc(x, y));
+          });
+          
+          let sum = 0;
+          ratioList.forEach(val=>{sum += val});
+          if(sum == 0) continue;
+          
+          points[i] = 0;
+          points[i+1] = 0;
+          
+          let matrix = new Matrix();
+          flexi.forEach((id, j)=>{
+            let ratio = ratioList[j];
+            let bone = pathContainer.groups[id];
+            let pos = bone.effectSprite.getMatrix().mult(1 - ratio/sum).applyToPoint(x, y);
+            points[i] += pos.x;
+            points[i+1] += pos.y;
+          });
+        }
+      });
+    });
+    
   };
   
   /**
@@ -587,11 +737,7 @@ class GroupObj extends Sprite {
    * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
    * @param {Boolean} isMask - when true, draw as a mask
    */
-  draw(pathContainer, context, isMask) {
-    if(!context) {
-      console.error("context is not found");
-      return;
-    }
+  draw(pathContainer, context, isMask = false) {
     if(!this.visible) {
       return;
     }
@@ -656,17 +802,55 @@ class GroupObj extends Sprite {
       context.restore();
     }
   };
+  
+  /**
+   * @param {PathContainer} pathContainer
+   * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
+   */
+  debugDraw(pathContainer, context) {
+    if(!this.visible) {
+      return;
+    }
+    
+    if(!!this.maskIdToUse) {
+      let mask = pathContainer.groups[this.maskIdToUse];
+      if(!!mask) {
+        mask.debugDraw(pathContainer, context);
+      } else {
+        console.error("group is not found : " + this.maskIdToUse);
+      }
+    }
+    
+    this.paths.forEach(path=>{
+      if(!!path.maskIdToUse) {
+        let maskPath = pathContainer.groups[path.maskIdToUse];
+        if(!!maskPath) {
+          maskPath.debugDraw(pathContainer, context);
+        } else {
+          console.error("mask is not found : " + path.maskIdToUse);
+        }
+      }
+      path.debugDraw(pathContainer, context);
+    });
+    
+    let actionID = PathCtr.currentActionID;
+    let frame = PathCtr.currentFrame;
+    this.getChildGroups(frame, actionID).forEach(childGroup=>{
+      pathContainer.groups[childGroup].debugDraw(pathContainer, context);
+    });
+  };
 };
 
 
 class BoneObj extends GroupObj {
   constructor(id, paths, childGroups, hasAction) {
     super(id, paths, childGroups, hasAction, "");
-    this.parentID = -1;
-    this.flexi = [];
-    this.feedback = false;
-    this.strength = 0;
-    this.effectState = new Sprite();
+    this.parentID = -1;                // parent bone id
+    this.isParentPin = false;          // parent bone is pin bone
+    this.feedback = false;             // receive feedback from other bones
+    this.strength = 0;                 // scope of influence of bone
+    this.effectSprite = new Sprite();  // actual effect sprite
+    this.isReady = false;              // can be used for calculation
     
     if(!!paths && paths.length > 0) {
       let pathDataList = paths[0].getPathDataList();
@@ -674,10 +858,21 @@ class BoneObj extends GroupObj {
       let y0 = pathDataList[0].pos[1];
       let x1 = pathDataList[1].pos[0];
       let y1 = pathDataList[1].pos[1];
-      this.defState = {
+      let distX = x1 - x0;
+      let distY = y1 - y0;
+      let distance = Math.sqrt(distX*distX + distY*distY);
+      let angle = Math.atan2(distY, distX);
+      this.defState = {  // default bone state
         x0, y0,
         x1, y1,
-        angle: Math.atan2(y1-y0, x1-x0),
+        distance,
+        angle,
+      };
+      this.currentState = {  // current bone state
+        x0, y0,
+        x1, y1,
+        distance,
+        angle,
       };
     }
   };
@@ -695,14 +890,9 @@ class BoneObj extends GroupObj {
       PathCtr.loadState("parentID:" + this.parentID);
     }
     
-    this.flexi.length = 0;
-    if("flexi" in data && Array.isArray(data.flexi)) {
-      data.flexi.forEach(name=> {
-        if(name in pathContainer.groupNameToIDList) {
-          this.flexi.push(pathContainer.groupNameToIDList[name]);
-        }
-      });
-      PathCtr.loadState("flexi:" + this.flexi.toString());
+    if("isParentPin" in data && (typeof data.isParentPin === "boolean")) {
+      this.isParentPin = data.isParentPin;
+      PathCtr.loadState("isParentPin:" + this.isParentPin);
     }
     
     if("feedback" in data && (typeof data.feedback === "boolean")) {
@@ -719,70 +909,190 @@ class BoneObj extends GroupObj {
   /**
    * @param {PathContainer} pathContainer
    */
-  preprocessing(pathContainer) {
-    this.reset();
-    
+  control(pathContainer) {
     if(!this.defState) return;
     
+    this.isReady = false;
+    
+    //TODO:ボーン制御処理等
+    
     let pathDataList = this.paths[0].getPathDataList(PathCtr.currentFrame, PathCtr.currentActionID);
-    if(pathDataList.length == 2) {
-      let defX = this.defState.x;
-      let defY = this.defState.y;
-      let x0 = pathDataList[0].pos[0];
-      let y0 = pathDataList[0].pos[1];
-      let x1 = pathDataList[1].pos[0];
-      let y1 = pathDataList[1].pos[1];
-      this.effectState.x = x0;
-      this.effectState.y = y0;
-      this.effectState.anchorX = this.defState.x0;
-      this.effectState.anchorY = this.defState.y0;
-      this.effectState.rotation = Math.atan2(y1-y0, x1-x0) - this.defState.angle;
+    
+    if(this.parentID < 0 && pathDataList.length == 2) {
+      this.effectSprite.reset();
+      
+      let sprite = this.clone();
+      sprite.anchorX = sprite.x += pathDataList[0].pos[0];
+      sprite.anchorY = sprite.y += pathDataList[0].pos[1];
+      let pos = sprite.getMatrix().applyToArray(pathDataList[0].pos.concat(pathDataList[1].pos));
+      
+      let x0 = this.effectSprite.x = this.currentState.x0 = pos[0];
+      let y0 = this.effectSprite.y = this.currentState.y0 = pos[1];
+      let x1 = this.currentState.x1 = pos[2];
+      let y1 = this.currentState.y1 = pos[3];
+      
+      let distX = x1 - x0;
+      let distY = y1 - y0;
+      let distance = this.currentState.distance = Math.sqrt(distX*distX + distY*distY);
+      let angle = this.currentState.angle = Math.atan2(distY, distX);
+      
+      this.effectSprite.anchorX = this.defState.x0;
+      this.effectSprite.anchorY = this.defState.y0;
+      this.effectSprite.scaleY = distance / this.defState.distance;
+      this.effectSprite.rotation = angle - this.defState.angle;
+      this.isReady = true;
     }
+    
   };
   
   /**
    * @param {PathContainer} pathContainer
    */
-  calc(pathContainer) {
-    if(!this.defState) return;
+  preprocessing(pathContainer) {
     
-    if(this.parentID >= 0) {
-      let group = pathContainer.groups[this.parentID];
-      this.addSprite(group.effectState);
+    if(!this.defState || this.isReady) return;
+    
+    let pathDataList = this.paths[0].getPathDataList(PathCtr.currentFrame, PathCtr.currentActionID);
+    
+    if(pathDataList.length == 2) {
+      this.effectSprite.reset();
+      
+      let sprite = this.clone();
+      sprite.anchorX = sprite.x += pathDataList[0].pos[0];
+      sprite.anchorY = sprite.y += pathDataList[0].pos[1];
+      let pos = sprite.getMatrix().applyToArray(pathDataList[0].pos.concat(pathDataList[1].pos));
+      
+      let x0 = pos[0];
+      let y0 = pos[1];
+      let x1 = pos[2];
+      let y1 = pos[3];
+      
+      if(this.parentID >= 0) {
+        let bone = pathContainer.groups[this.parentID];
+        bone.preprocessing(pathContainer);
+        if(this.isParentPin) {
+          let effect = bone.effectSprite;
+          let x = effect.x - effect.anchorX;
+          let y = effect.y - effect.anchorY;
+          x0 += x;
+          y0 += y;
+          x1 += x;
+          y1 += y;
+        } else {
+          let posArray = bone.effectSprite.getMatrix().applyToArray([x0, y0, x1, y1]);
+          x0 = posArray[0];
+          y0 = posArray[1];
+          x1 = posArray[2];
+          y1 = posArray[3];
+        }
+      }
+      
+      this.effectSprite.x = this.currentState.x0 = x0;
+      this.effectSprite.y = this.currentState.y0 = y0;
+      this.currentState.x1 = x1;
+      this.currentState.y1 = y1;
+      
+      let distX = x1 - x0;
+      let distY = y1 - y0;
+      let distance = this.currentState.distance = Math.sqrt(distX*distX + distY*distY);
+      let angle = this.currentState.angle = Math.atan2(distY, distX);
+      
+      this.effectSprite.anchorX = this.defState.x0;
+      this.effectSprite.anchorY = this.defState.y0;
+      this.effectSprite.scaleY = distance / this.defState.distance;
+      this.effectSprite.rotation = angle - this.defState.angle;
+      this.isReady = true;
+    }
+  };
+  
+  /**
+   * @param {Array} points
+   */
+  calc(x0, y0) {
+    let strength = this.strength;
+    if(strength == 0) return 0;
+    
+    let x1 = this.defState.x0;
+    let y1 = this.defState.y0;
+    let x2 = this.defState.x1;
+    let y2 = this.defState.y1;
+    let a = x2 - x1;
+    let b = y2 - y1;
+    let r2 = a*a + b*b;
+    let tt = -(a*(x1-x0)+b*(y1-y0));
+    let dist = 0;
+    if( tt < 0 ) {
+      dist = (x1-x0)*(x1-x0) + (y1-y0)*(y1-y0);
+    } else if( tt > r2 ) {
+      dist = (x2-x0)*(x2-x0) + (y2-y0)*(y2-y0);
+    } else {
+      let f1 = a*(y1-y0)-b*(x1-x0);
+      dist = (f1*f1)/r2;
     }
     
-    this.flexi.forEach(id=>{
-      let group = pathContainer.groups[id];
-      group.addSprite(this.effectState);
-    });
+    return dist * strength;
+  };
+  
+  /**
+   * @param {PathContainer} pathContainer
+   * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
+   * @param {Path2D} path2D
+   * @param {Boolean} isMask - when true, draw as a mask
+   */
+  draw(pathContainer, context, path2D, isMask) {
+    // do nothing.
   };
   
   /**
    * @param {PathContainer} pathContainer
    * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
    */
-  draw(pathContainer, context) {
-    if(!context) {
-      console.error("context is not found");
+  debugDraw(pathContainer, context) {
+    if(!this.visible || !DebugPath.isShowBones) {
       return;
     }
-    if(typeof DebugPath === "undefined" || !DebugPath.isShowBones || !this.visible) {
-      return;
-    }
+    let ratio = pathContainer.pathRatio;
+    let tau = Math.PI*2;
     
     this.paths.forEach(path=>{
+      let x0 = this.currentState.x0 * ratio;
+      let y0 = this.currentState.y0 * ratio;
+      let x1 = this.currentState.x1 * ratio;
+      let y1 = this.currentState.y1 * ratio;
+      
+      context.lineJoin = "round";
+      context.lineCap = "round";
+      
       let path2D = new Path2D();
-      let pos = path.resultPath.pathData[0].pos;
-      let ratio = pathContainer.pathRatio;
-      path2D.arc(pos[0]*ratio, pos[1]*ratio, 2, 0, Math.PI*2);
-      path.draw(pathContainer, context, path2D, false);
+      path2D.arc(x0, y0, DebugPath.bonePointSize, 0, tau);
+      path2D.moveTo(x0, y0);
+      path2D.lineTo(x1, y1);
+      context.lineWidth = DebugPath.boneLineSize;
+      context.strokeStyle = DebugPath.boneColor;
+      context.stroke(path2D);
+      
+      let dist = this.strength * ratio;
+      path2D = new Path2D();
+      path2D.arc(x0, y0, dist, 0, tau);
+      path2D.arc(x1, y1, dist, 0, tau);
+      context.fillStyle = DebugPath.strengthPointColor;
+      context.fill(path2D, "nonzero");
+      
+      path2D = new Path2D();
+      path2D.moveTo(x0, y0);
+      path2D.lineTo(x1, y1);
+      context.lineWidth = dist*2;
+      context.strokeStyle = DebugPath.strengthLineColor;
+      context.stroke(path2D);
       path2D = null;
+      
+      //path.draw(pathContainer, context, path2D, false);
     });
     
     let actionID = PathCtr.currentActionID;
     let frame = PathCtr.currentFrame;
     this.getChildGroups(frame, actionID).forEach(childGroup=>{
-      pathContainer.groups[childGroup].draw(pathContainer, context, false);
+      pathContainer.groups[childGroup].debugDraw(pathContainer, context);
     });
   };
 };
@@ -853,14 +1163,14 @@ class PathContainer extends Sprite {
     PathCtr.currentFrame = frame;
     PathCtr.currentActionID = Object.keys(this.actionList).indexOf(actionName);
     
+    this.bones.forEach(id=>{
+      this.groups[id].control(this);
+    });
     this.groups.forEach(group=>{
       group.preprocessing(this);
     });
-    this.bones.forEach(id=>{
-      this.groups[id].calc(this);
-    });
     this.rootGroups.forEach(id=>{
-      this.groups[id].update(this, (new Sprite().setSprite(this)), false);
+      this.groups[id].update(this, (new Sprite().setSprite(this)));
     });
   };
   
@@ -868,10 +1178,20 @@ class PathContainer extends Sprite {
     if(!this.visible || !this.rootGroups) {
       return;
     }
+    if(!this.context) {
+      console.error("context is not found");
+      return;
+    }
     
     this.rootGroups.forEach(id=>{
-      this.groups[id].draw(this, this.context, false);
+      this.groups[id].draw(this, this.context);
     });
+    
+    if(typeof DebugPath !== "undefined" && DebugPath.isDebugDraw()) {
+      this.rootGroups.forEach(id=>{
+        this.groups[id].debugDraw(this, this.context);
+      });
+    }
   };
 };
 
@@ -1114,3 +1434,49 @@ var BinaryLoader = {
   },
 };
 
+
+/**
+ * BoneLoader
+ * Singleton
+ */
+var BoneLoader = {
+  /**
+   * @param {String} filePath - binary file path
+   */
+  load: function(filePath, pathContainer) {
+    let request = new XMLHttpRequest();
+    
+    request.onload = function(e) {
+      let target = e.target;
+      if(target.readyState != 4) return;
+      if(target.status != 200 && target.status != 0) return;
+      
+      let ret = JSON.parse(target.responseText);
+      if(!!ret.bones) {
+        Object.keys(ret.bones).forEach(id=>{
+          let bone = pathContainer.getBone(id);
+          if(!bone) {
+            console.error("bone is not found : " + id);
+            return;
+          }
+          bone.setJSONData(pathContainer, ret.bones[id]);
+        });
+      }
+      if(!!ret.flexi) {
+        Object.keys(ret.flexi).forEach(name=>{
+          let id = pathContainer.groupNameToIDList[name];
+          if(!id) {
+            console.error("group is not found : " + name);
+            return;
+          }
+          pathContainer.groups[id].setFlexiBones(pathContainer, ret.flexi[name]);
+        });
+      }
+      
+      PathCtr.loadState("bones JSON load complete.");
+      PathCtr.loadState(pathContainer);
+    }
+    request.open("GET", filePath, true);
+    request.send();
+  },
+}

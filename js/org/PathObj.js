@@ -55,6 +55,10 @@ class PathObj {
    * @param {Matrix} matrix - used to transform the path
    */
   update(frame, actionID, pathContainer, matrix) {
+    this.resultPath = {
+      pathData: []
+    };
+    
     let updatePath =d=> {
       switch(d.type) {
         case "M":
@@ -73,10 +77,6 @@ class PathObj {
           console.error("unknown type");
           break;
       }
-    };
-    
-    this.resultPath = {
-      pathData: []
     };
     
     if( this.hasActionList.length == 0) {
@@ -134,6 +134,53 @@ class PathObj {
     }
     context.fillStyle = this.resultPath.fillStyle;
     context.fill(path2D, this.fillRule);
+  };
+  
+  /**
+   * @param {PathContainer} pathContainer
+   * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
+   */
+  debugDraw(pathContainer, context) {
+    let tau = Math.PI*2;
+    
+    let showPos =(x, y)=> {
+      if(!DebugPath.isShowPoints) return;
+      let path2D = new Path2D();
+      path2D.arc(x, y, DebugPath.pointSize, 0, tau);
+      context.fillStyle = DebugPath.pointColor;
+      context.fill(path2D, "nonzero");
+    };
+    
+    let showControl =(x0, y0, x1, y1)=> {
+      if(!DebugPath.isShowControls) return;
+      let path2D = new Path2D();
+      path2D.arc(x0, y0, DebugPath.controlSize, 0, tau);
+      path2D.arc(x1, y1, DebugPath.controlSize, 0, tau);
+      context.fillStyle = DebugPath.controlColor;
+      context.fill(path2D, "nonzero");
+    };
+    
+    this.resultPath.pathData.forEach(d=>{
+      let pos = d.pos;
+      let ratio = pathContainer.pathRatio;
+      switch(d.type) {
+        case "M":
+          showPos(pos[0]*ratio, pos[1]*ratio);
+          break;
+        case "L":
+          showPos(pos[0]*ratio, pos[1]*ratio);
+          break;
+        case "C":
+          showControl(pos[0]*ratio, pos[1]*ratio, pos[2]*ratio, pos[3]*ratio);
+          showPos(pos[4]*ratio, pos[5]*ratio);
+          break;
+        case "Z":
+          break;
+        default:
+          console.error("unknown type");
+          break;
+      }
+    });
   };
 };
 

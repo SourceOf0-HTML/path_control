@@ -31,6 +31,8 @@ class Matrix {
   
   /**
    * @param {Array} points
+   * @param {Number} ratioX
+   * @param {Number} ratioY
    * @return {Array}
    */
   applyToArray(points, ratioX = 1, ratioY = ratioX) {
@@ -70,6 +72,21 @@ class Matrix {
     m.d = this.d + (m2.d - this.d) * t;
     m.e = this.e + (m2.e - this.e) * t;
     m.f = this.f + (m2.f - this.f) * t;
+    return m;
+  };
+  
+  /**
+   * @param {Number} t
+   * @return {Matrix} - new Matrix
+   */
+  mult(t) {
+    let m = new Matrix();
+    m.a = this.a * t;
+    m.b = this.b * t;
+    m.c = this.c * t;
+    m.d = this.d * t;
+    m.e = this.e * t;
+    m.f = this.f * t;
     return m;
   };
   

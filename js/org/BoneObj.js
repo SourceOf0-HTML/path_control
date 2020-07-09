@@ -2,11 +2,12 @@
 class BoneObj extends GroupObj {
   constructor(id, paths, childGroups, hasAction) {
     super(id, paths, childGroups, hasAction, "");
-    this.parentID = -1;
-    this.flexi = [];
-    this.feedback = false;
-    this.strength = 0;
-    this.effectState = new Sprite();
+    this.parentID = -1;                // parent bone id
+    this.isParentPin = false;          // parent bone is pin bone
+    this.feedback = false;             // receive feedback from other bones
+    this.strength = 0;                 // scope of influence of bone
+    this.effectSprite = new Sprite();  // actual effect sprite
+    this.isReady = false;              // can be used for calculation
     
     if(!!paths && paths.length > 0) {
       let pathDataList = paths[0].getPathDataList();
@@ -14,10 +15,21 @@ class BoneObj extends GroupObj {
       let y0 = pathDataList[0].pos[1];
       let x1 = pathDataList[1].pos[0];
       let y1 = pathDataList[1].pos[1];
-      this.defState = {
+      let distX = x1 - x0;
+      let distY = y1 - y0;
+      let distance = Math.sqrt(distX*distX + distY*distY);
+      let angle = Math.atan2(distY, distX);
+      this.defState = {  // default bone state
         x0, y0,
         x1, y1,
-        angle: Math.atan2(y1-y0, x1-x0),
+        distance,
+        angle,
+      };
+      this.currentState = {  // current bone state
+        x0, y0,
+        x1, y1,
+        distance,
+        angle,
       };
     }
   };
@@ -35,14 +47,9 @@ class BoneObj extends GroupObj {
       PathCtr.loadState("parentID:" + this.parentID);
     }
     
-    this.flexi.length = 0;
-    if("flexi" in data && Array.isArray(data.flexi)) {
-      data.flexi.forEach(name=> {
-        if(name in pathContainer.groupNameToIDList) {
-          this.flexi.push(pathContainer.groupNameToIDList[name]);
-        }
-      });
-      PathCtr.loadState("flexi:" + this.flexi.toString());
+    if("isParentPin" in data && (typeof data.isParentPin === "boolean")) {
+      this.isParentPin = data.isParentPin;
+      PathCtr.loadState("isParentPin:" + this.isParentPin);
     }
     
     if("feedback" in data && (typeof data.feedback === "boolean")) {
@@ -59,70 +66,190 @@ class BoneObj extends GroupObj {
   /**
    * @param {PathContainer} pathContainer
    */
-  preprocessing(pathContainer) {
-    this.reset();
-    
+  control(pathContainer) {
     if(!this.defState) return;
     
+    this.isReady = false;
+    
+    //TODO:ボーン制御処理等
+    
     let pathDataList = this.paths[0].getPathDataList(PathCtr.currentFrame, PathCtr.currentActionID);
-    if(pathDataList.length == 2) {
-      let defX = this.defState.x;
-      let defY = this.defState.y;
-      let x0 = pathDataList[0].pos[0];
-      let y0 = pathDataList[0].pos[1];
-      let x1 = pathDataList[1].pos[0];
-      let y1 = pathDataList[1].pos[1];
-      this.effectState.x = x0;
-      this.effectState.y = y0;
-      this.effectState.anchorX = this.defState.x0;
-      this.effectState.anchorY = this.defState.y0;
-      this.effectState.rotation = Math.atan2(y1-y0, x1-x0) - this.defState.angle;
+    
+    if(this.parentID < 0 && pathDataList.length == 2) {
+      this.effectSprite.reset();
+      
+      let sprite = this.clone();
+      sprite.anchorX = sprite.x += pathDataList[0].pos[0];
+      sprite.anchorY = sprite.y += pathDataList[0].pos[1];
+      let pos = sprite.getMatrix().applyToArray(pathDataList[0].pos.concat(pathDataList[1].pos));
+      
+      let x0 = this.effectSprite.x = this.currentState.x0 = pos[0];
+      let y0 = this.effectSprite.y = this.currentState.y0 = pos[1];
+      let x1 = this.currentState.x1 = pos[2];
+      let y1 = this.currentState.y1 = pos[3];
+      
+      let distX = x1 - x0;
+      let distY = y1 - y0;
+      let distance = this.currentState.distance = Math.sqrt(distX*distX + distY*distY);
+      let angle = this.currentState.angle = Math.atan2(distY, distX);
+      
+      this.effectSprite.anchorX = this.defState.x0;
+      this.effectSprite.anchorY = this.defState.y0;
+      this.effectSprite.scaleY = distance / this.defState.distance;
+      this.effectSprite.rotation = angle - this.defState.angle;
+      this.isReady = true;
     }
+    
   };
   
   /**
    * @param {PathContainer} pathContainer
    */
-  calc(pathContainer) {
-    if(!this.defState) return;
+  preprocessing(pathContainer) {
     
-    if(this.parentID >= 0) {
-      let group = pathContainer.groups[this.parentID];
-      this.addSprite(group.effectState);
+    if(!this.defState || this.isReady) return;
+    
+    let pathDataList = this.paths[0].getPathDataList(PathCtr.currentFrame, PathCtr.currentActionID);
+    
+    if(pathDataList.length == 2) {
+      this.effectSprite.reset();
+      
+      let sprite = this.clone();
+      sprite.anchorX = sprite.x += pathDataList[0].pos[0];
+      sprite.anchorY = sprite.y += pathDataList[0].pos[1];
+      let pos = sprite.getMatrix().applyToArray(pathDataList[0].pos.concat(pathDataList[1].pos));
+      
+      let x0 = pos[0];
+      let y0 = pos[1];
+      let x1 = pos[2];
+      let y1 = pos[3];
+      
+      if(this.parentID >= 0) {
+        let bone = pathContainer.groups[this.parentID];
+        bone.preprocessing(pathContainer);
+        if(this.isParentPin) {
+          let effect = bone.effectSprite;
+          let x = effect.x - effect.anchorX;
+          let y = effect.y - effect.anchorY;
+          x0 += x;
+          y0 += y;
+          x1 += x;
+          y1 += y;
+        } else {
+          let posArray = bone.effectSprite.getMatrix().applyToArray([x0, y0, x1, y1]);
+          x0 = posArray[0];
+          y0 = posArray[1];
+          x1 = posArray[2];
+          y1 = posArray[3];
+        }
+      }
+      
+      this.effectSprite.x = this.currentState.x0 = x0;
+      this.effectSprite.y = this.currentState.y0 = y0;
+      this.currentState.x1 = x1;
+      this.currentState.y1 = y1;
+      
+      let distX = x1 - x0;
+      let distY = y1 - y0;
+      let distance = this.currentState.distance = Math.sqrt(distX*distX + distY*distY);
+      let angle = this.currentState.angle = Math.atan2(distY, distX);
+      
+      this.effectSprite.anchorX = this.defState.x0;
+      this.effectSprite.anchorY = this.defState.y0;
+      this.effectSprite.scaleY = distance / this.defState.distance;
+      this.effectSprite.rotation = angle - this.defState.angle;
+      this.isReady = true;
+    }
+  };
+  
+  /**
+   * @param {Array} points
+   */
+  calc(x0, y0) {
+    let strength = this.strength;
+    if(strength == 0) return 0;
+    
+    let x1 = this.defState.x0;
+    let y1 = this.defState.y0;
+    let x2 = this.defState.x1;
+    let y2 = this.defState.y1;
+    let a = x2 - x1;
+    let b = y2 - y1;
+    let r2 = a*a + b*b;
+    let tt = -(a*(x1-x0)+b*(y1-y0));
+    let dist = 0;
+    if( tt < 0 ) {
+      dist = (x1-x0)*(x1-x0) + (y1-y0)*(y1-y0);
+    } else if( tt > r2 ) {
+      dist = (x2-x0)*(x2-x0) + (y2-y0)*(y2-y0);
+    } else {
+      let f1 = a*(y1-y0)-b*(x1-x0);
+      dist = (f1*f1)/r2;
     }
     
-    this.flexi.forEach(id=>{
-      let group = pathContainer.groups[id];
-      group.addSprite(this.effectState);
-    });
+    return dist * strength;
+  };
+  
+  /**
+   * @param {PathContainer} pathContainer
+   * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
+   * @param {Path2D} path2D
+   * @param {Boolean} isMask - when true, draw as a mask
+   */
+  draw(pathContainer, context, path2D, isMask) {
+    // do nothing.
   };
   
   /**
    * @param {PathContainer} pathContainer
    * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
    */
-  draw(pathContainer, context) {
-    if(!context) {
-      console.error("context is not found");
+  debugDraw(pathContainer, context) {
+    if(!this.visible || !DebugPath.isShowBones) {
       return;
     }
-    if(typeof DebugPath === "undefined" || !DebugPath.isShowBones || !this.visible) {
-      return;
-    }
+    let ratio = pathContainer.pathRatio;
+    let tau = Math.PI*2;
     
     this.paths.forEach(path=>{
+      let x0 = this.currentState.x0 * ratio;
+      let y0 = this.currentState.y0 * ratio;
+      let x1 = this.currentState.x1 * ratio;
+      let y1 = this.currentState.y1 * ratio;
+      
+      context.lineJoin = "round";
+      context.lineCap = "round";
+      
       let path2D = new Path2D();
-      let pos = path.resultPath.pathData[0].pos;
-      let ratio = pathContainer.pathRatio;
-      path2D.arc(pos[0]*ratio, pos[1]*ratio, 2, 0, Math.PI*2);
-      path.draw(pathContainer, context, path2D, false);
+      path2D.arc(x0, y0, DebugPath.bonePointSize, 0, tau);
+      path2D.moveTo(x0, y0);
+      path2D.lineTo(x1, y1);
+      context.lineWidth = DebugPath.boneLineSize;
+      context.strokeStyle = DebugPath.boneColor;
+      context.stroke(path2D);
+      
+      let dist = this.strength * ratio;
+      path2D = new Path2D();
+      path2D.arc(x0, y0, dist, 0, tau);
+      path2D.arc(x1, y1, dist, 0, tau);
+      context.fillStyle = DebugPath.strengthPointColor;
+      context.fill(path2D, "nonzero");
+      
+      path2D = new Path2D();
+      path2D.moveTo(x0, y0);
+      path2D.lineTo(x1, y1);
+      context.lineWidth = dist*2;
+      context.strokeStyle = DebugPath.strengthLineColor;
+      context.stroke(path2D);
       path2D = null;
+      
+      //path.draw(pathContainer, context, path2D, false);
     });
     
     let actionID = PathCtr.currentActionID;
     let frame = PathCtr.currentFrame;
     this.getChildGroups(frame, actionID).forEach(childGroup=>{
-      pathContainer.groups[childGroup].draw(pathContainer, context, false);
+      pathContainer.groups[childGroup].debugDraw(pathContainer, context);
     });
   };
 };

@@ -124,7 +124,7 @@ var PathCtr = {
       canvas.width = subCanvas.width = this.viewWidth;
       canvas.height = subCanvas.height = this.viewHeight;
       
-      this.pathContainer.update(frameNumber);
+      this.pathContainer.update(frameNumber, "walk");
       
       this.subContext.clearRect(0, 0, this.viewWidth, this.viewHeight);
       this.pathContainer.draw();

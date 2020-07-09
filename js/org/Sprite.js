@@ -22,6 +22,21 @@ class Sprite {
   };
   
   /**
+   * @return {Sprite}
+   */
+  clone() {
+    let sprite = new Sprite();
+    sprite.x = this.x;
+    sprite.y = this.y;
+    sprite.anchorX = this.anchorX;
+    sprite.anchorY = this.anchorY;
+    sprite.scaleX = this.scaleX;
+    sprite.scaleY = this.scaleY;
+    sprite.rotation = this.rotation;
+    return sprite;
+  };
+  
+  /**
    * @param {Sprite} s
    * @return {Sprite}
    */
@@ -67,7 +82,7 @@ class Sprite {
     return ret;
   };
   
-  get matrix() {
+  getMatrix() {
     let sx = this.scaleX;
     let sy = this.scaleY;
     let r = this.rotation;
