@@ -8,8 +8,8 @@ function setPathContainer() {
   }
 }
 SVGLoader.load([
-//  ["./resource/base/original_", 260, "base"],
-  ["./resource/base_bone/original_bone_", 260, "base"],
+  ["./resource/base/original_base_", 1, "base"],
+  ["./resource/base_bone_3/original_bone_", 260, "walk"],
   ["./resource/face/original_face_", 50, "face"],
 //  ["./resource/base_single/original_single_", 1120, "base"],
 ], setPathContainer);
