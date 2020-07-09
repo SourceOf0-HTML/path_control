@@ -119,6 +119,8 @@ var SVGLoader = {
     let pathDataList = null;
     if(!!pathDOM) {
       pathDataList = this.makePathDataList(pathDOM.getAttribute("d"));
+    } else if( path.hasActionList.length == 0 ) {
+      pathDataList = path.pathDataList.concat();
     } else {
       pathDataList = path.pathDataList[0][0].concat();
     }
