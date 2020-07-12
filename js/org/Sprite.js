@@ -83,10 +83,7 @@ class Sprite {
   };
   
   getMatrix() {
-    let sx = this.scaleX;
-    let sy = this.scaleY;
-    let r = this.rotation;
-    return this.m.reset().translate(this.x, this.y).rotate(r).scale(sx, sy).translate(-this.anchorX, -this.anchorY);
+    return this.m.reset().translate(this.x, this.y).rotate(this.rotation).scale(this.scaleX, this.scaleY).translate(-this.anchorX, -this.anchorY);
   };
 };
 

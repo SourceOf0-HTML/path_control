@@ -60,15 +60,22 @@ class PathObj {
     };
     
     let updatePath =d=> {
+      let pos;
       switch(d.type) {
         case "M":
-          this.resultPath.pathData.push({type:"M", pos:matrix.applyToArray(d.pos)});
+          pos = d.pos.slice();
+          matrix.applyToArray(pos);
+          this.resultPath.pathData.push({type:"M", pos});
           break;
         case "L":
-          this.resultPath.pathData.push({type:"L", pos:matrix.applyToArray(d.pos)});
+          pos = d.pos.slice();
+          matrix.applyToArray(pos);
+          this.resultPath.pathData.push({type:"L", pos});
           break;
         case "C":
-          this.resultPath.pathData.push({type:"C", pos:matrix.applyToArray(d.pos)});
+          pos = d.pos.slice();
+          matrix.applyToArray(pos);
+          this.resultPath.pathData.push({type:"C", pos});
           break;
         case "Z":
           this.resultPath.pathData.push({type:"Z"});

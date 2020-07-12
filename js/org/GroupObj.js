@@ -102,18 +102,15 @@ class GroupObj extends Sprite {
         let points = d.pos;
         let pointsNum = points.length;
         for(let i = 0; i < pointsNum; i += 2) {
-          let x = points[i];
-          let y = points[i+1];
-          
           if(flexi.length == 1) {
             let id = flexi[0];
             if(pathContainer.groups[id].strength == 0) continue;
-            let pos = pathContainer.groups[id].effectSprite.getMatrix().applyToPoint(x, y);
-            points[i] = pos.x;
-            points[i+1] = pos.y;
+            pathContainer.groups[id].effectSprite.getMatrix().applyToPoint(points, i);
             continue;
           }
           
+          let x = points[i];
+          let y = points[i+1];
           let ratioList = [];
           flexi.forEach(id=>{
             ratioList.push(pathContainer.groups[id].calc(x, y));
@@ -126,13 +123,8 @@ class GroupObj extends Sprite {
           points[i] = 0;
           points[i+1] = 0;
           
-          let matrix = new Matrix();
           flexi.forEach((id, j)=>{
-            let ratio = ratioList[j];
-            let bone = pathContainer.groups[id];
-            let pos = bone.effectSprite.getMatrix().mult(1 - ratio/sum).applyToPoint(x, y);
-            points[i] += pos.x;
-            points[i+1] += pos.y;
+            pathContainer.groups[id].effectSprite.getMatrix().multAndAddPoint(1 - ratioList[j]/sum, x, y, points, i);
           });
         }
       });

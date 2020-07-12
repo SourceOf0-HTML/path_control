@@ -175,33 +175,25 @@ class Matrix {
   };
   
   /**
-   * @param {Number} x
-   * @param {Number} y
-   * @param {Number} ratioX
-   * @param {Number} ratioY
-   * @return {{x: Number, y: Number}}
+   * @param {Array} point
+   * @param {Integer} index
    */
-  applyToPoint(x, y, ratioX = 1, ratioY = ratioX) {
-    return {
-      x: (x * this.a + y * this.c + this.e) * ratioX,
-      y: (x * this.b + y * this.d + this.f) * ratioY
-    };
+  applyToPoint(point, index = 0) {
+    let x = point[index];
+    let y = point[index+1];
+    point[index] = x * this.a + y * this.c + this.e;
+    point[index+1] = x * this.b + y * this.d + this.f;
   };
   
   /**
    * @param {Array} points
-   * @param {Number} ratioX
-   * @param {Number} ratioY
-   * @return {Array}
+   * @param {Integer} index
    */
-  applyToArray(points, ratioX = 1, ratioY = ratioX) {
-    let ret = [];
+  applyToArray(points, index = 0) {
     let pointsNum = points.length;
-    for(let i = 0; i < pointsNum; ) {
-      let p = this.applyToPoint(points[i++], points[i++]);
-      ret.push(p.x * ratioX, p.y * ratioY);
+    for(let i = index; i < pointsNum; i += 2) {
+      this.applyToPoint(points, i);
     }
-    return ret;
   };
   
   /**
@@ -247,6 +239,18 @@ class Matrix {
     m.e = this.e * t;
     m.f = this.f * t;
     return m;
+  };
+  
+  /**
+   * @param {Number} t
+   * @param {Number} x
+   * @param {Number} y
+   * @param {Array} point
+   * @param {Integer} index
+   */
+  multAndAddPoint(t, x, y, point, index) {
+    point[index] += (x * this.a + y * this.c + this.e) * t;
+    point[index+1] += (x * this.b + y * this.d + this.f) * t;
   };
   
   /**
@@ -397,10 +401,7 @@ class Sprite {
   };
   
   getMatrix() {
-    let sx = this.scaleX;
-    let sy = this.scaleY;
-    let r = this.rotation;
-    return this.m.reset().translate(this.x, this.y).rotate(r).scale(sx, sy).translate(-this.anchorX, -this.anchorY);
+    return this.m.reset().translate(this.x, this.y).rotate(this.rotation).scale(this.scaleX, this.scaleY).translate(-this.anchorX, -this.anchorY);
   };
 };
 
@@ -466,15 +467,22 @@ class PathObj {
     };
     
     let updatePath =d=> {
+      let pos;
       switch(d.type) {
         case "M":
-          this.resultPath.pathData.push({type:"M", pos:matrix.applyToArray(d.pos)});
+          pos = d.pos.slice();
+          matrix.applyToArray(pos);
+          this.resultPath.pathData.push({type:"M", pos});
           break;
         case "L":
-          this.resultPath.pathData.push({type:"L", pos:matrix.applyToArray(d.pos)});
+          pos = d.pos.slice();
+          matrix.applyToArray(pos);
+          this.resultPath.pathData.push({type:"L", pos});
           break;
         case "C":
-          this.resultPath.pathData.push({type:"C", pos:matrix.applyToArray(d.pos)});
+          pos = d.pos.slice();
+          matrix.applyToArray(pos);
+          this.resultPath.pathData.push({type:"C", pos});
           break;
         case "Z":
           this.resultPath.pathData.push({type:"Z"});
@@ -694,18 +702,15 @@ class GroupObj extends Sprite {
         let points = d.pos;
         let pointsNum = points.length;
         for(let i = 0; i < pointsNum; i += 2) {
-          let x = points[i];
-          let y = points[i+1];
-          
           if(flexi.length == 1) {
             let id = flexi[0];
             if(pathContainer.groups[id].strength == 0) continue;
-            let pos = pathContainer.groups[id].effectSprite.getMatrix().applyToPoint(x, y);
-            points[i] = pos.x;
-            points[i+1] = pos.y;
+            pathContainer.groups[id].effectSprite.getMatrix().applyToPoint(points, i);
             continue;
           }
           
+          let x = points[i];
+          let y = points[i+1];
           let ratioList = [];
           flexi.forEach(id=>{
             ratioList.push(pathContainer.groups[id].calc(x, y));
@@ -718,13 +723,8 @@ class GroupObj extends Sprite {
           points[i] = 0;
           points[i+1] = 0;
           
-          let matrix = new Matrix();
           flexi.forEach((id, j)=>{
-            let ratio = ratioList[j];
-            let bone = pathContainer.groups[id];
-            let pos = bone.effectSprite.getMatrix().mult(1 - ratio/sum).applyToPoint(x, y);
-            points[i] += pos.x;
-            points[i+1] += pos.y;
+            pathContainer.groups[id].effectSprite.getMatrix().multAndAddPoint(1 - ratioList[j]/sum, x, y, points, i);
           });
         }
       });
@@ -921,15 +921,16 @@ class BoneObj extends GroupObj {
     if(this.parentID < 0 && pathDataList.length == 2) {
       this.effectSprite.reset();
       
+      let points = pathDataList[0].pos.concat(pathDataList[1].pos);
       let sprite = this.clone();
       sprite.anchorX = sprite.x += pathDataList[0].pos[0];
       sprite.anchorY = sprite.y += pathDataList[0].pos[1];
-      let pos = sprite.getMatrix().applyToArray(pathDataList[0].pos.concat(pathDataList[1].pos));
+      sprite.getMatrix().applyToArray(points);
       
-      let x0 = this.effectSprite.x = this.currentState.x0 = pos[0];
-      let y0 = this.effectSprite.y = this.currentState.y0 = pos[1];
-      let x1 = this.currentState.x1 = pos[2];
-      let y1 = this.currentState.y1 = pos[3];
+      let x0 = this.effectSprite.x = this.currentState.x0 = points[0];
+      let y0 = this.effectSprite.y = this.currentState.y0 = points[1];
+      let x1 = this.currentState.x1 = points[2];
+      let y1 = this.currentState.y1 = points[3];
       
       let distX = x1 - x0;
       let distY = y1 - y0;
@@ -957,15 +958,11 @@ class BoneObj extends GroupObj {
     if(pathDataList.length == 2) {
       this.effectSprite.reset();
       
+      let points = pathDataList[0].pos.concat(pathDataList[1].pos);
       let sprite = this.clone();
       sprite.anchorX = sprite.x += pathDataList[0].pos[0];
       sprite.anchorY = sprite.y += pathDataList[0].pos[1];
-      let pos = sprite.getMatrix().applyToArray(pathDataList[0].pos.concat(pathDataList[1].pos));
-      
-      let x0 = pos[0];
-      let y0 = pos[1];
-      let x1 = pos[2];
-      let y1 = pos[3];
+      sprite.getMatrix().applyToArray(points);
       
       if(this.parentID >= 0) {
         let bone = pathContainer.groups[this.parentID];
@@ -974,26 +971,22 @@ class BoneObj extends GroupObj {
           let effect = bone.effectSprite;
           let x = effect.x - effect.anchorX;
           let y = effect.y - effect.anchorY;
-          x0 += x;
-          y0 += y;
-          x1 += x;
-          y1 += y;
+          points[0] += x;
+          points[1] += y;
+          points[2] += x;
+          points[3] += y;
         } else {
-          let posArray = bone.effectSprite.getMatrix().applyToArray([x0, y0, x1, y1]);
-          x0 = posArray[0];
-          y0 = posArray[1];
-          x1 = posArray[2];
-          y1 = posArray[3];
+          bone.effectSprite.getMatrix().applyToArray(points);
         }
       }
       
-      this.effectSprite.x = this.currentState.x0 = x0;
-      this.effectSprite.y = this.currentState.y0 = y0;
-      this.currentState.x1 = x1;
-      this.currentState.y1 = y1;
+      this.effectSprite.x = this.currentState.x0 = points[0];
+      this.effectSprite.y = this.currentState.y0 = points[1];
+      this.currentState.x1 = points[2];
+      this.currentState.y1 = points[3];
       
-      let distX = x1 - x0;
-      let distY = y1 - y0;
+      let distX = points[2] - points[0];
+      let distY = points[3] - points[1];
       let distance = this.currentState.distance = Math.sqrt(distX*distX + distY*distY);
       let angle = this.currentState.angle = Math.atan2(distY, distX);
       

@@ -16,33 +16,25 @@ class Matrix {
   };
   
   /**
-   * @param {Number} x
-   * @param {Number} y
-   * @param {Number} ratioX
-   * @param {Number} ratioY
-   * @return {{x: Number, y: Number}}
+   * @param {Array} point
+   * @param {Integer} index
    */
-  applyToPoint(x, y, ratioX = 1, ratioY = ratioX) {
-    return {
-      x: (x * this.a + y * this.c + this.e) * ratioX,
-      y: (x * this.b + y * this.d + this.f) * ratioY
-    };
+  applyToPoint(point, index = 0) {
+    let x = point[index];
+    let y = point[index+1];
+    point[index] = x * this.a + y * this.c + this.e;
+    point[index+1] = x * this.b + y * this.d + this.f;
   };
   
   /**
    * @param {Array} points
-   * @param {Number} ratioX
-   * @param {Number} ratioY
-   * @return {Array}
+   * @param {Integer} index
    */
-  applyToArray(points, ratioX = 1, ratioY = ratioX) {
-    let ret = [];
+  applyToArray(points, index = 0) {
     let pointsNum = points.length;
-    for(let i = 0; i < pointsNum; ) {
-      let p = this.applyToPoint(points[i++], points[i++]);
-      ret.push(p.x * ratioX, p.y * ratioY);
+    for(let i = index; i < pointsNum; i += 2) {
+      this.applyToPoint(points, i);
     }
-    return ret;
   };
   
   /**
@@ -88,6 +80,18 @@ class Matrix {
     m.e = this.e * t;
     m.f = this.f * t;
     return m;
+  };
+  
+  /**
+   * @param {Number} t
+   * @param {Number} x
+   * @param {Number} y
+   * @param {Array} point
+   * @param {Integer} index
+   */
+  multAndAddPoint(t, x, y, point, index) {
+    point[index] += (x * this.a + y * this.c + this.e) * t;
+    point[index+1] += (x * this.b + y * this.d + this.f) * t;
   };
   
   /**
