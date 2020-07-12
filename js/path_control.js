@@ -711,13 +711,15 @@ class GroupObj extends Sprite {
           
           let x = points[i];
           let y = points[i+1];
+          
           let ratioList = [];
+          let sum = 0;
           flexi.forEach(id=>{
-            ratioList.push(pathContainer.groups[id].calc(x, y));
+            let val = pathContainer.groups[id].calc(x, y);
+            sum += val;
+            ratioList.push(val);
           });
           
-          let sum = 0;
-          ratioList.forEach(val=>{sum += val});
           if(sum == 0) continue;
           
           points[i] = 0;
