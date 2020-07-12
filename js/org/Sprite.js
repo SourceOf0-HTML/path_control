@@ -82,8 +82,13 @@ class Sprite {
     return ret;
   };
   
-  getMatrix() {
-    return this.m.reset().translate(this.x, this.y).rotate(this.rotation).scale(this.scaleX, this.scaleY).translate(-this.anchorX, -this.anchorY);
+  /**
+   * @param {Number} offsetX
+   * @param {Number} offsetY
+   * @return {Matrix}
+   */
+  getMatrix(offsetX = 0, offsetY = 0) {
+    return this.m.reset().translate(this.x + offsetX, this.y + offsetY).rotate(this.rotation).scale(this.scaleX, this.scaleY).translate(- this.anchorX - offsetX, - this.anchorY -  + offsetY);
   };
 };
 

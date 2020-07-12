@@ -400,8 +400,13 @@ class Sprite {
     return ret;
   };
   
-  getMatrix() {
-    return this.m.reset().translate(this.x, this.y).rotate(this.rotation).scale(this.scaleX, this.scaleY).translate(-this.anchorX, -this.anchorY);
+  /**
+   * @param {Number} offsetX
+   * @param {Number} offsetY
+   * @return {Matrix}
+   */
+  getMatrix(offsetX = 0, offsetY = 0) {
+    return this.m.reset().translate(this.x + offsetX, this.y + offsetY).rotate(this.rotation).scale(this.scaleX, this.scaleY).translate(- this.anchorX - offsetX, - this.anchorY -  + offsetY);
   };
 };
 
@@ -906,6 +911,37 @@ class BoneObj extends GroupObj {
       this.strength = data.strength;
       PathCtr.loadState("strength:" + this.strength);
     }
+    
+    if("smartMin" in data && Number.isFinite(data.smartMin)) {
+      this.smartMin = data.smartMin/(Math.PI*2);
+      PathCtr.loadState("smartMin:" + this.smartMin);
+    }
+    
+    if("smartMax" in data && Number.isFinite(data.smartMax)) {
+      this.smartMax = data.smartMax/(Math.PI*2);
+      PathCtr.loadState("smartMax:" + this.smartMax);
+    }
+  };
+  
+  /**
+   * @param {Array} points - bone pos
+   */
+  diff(points) {
+    let x0 = this.effectSprite.x = this.currentState.x0 = points[0];
+    let y0 = this.effectSprite.y = this.currentState.y0 = points[1];
+    let x1 = this.currentState.x1 = points[2];
+    let y1 = this.currentState.y1 = points[3];
+    
+    let distX = x1 - x0;
+    let distY = y1 - y0;
+    let distance = this.currentState.distance = Math.sqrt(distX*distX + distY*distY);
+    let angle = this.currentState.angle = Math.atan2(distY, distX);
+    
+    this.effectSprite.anchorX = this.defState.x0;
+    this.effectSprite.anchorY = this.defState.y0;
+    this.effectSprite.scaleY = distance / this.defState.distance;
+    this.effectSprite.rotation = angle - this.defState.angle;
+    this.isReady = true;
   };
   
   /**
@@ -916,36 +952,16 @@ class BoneObj extends GroupObj {
     
     this.isReady = false;
     
-    //TODO:ボーン制御処理等
-    
     let pathDataList = this.paths[0].getPathDataList(PathCtr.currentFrame, PathCtr.currentActionID);
     
-    if(this.parentID < 0 && pathDataList.length == 2) {
-      this.effectSprite.reset();
-      
-      let points = pathDataList[0].pos.concat(pathDataList[1].pos);
-      let sprite = this.clone();
-      sprite.anchorX = sprite.x += pathDataList[0].pos[0];
-      sprite.anchorY = sprite.y += pathDataList[0].pos[1];
-      sprite.getMatrix().applyToArray(points);
-      
-      let x0 = this.effectSprite.x = this.currentState.x0 = points[0];
-      let y0 = this.effectSprite.y = this.currentState.y0 = points[1];
-      let x1 = this.currentState.x1 = points[2];
-      let y1 = this.currentState.y1 = points[3];
-      
-      let distX = x1 - x0;
-      let distY = y1 - y0;
-      let distance = this.currentState.distance = Math.sqrt(distX*distX + distY*distY);
-      let angle = this.currentState.angle = Math.atan2(distY, distX);
-      
-      this.effectSprite.anchorX = this.defState.x0;
-      this.effectSprite.anchorY = this.defState.y0;
-      this.effectSprite.scaleY = distance / this.defState.distance;
-      this.effectSprite.rotation = angle - this.defState.angle;
-      this.isReady = true;
-    }
+    if(this.parentID >= 0 || pathDataList.length != 2) return;
     
+    this.effectSprite.reset();
+    
+    let points = pathDataList[0].pos.concat(pathDataList[1].pos);
+    this.getMatrix(pathDataList[0].pos[0], pathDataList[0].pos[1]).applyToArray(points);
+    
+    this.diff(points);
   };
   
   /**
@@ -957,47 +973,29 @@ class BoneObj extends GroupObj {
     
     let pathDataList = this.paths[0].getPathDataList(PathCtr.currentFrame, PathCtr.currentActionID);
     
-    if(pathDataList.length == 2) {
-      this.effectSprite.reset();
-      
-      let points = pathDataList[0].pos.concat(pathDataList[1].pos);
-      let sprite = this.clone();
-      sprite.anchorX = sprite.x += pathDataList[0].pos[0];
-      sprite.anchorY = sprite.y += pathDataList[0].pos[1];
-      sprite.getMatrix().applyToArray(points);
-      
-      if(this.parentID >= 0) {
-        let bone = pathContainer.groups[this.parentID];
-        bone.preprocessing(pathContainer);
-        if(this.isParentPin) {
-          let effect = bone.effectSprite;
-          let x = effect.x - effect.anchorX;
-          let y = effect.y - effect.anchorY;
-          points[0] += x;
-          points[1] += y;
-          points[2] += x;
-          points[3] += y;
-        } else {
-          bone.effectSprite.getMatrix().applyToArray(points);
-        }
+    if(pathDataList.length != 2) return;
+    
+    this.effectSprite.reset();
+    
+    let points = pathDataList[0].pos.concat(pathDataList[1].pos);
+    this.getMatrix(pathDataList[0].pos[0], pathDataList[0].pos[1]).applyToArray(points);
+    
+    if(this.parentID >= 0) {
+      let bone = pathContainer.groups[this.parentID];
+      bone.preprocessing(pathContainer);
+      if(this.isParentPin) {
+        let effect = bone.effectSprite;
+        let x = effect.x - effect.anchorX;
+        let y = effect.y - effect.anchorY;
+        points[0] += x;
+        points[1] += y;
+        points[2] += x;
+        points[3] += y;
+      } else {
+        bone.effectSprite.getMatrix().applyToArray(points);
       }
-      
-      this.effectSprite.x = this.currentState.x0 = points[0];
-      this.effectSprite.y = this.currentState.y0 = points[1];
-      this.currentState.x1 = points[2];
-      this.currentState.y1 = points[3];
-      
-      let distX = points[2] - points[0];
-      let distY = points[3] - points[1];
-      let distance = this.currentState.distance = Math.sqrt(distX*distX + distY*distY);
-      let angle = this.currentState.angle = Math.atan2(distY, distX);
-      
-      this.effectSprite.anchorX = this.defState.x0;
-      this.effectSprite.anchorY = this.defState.y0;
-      this.effectSprite.scaleY = distance / this.defState.distance;
-      this.effectSprite.rotation = angle - this.defState.angle;
-      this.isReady = true;
     }
+    this.diff(points);
   };
   
   /**
