@@ -11,7 +11,7 @@ class PathObj {
     this.resultPath = {};              // path data for drawing
   };
   
-  addAction(pathDataList, fillRule, fillStyle, lineWidth, strokeStyle, frame, actionID) {
+  addAction(pathDataList, fillStyle, lineWidth, strokeStyle, frame, actionID) {
     if( this.hasActionList.length == 0 ) {
       // init action data
       this.pathDataList = [[this.pathDataList]];  // path data array

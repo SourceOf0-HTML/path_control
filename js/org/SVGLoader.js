@@ -102,7 +102,6 @@ var SVGLoader = {
    * @param {Integer} actionID - action ID
    */
   addActionPath: function(path, pathDOM, style, frame, actionID) {
-    let fillRule = (!pathDOM)? "nonzero" : style.fillRule;
     let fillStyle = (!pathDOM)? "none" : style.fill;
     if(fillStyle == "none") {
       fillStyle = "transparent";
@@ -127,7 +126,6 @@ var SVGLoader = {
     
     path.addAction(
       pathDataList,
-      fillRule,
       fillStyle,
       lineWidth,
       strokeStyle,
@@ -230,7 +228,6 @@ var SVGLoader = {
     
     path.addAction(
       pathDataList,
-      "nonzero",
       "transparent",
       2,
       "rgb(0, 255, 0)",

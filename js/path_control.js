@@ -423,7 +423,7 @@ class PathObj {
     this.resultPath = {};              // path data for drawing
   };
   
-  addAction(pathDataList, fillRule, fillStyle, lineWidth, strokeStyle, frame, actionID) {
+  addAction(pathDataList, fillStyle, lineWidth, strokeStyle, frame, actionID) {
     if( this.hasActionList.length == 0 ) {
       // init action data
       this.pathDataList = [[this.pathDataList]];  // path data array
@@ -910,16 +910,6 @@ class BoneObj extends GroupObj {
     if("strength" in data && Number.isFinite(data.strength)) {
       this.strength = data.strength;
       PathCtr.loadState("strength:" + this.strength);
-    }
-    
-    if("smartMin" in data && Number.isFinite(data.smartMin)) {
-      this.smartMin = data.smartMin/(Math.PI*2);
-      PathCtr.loadState("smartMin:" + this.smartMin);
-    }
-    
-    if("smartMax" in data && Number.isFinite(data.smartMax)) {
-      this.smartMax = data.smartMax/(Math.PI*2);
-      PathCtr.loadState("smartMax:" + this.smartMax);
     }
   };
   

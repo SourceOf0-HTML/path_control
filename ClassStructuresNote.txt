@@ -53,6 +53,12 @@ PathObj (after add action data)
   lineWidth = [actionID, ... ][frame, ... ] = lineWidth;        // strokeWidth ( context2D.lineWidth )
   strokeStyle = [actionID, ... ][frame, ... ] = strokeStyle;    // strokeColor ( context2D.strokeStyle )
   pathDataList = [actionID, ... ][frame, ... ] = pathDataList;  // path data array
+  this.resultPath = {           // path data for drawing
+    pathData: [],
+    fillStyle: fillStyle,
+    lineWidth: lineWidth,
+    strokeStyle: strokeStyle,
+  };
 
 
 BoneObj - extends GroupObj
