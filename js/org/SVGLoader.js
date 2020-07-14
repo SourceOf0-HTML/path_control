@@ -3,6 +3,12 @@
  * Singleton
  */
 var SVGLoader = {
+  
+  FILE_KIND_BASE: "BASE",
+  FILE_KIND_BONE: "BONE",
+  FILE_KIND_SMRT: "SMRT",
+  initKind: "",
+  
   /**
    * @param {String} maskStr - mask attribute of element
    * @return {GroupObj} - mask group
@@ -247,6 +253,11 @@ var SVGLoader = {
     let children = Array.prototype.slice.call(groupDOM.children);
     let isBone = name.startsWith(PathCtr.defaultBoneName);
     
+    if(!isBone && this.initKind === this.FILE_KIND_BONE) {
+      PathCtr.loadState("  skip load : " + name);
+      return null;
+    }
+    
     children.forEach(child=>{
       let tagName = child.tagName;
       PathCtr.debugPrint("make group : " + name + " : " + tagName);
@@ -311,6 +322,11 @@ var SVGLoader = {
     let childGroups = [];
     let dataIndex = 0;
     let isBone = PathCtr.initTarget.bones.includes(id);
+    
+    if(!isBone && this.initKind === this.FILE_KIND_BONE) {
+      PathCtr.loadState("  skip load : " + name);
+      return;
+    }
     
     if(!!groupDOM) {
       let children = Array.prototype.slice.call(groupDOM.children);
@@ -389,6 +405,7 @@ var SVGLoader = {
     children.forEach(child=>{
       if(child.tagName != "g") return;
       let group = this.makeGroup(child);
+      if(!group) return;
       pathContainer.rootGroups.push(pathContainer.groupNameToIDList[group.id]);
     });
     PathCtr.initTarget = null;
@@ -466,7 +483,7 @@ var SVGLoader = {
   },
   
   /**
-   * @param {Array} fileInfoList - [ [ filePath, totalFrames, actionName ], ... ]
+   * @param {Array} fileInfoList - [ [ kind, totalFrames, actionName, filePath ], ... ]
    * @param {Function} completeFunc - callback when loading complete
    */
   load: function(fileInfoList, completeFunc = null) {
@@ -475,8 +492,8 @@ var SVGLoader = {
       console.log(fileInfoList);
       return;
     }
-    if(fileInfoList[0][2] != PathCtr.defaultActionName) {
-      console.error("action name \"" + PathCtr.defaultActionName + "\" is missing in fileInfoList");
+    if(fileInfoList[0][0] != SVGLoader.FILE_KIND_BASE) {
+      console.error("action kind \"" + SVGLoader.FILE_KIND_BASE + "\" is missing in fileInfoList");
       return;
     }
     
@@ -486,9 +503,10 @@ var SVGLoader = {
     let getFrameNum=i=>("00000".substr(0, 5 - i.toString().length) + i + ".svg");
     
     let loadFile=fileInfo=>{
-      let filePath = fileInfo[0];
+      this.initKind = fileInfo[0];
       let totalFrames = fileInfo[1];
       let actionName = fileInfo[2];
+      let filePath = fileInfo[3];
       
       let loadFrame = 1;
       let request = new XMLHttpRequest();
@@ -518,7 +536,6 @@ var SVGLoader = {
         
         if(!pathContainer) {
           pathContainer = SVGLoader.init(domList[0]);
-          pathContainer.actionList = {};
         }
         
         let actionID = Object.keys(pathContainer.actionList).length;
@@ -534,6 +551,8 @@ var SVGLoader = {
         
         domList.forEach(dom=>dom.parentNode.remove());
         domList.length = 0;
+        
+        this.initKind = "";
         
         if(++fileIndex < fileInfoList.length) {
           loadFile(fileInfoList[fileIndex]);

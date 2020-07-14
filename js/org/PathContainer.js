@@ -14,7 +14,7 @@ class PathContainer extends Sprite {
     this.groupNameToIDList = {};  // list of group name and group ID
     this.masks = {};              // list of mask name and group ID
     this.bones = [];              // list of bone ID
-    this.actionList = null;       // action info list
+    this.actionList = {};         // action info list
   };
   
   /**

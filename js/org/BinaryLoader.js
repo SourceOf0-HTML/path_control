@@ -177,7 +177,6 @@ var BinaryLoader = {
     
     let actionListNum = getUint8();
     if(actionListNum > 0) {
-      pathContainer.actionList = {};
       for(let i = 0; i < actionListNum; ++i) {
         pathContainer.actionList[getString()] = {
           id : getUint8(),

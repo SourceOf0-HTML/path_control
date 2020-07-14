@@ -1016,13 +1016,11 @@ class BoneObj extends GroupObj {
     return dist * strength;
   };
   
-  /**
-   * @param {PathContainer} pathContainer
-   * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
-   * @param {Path2D} path2D
-   * @param {Boolean} isMask - when true, draw as a mask
-   */
-  draw(pathContainer, context, path2D, isMask) {
+  update() {
+    // do nothing.
+  };
+  
+  draw() {
     // do nothing.
   };
   
@@ -1068,8 +1066,6 @@ class BoneObj extends GroupObj {
       context.strokeStyle = DebugPath.strengthLineColor;
       context.stroke(path2D);
       path2D = null;
-      
-      //path.draw(pathContainer, context, path2D, false);
     });
     
     let actionID = PathCtr.currentActionID;
@@ -1096,7 +1092,7 @@ class PathContainer extends Sprite {
     this.groupNameToIDList = {};  // list of group name and group ID
     this.masks = {};              // list of mask name and group ID
     this.bones = [];              // list of bone ID
-    this.actionList = null;       // action info list
+    this.actionList = {};         // action info list
   };
   
   /**
@@ -1357,7 +1353,6 @@ var BinaryLoader = {
     
     let actionListNum = getUint8();
     if(actionListNum > 0) {
-      pathContainer.actionList = {};
       for(let i = 0; i < actionListNum; ++i) {
         pathContainer.actionList[getString()] = {
           id : getUint8(),
