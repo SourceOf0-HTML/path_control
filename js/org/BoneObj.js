@@ -166,13 +166,11 @@ class BoneObj extends GroupObj {
     return dist * strength;
   };
   
-  /**
-   * @param {PathContainer} pathContainer
-   * @param {CanvasRenderingContext2D} context - canvas.getContext("2d")
-   * @param {Path2D} path2D
-   * @param {Boolean} isMask - when true, draw as a mask
-   */
-  draw(pathContainer, context, path2D, isMask) {
+  update() {
+    // do nothing.
+  };
+  
+  draw() {
     // do nothing.
   };
   
@@ -218,8 +216,6 @@ class BoneObj extends GroupObj {
       context.strokeStyle = DebugPath.strengthLineColor;
       context.stroke(path2D);
       path2D = null;
-      
-      //path.draw(pathContainer, context, path2D, false);
     });
     
     let actionID = PathCtr.currentActionID;
