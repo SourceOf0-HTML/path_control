@@ -1,32 +1,61 @@
 
 class PathObj {
-  constructor(pathDataList, maskIdToUse, fillRule, fillStyle, lineWidth, strokeStyle) {
+  constructor(maskIdToUse, pathDataList, pathDiffList, fillRule, fillStyle, lineWidth, strokeStyle) {
     this.maskIdToUse = maskIdToUse;    // ID of the mask to use
-    this.pathDataList = pathDataList;  // path data array
+    this.pathDiffList = pathDiffList;  // diff pos data array
     this.fillRule = fillRule;          // "nonzero" or "evenodd"
     this.fillStyle = fillStyle;        // fillColor ( context2D.fillStyle )
     this.lineWidth = lineWidth;        // strokeWidth ( context2D.lineWidth )
     this.strokeStyle = strokeStyle;    // strokeColor ( context2D.strokeStyle )
     this.hasActionList = [];           // if true, have action
     this.resultPath = {};              // path data for drawing
+    
+    this.defPath = {  // default path data
+      pathDataList,
+      fillStyle,
+      lineWidth,
+      strokeStyle,
+    };
   };
   
   addAction(pathDataList, fillStyle, lineWidth, strokeStyle, frame, actionID) {
+    if(this.defPath.pathDataList.length != pathDataList.length) {
+      console.error("The number of paths does not match.");
+      console.log(this.defPath.pathDataList);
+      console.log(pathDataList);
+      pathDataList = this.defPath.pathDataList.slice();
+    }
+    
+    let pathDiffList = [];
+    this.defPath.pathDataList.forEach((d, i)=>{
+      if(d.type != pathDataList[i].type) {
+        console.error("type does not match.");
+        console.log(this.defPath.pathDataList);
+        console.log(pathDataList);
+        return;
+      }
+      if(!d.pos) return;
+      pathDiffList[i] = [];
+      d.pos.forEach((val, j)=>{
+        pathDiffList[i].push(pathDataList[i].pos[j] - val);
+      });
+    });
+    
     if( this.hasActionList.length == 0 ) {
       // init action data
-      this.pathDataList = [[this.pathDataList]];  // path data array
+      this.pathDiffList = [[this.pathDiffList]];  // path data array
       this.fillStyle = [[this.fillStyle]];        // fillColor ( context2D.fillStyle )
       this.lineWidth = [[this.lineWidth]];        // strokeWidth ( context2D.lineWidth )
       this.strokeStyle = [[this.strokeStyle]];    // strokeColor ( context2D.strokeStyle )
     }
     if( !this.hasActionList[actionID] ) {
-      this.pathDataList[actionID] = [this.pathDataList[0][0]];
+      this.pathDiffList[actionID] = [this.pathDiffList[0][0]];
       this.fillStyle[actionID] = [this.fillStyle[0][0]];
       this.lineWidth[actionID] = [this.lineWidth[0][0]];
       this.strokeStyle[actionID] = [this.strokeStyle[0][0]];
       this.hasActionList[actionID] = true;
     }
-    this.pathDataList[actionID][frame] = pathDataList;
+    this.pathDiffList[actionID][frame] = pathDiffList;
     this.fillStyle[actionID][frame] = fillStyle;
     this.lineWidth[actionID][frame] = lineWidth;
     this.strokeStyle[actionID][frame] = strokeStyle;
@@ -38,14 +67,26 @@ class PathObj {
    * @return {Array} - pathDataList
    */
   getPathDataList(frame = 0, actionID = 0) {
+    let ret = [];
+    
+    let makeData =(pathDiffList)=> {
+      this.defPath.pathDataList.forEach((d, i)=>{
+        ret.push({
+          type: d.type,
+          pos: (!d.pos)? undefined : d.pos.map((val, j)=>val+pathDiffList[i][j]),
+        });
+      });
+      return ret;
+    }
+    
     if( this.hasActionList.length == 0 ) {
-      return this.pathDataList;
+      return makeData(this.pathDiffList);
     }
     if( !this.hasActionList[actionID] ) {
       actionID = 0;
       frame = 0;
     }
-    return this.pathDataList[actionID][Math.min(frame, this.pathDataList[actionID].length)];
+    return makeData(this.pathDiffList[actionID][Math.min(frame, this.pathDiffList[actionID].length)]);
   };
   
   /**
@@ -55,39 +96,17 @@ class PathObj {
    * @param {Matrix} matrix - used to transform the path
    */
   update(frame, actionID, pathContainer, matrix) {
-    this.resultPath = {
-      pathData: []
+    this.resultPath = {};
+    
+    let updatePath =d=>{
+      if(!!d.pos) matrix.applyToArray(d.pos);
     };
     
-    let updatePath =d=> {
-      let pos;
-      switch(d.type) {
-        case "M":
-          pos = d.pos.slice();
-          matrix.applyToArray(pos);
-          this.resultPath.pathData.push({type:"M", pos});
-          break;
-        case "L":
-          pos = d.pos.slice();
-          matrix.applyToArray(pos);
-          this.resultPath.pathData.push({type:"L", pos});
-          break;
-        case "C":
-          pos = d.pos.slice();
-          matrix.applyToArray(pos);
-          this.resultPath.pathData.push({type:"C", pos});
-          break;
-        case "Z":
-          this.resultPath.pathData.push({type:"Z"});
-          break;
-        default:
-          console.error("unknown type");
-          break;
-      }
-    };
+    let pathDataList = this.getPathDataList(frame, actionID);
+    pathDataList.forEach(updatePath);
+    this.resultPath.pathDataList = pathDataList;
     
     if( this.hasActionList.length == 0) {
-      this.pathDataList.forEach(updatePath);
       this.resultPath.lineWidth = this.lineWidth;
       this.resultPath.strokeStyle = this.strokeStyle;
       this.resultPath.fillStyle = this.fillStyle;
@@ -97,7 +116,6 @@ class PathObj {
       frame = 0;
     }
     
-    this.pathDataList[actionID][Math.min(frame, this.pathDataList[actionID].length)].forEach(updatePath);
     this.resultPath.lineWidth = this.lineWidth[actionID][Math.min(frame, this.lineWidth[actionID].length)];
     this.resultPath.strokeStyle = this.strokeStyle[actionID][Math.min(frame, this.strokeStyle[actionID].length)];
     this.resultPath.fillStyle = this.fillStyle[actionID][Math.min(frame, this.fillStyle[actionID].length)];
@@ -110,7 +128,7 @@ class PathObj {
    * @param {Boolean} isMask - when true, draw as a mask
    */
   draw(pathContainer, context, path2D, isMask) {
-    this.resultPath.pathData.forEach(d=>{
+    this.resultPath.pathDataList.forEach(d=>{
       let pos = d.pos;
       let ratio = pathContainer.pathRatio;
       switch(d.type) {
@@ -167,7 +185,7 @@ class PathObj {
       context.fill(path2D, "nonzero");
     };
     
-    this.resultPath.pathData.forEach(d=>{
+    this.resultPath.pathDataList.forEach(d=>{
       let pos = d.pos;
       let ratio = pathContainer.pathRatio;
       switch(d.type) {

@@ -97,7 +97,7 @@ class GroupObj extends Sprite {
     });
     
     this.paths.forEach(path=>{
-      path.resultPath.pathData.forEach(d=>{
+      path.resultPath.pathDataList.forEach(d=>{
         if(!d.pos || d.pos.length == 0) return;
         let points = d.pos;
         let pointsNum = points.length;

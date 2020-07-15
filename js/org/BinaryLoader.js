@@ -96,19 +96,24 @@ var BinaryLoader = {
       return ret;
     }
     
+    let getPathDiff=()=>getArray(getUint16, ()=>getArray(getUint16, getPos));
+    
     let getPath=()=>{
       let maskIdToUse = getUint16();
       let fillRule = (getUint8() == 0 ? "nonzero" : "evenodd");
+      
+      let pathDataList = getPathData();
       
       let hasAction = getUint8();
       if(!hasAction) {
         let lineWidth = getFloat32();
         let fillStyle = getColor();
         let strokeStyle = getColor();
-        let pathDataList = getPathData();
+        let pathDiffList = getPathDiff();
         return new PathObj(
-          pathDataList,
           maskIdToUse,
+          pathDataList,
+          pathDiffList,
           fillRule,
           fillStyle,
           lineWidth,
@@ -119,11 +124,12 @@ var BinaryLoader = {
       let lineWidth = getAction(getFloat32);
       let fillStyle = getAction(getColor);
       let strokeStyle = getAction(getColor);
-      let pathDataList = getAction(getPathData);
+      let pathDiffList = getAction(getPathDiff);
       
       let pathObj = new PathObj(
-        pathDataList,
         maskIdToUse,
+        pathDataList,
+        pathDiffList,
         fillRule,
         fillStyle,
         lineWidth,
@@ -132,7 +138,7 @@ var BinaryLoader = {
       pathObj.lineWidth.forEach((val, i)=>(pathObj.hasActionList[i] = true));
       pathObj.fillStyle.forEach((val, i)=>(pathObj.hasActionList[i] = true));
       pathObj.strokeStyle.forEach((val, i)=>(pathObj.hasActionList[i] = true));
-      pathObj.pathDataList.forEach((val, i)=>(pathObj.hasActionList[i] = true));
+      pathObj.pathDiffList.forEach((val, i)=>(pathObj.hasActionList[i] = true));
       return pathObj;
     };
     

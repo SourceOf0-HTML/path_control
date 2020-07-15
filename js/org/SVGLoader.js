@@ -90,9 +90,15 @@ var SVGLoader = {
     } else {
       lineWidth = parseFloat(style.strokeWidth.match(/([\d\.]+)/)[1]);
     }
+    
+    let pathDataList = this.makePathDataList(pathDOM.getAttribute("d"));
+    let pathDiffList = [];
+    pathDataList.forEach(d=>pathDiffList.push((!d.pos)? undefined : d.pos.slice().fill(0)));
+    
     return new PathObj(
-      this.makePathDataList(pathDOM.getAttribute("d")),
       this.getMaskId(pathDOM.getAttribute("mask")),
+      pathDataList,
+      pathDiffList,
       style.fillRule,
       fillStyle,
       lineWidth,
@@ -208,9 +214,13 @@ var SVGLoader = {
    * @return {PathObj}
    */
   makeBonePath: function(pathDOM) {
+    let pathDataList = this.makeBonePathDataList(pathDOM.getAttribute("d"));
+    let pathDiffList = [];
+    pathDataList.forEach(d=>pathDiffList.push((!d.pos)? undefined : d.pos.slice().fill(0)));
     return new PathObj(
-      this.makeBonePathDataList(pathDOM.getAttribute("d")),
       this.getMaskId(pathDOM.getAttribute("mask")),
+      pathDataList,
+      pathDiffList,
       "nonzero",
       "transparent",
       2,
@@ -605,9 +615,9 @@ var SVGLoader = {
         setUint8(colorArr[3]);  // B
       }
     };
-    let setArray=(arr, lengFunc, setFunc)=>{
+    let setArray=(arr, setLengFunc, setFunc)=>{
       let num = arr.length;
-      lengFunc(num);
+      setLengFunc(num);
       for(let i = 0; i < num;) {
         let val = arr[i];
         let j = 1;
@@ -665,9 +675,17 @@ var SVGLoader = {
       });
     };
     
+    let setPathDiff=pathDiff=>{
+      setArray(pathDiff, setUint16, posArray=>{
+        setArray(posArray, setUint16, setPos);
+      });
+    };
+    
     let setPath=path=>{
       setUint16(path.maskIdToUse);
       setUint8(path.fillRule == "nonzero" ? 0 : 1);
+      
+      setPathData(path.defPath.pathDataList);
       
       let hasAction = (path.hasActionList.length > 0);
       if(hasAction) {
@@ -675,13 +693,13 @@ var SVGLoader = {
         setAction(path.lineWidth, setFloat32);
         setAction(path.fillStyle, setColor);
         setAction(path.strokeStyle, setColor);
-        setAction(path.pathDataList, setPathData);
+        setAction(path.pathDiffList, setPathDiff);
       } else {
         setUint8(0);
         setFloat32(path.lineWidth);
         setColor(path.fillStyle);
         setColor(path.strokeStyle);
-        setPathData(path.pathDataList);
+        setPathDiff(path.pathDiffList);
       }
     };
     

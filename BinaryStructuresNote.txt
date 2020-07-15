@@ -68,15 +68,17 @@ PathObj
      G : Uint8
      B : Uint8
  pathDataList
+   length : Uint16
+   Array : PathData
+ pathDiffList
    actionID(length) : Uint8 @
      frame(length) : Uint16 @
        length : Uint16
-       Array : PathData
-
+       Array : PathData.pos
 
 PathData
  type
    M = 0, L = 1, C = 2, Z = 3 : Uint8
  pos
-   Array : Float32Array ( length: M = 2, C = 6, Z = 0 )
+   Array : Int16Array ( length: M = 2, C = 6, Z = 0 )
 
