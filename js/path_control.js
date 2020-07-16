@@ -431,7 +431,9 @@ class PathObj {
   };
   
   addAction(pathDataList, fillStyle, lineWidth, strokeStyle, frame, actionID) {
-    if(this.defPath.pathDataList.length != pathDataList.length) {
+    if(!pathDataList) {
+      pathDataList = this.defPath.pathDataList.slice();
+    } else if(this.defPath.pathDataList.length != pathDataList.length) {
       console.error("The number of paths does not match.");
       console.log(this.defPath.pathDataList);
       console.log(pathDataList);
@@ -502,19 +504,72 @@ class PathObj {
   };
   
   /**
+   * @param {PathContainer} pathContainer
+   * @param {Integer} frame - frame number
+   * @param {Integer} actionID - action ID
+   * @return {Array} - pathDataList
+   */
+  getMergePathDataList(pathContainer, frame = 0, actionID = 0) {
+    let ret = [];
+    
+    let makeData =(pathDiffList)=> {
+      this.defPath.pathDataList.forEach((d, i)=>{
+        ret.push({
+          type: d.type,
+          pos: (!d.pos)? undefined : d.pos.map((val, j)=>val+pathDiffList[i][j]),
+        });
+      });
+      return ret;
+    }
+    
+    if( this.hasActionList.length == 0 ) {
+      return makeData(this.pathDiffList);
+    }
+    
+    let actionNameList = Object.keys(pathContainer.actionList);
+    if(actionNameList.length == 1) {
+      if( !this.hasActionList[actionID] ) {
+        actionID = 0;
+        frame = 0;
+      }
+      return makeData(this.pathDiffList[actionID][Math.min(frame, this.pathDiffList[actionID].length)]);
+    }
+    
+    if( !this.hasActionList[actionID] ) {
+      actionID = 0;
+      frame = 0;
+    }
+    let pathDataList = makeData(this.pathDiffList[actionID][Math.min(frame, this.pathDiffList[actionID].length)]);
+    
+    actionNameList.forEach(actionName=>{
+      let action = pathContainer.actionList[actionName];
+      if(actionID == action.id) return;
+      if( !this.hasActionList[action.id] ) return;
+      frame = action.currentFrame;
+      
+      this.pathDiffList[action.id][Math.min(frame, this.pathDiffList[action.id].length)].forEach((list, i)=>{
+        if(!list) return;
+        list.forEach((val, j)=>{
+          if(!val) return;
+          pathDataList[i].pos[j] += val;
+        });
+      });
+    });
+    return pathDataList;
+  };
+  
+  /**
    * @param {Integer} frame - frame number
    * @param {Integer} actionID - action ID
    * @param {PathContainer} pathContainer
    * @param {Matrix} matrix - used to transform the path
    */
   update(frame, actionID, pathContainer, matrix) {
-    this.resultPath = {};
-    
     let updatePath =d=>{
       if(!!d.pos) matrix.applyToArray(d.pos);
     };
     
-    let pathDataList = this.getPathDataList(frame, actionID);
+    let pathDataList = this.getMergePathDataList(pathContainer, frame, actionID);
     pathDataList.forEach(updatePath);
     this.resultPath.pathDataList = pathDataList;
     
@@ -667,13 +722,13 @@ class GroupObj extends Sprite {
     nameList.forEach(name=> {
       if(name in pathContainer.groupNameToIDList) {
         let id = pathContainer.groupNameToIDList[name];
+        PathCtr.loadState("  flexi:");
         if(pathContainer.bones.includes(id)) {
-          //this.flexi.unshift(id);
           this.flexi.push(id);
+          PathCtr.loadState("    " + id + "(" + name +")");
         }
       }
     });
-    PathCtr.loadState("flexi:" + this.flexi.toString());
   };
   
   /**
@@ -686,7 +741,7 @@ class GroupObj extends Sprite {
     if( this.hasActionList.length == 0 ) {
       return this.childGroups;
     }
-    if( this.childGroups[actionID] == null || this.childGroups[actionID][frame] == null ) {
+    if( typeof this.childGroups[actionID] === "undefined" || typeof this.childGroups[actionID][frame] === "undefined" ) {
       return this.childGroups[0][0];
     }
     return this.childGroups[actionID][frame];
@@ -719,42 +774,43 @@ class GroupObj extends Sprite {
       pathContainer.groups[childGroup].update(pathContainer, groupSprite, flexi);
     });
     
-    this.paths.forEach(path=>{
-      path.resultPath.pathDataList.forEach(d=>{
-        if(!d.pos || d.pos.length == 0) return;
-        let points = d.pos;
-        let pointsNum = points.length;
-        for(let i = 0; i < pointsNum; i += 2) {
-          if(flexi.length == 1) {
-            let id = flexi[0];
-            if(pathContainer.groups[id].strength == 0) continue;
-            pathContainer.groups[id].effectSprite.getMatrix().applyToPoint(points, i);
-            continue;
+    if(flexi.length > 0) {
+      this.paths.forEach(path=>{
+        path.resultPath.pathDataList.forEach(d=>{
+          if(!d.pos || d.pos.length == 0) return;
+          let points = d.pos;
+          let pointsNum = points.length;
+          for(let i = 0; i < pointsNum; i += 2) {
+            if(flexi.length == 1) {
+              let id = flexi[0];
+              if(pathContainer.groups[id].strength == 0) continue;
+              pathContainer.groups[id].effectSprite.getMatrix().applyToPoint(points, i);
+              continue;
+            }
+            
+            let x = points[i];
+            let y = points[i+1];
+            
+            let ratioList = [];
+            let sum = 0;
+            flexi.forEach(id=>{
+              let val = pathContainer.groups[id].calc(x, y);
+              sum += val;
+              ratioList.push(val);
+            });
+            
+            if(sum == 0) continue;
+            
+            points[i] = 0;
+            points[i+1] = 0;
+            
+            flexi.forEach((id, j)=>{
+              pathContainer.groups[id].effectSprite.getMatrix().multAndAddPoint(1 - ratioList[j]/sum, x, y, points, i);
+            });
           }
-          
-          let x = points[i];
-          let y = points[i+1];
-          
-          let ratioList = [];
-          let sum = 0;
-          flexi.forEach(id=>{
-            let val = pathContainer.groups[id].calc(x, y);
-            sum += val;
-            ratioList.push(val);
-          });
-          
-          if(sum == 0) continue;
-          
-          points[i] = 0;
-          points[i+1] = 0;
-          
-          flexi.forEach((id, j)=>{
-            pathContainer.groups[id].effectSprite.getMatrix().multAndAddPoint(1 - ratioList[j]/sum, x, y, points, i);
-          });
-        }
+        });
       });
-    });
-    
+    }
   };
   
   /**
@@ -912,23 +968,39 @@ class BoneObj extends GroupObj {
     
     if("parent" in data && data.parent in pathContainer.groupNameToIDList) {
       this.parentID = pathContainer.groupNameToIDList[data.parent];
-      PathCtr.loadState("parentID:" + this.parentID);
+      PathCtr.loadState("  parentID:" + this.parentID + "(" + data.parent + ")");
     }
     
     if("isParentPin" in data && (typeof data.isParentPin === "boolean")) {
       this.isParentPin = data.isParentPin;
-      PathCtr.loadState("isParentPin:" + this.isParentPin);
+      PathCtr.loadState("  isParentPin:" + this.isParentPin);
     }
     
     if("feedback" in data && (typeof data.feedback === "boolean")) {
       this.feedback = data.feedback;
-      PathCtr.loadState("feedback:" + this.feedback);
+      PathCtr.loadState("  feedback:" + this.feedback);
     }
     
     if("strength" in data && Number.isFinite(data.strength)) {
       this.strength = data.strength;
-      PathCtr.loadState("strength:" + this.strength);
+      PathCtr.loadState("  strength:" + this.strength);
     }
+    
+    if("isSmartBone" in data && (typeof data.isSmartBone === "boolean")) {
+      this.isSmartBone = data.isSmartBone;
+      PathCtr.loadState("  isSmartBone:" + this.isSmartBone);
+    }
+    
+    if("smartBase" in data && Number.isFinite(data.smartBase)) {
+      this.smartBase = data.smartBase/180 * Math.PI;
+      PathCtr.loadState("  smartBase:" + this.smartBase);
+    }
+    
+    if("smartMax" in data && Number.isFinite(data.smartMax)) {
+      this.smartMax = data.smartMax/180 * Math.PI;
+      PathCtr.loadState("  smartMax:" + this.smartMax);
+    }
+    
   };
   
   /**
@@ -950,6 +1022,23 @@ class BoneObj extends GroupObj {
     this.effectSprite.scaleY = distance / this.defState.distance;
     this.effectSprite.rotation = angle - this.defState.angle;
     this.isReady = true;
+  };
+  
+  /**
+   * @param {Integer} totalFrames - action total frames
+   */
+  getSmartFrame(totalFrames) {
+    if(!this.isSmartBone) {
+      console.error("It is not bone: " + this.id);
+      return 0;
+    }
+    
+    let angle = -this.currentState.angle;
+    angle -= this.smartBase;
+    
+    if(angle < 0) angle += Math.PI*2;
+    if(angle > this.smartMax) angle = this.smartMax;
+    return ((angle/this.smartMax * (totalFrames-2))^0) + 1;
   };
   
   /**
@@ -976,7 +1065,6 @@ class BoneObj extends GroupObj {
    * @param {PathContainer} pathContainer
    */
   preprocessing(pathContainer) {
-    
     if(!this.defState || this.isReady) return;
     
     let pathDataList = this.paths[0].getPathDataList(PathCtr.currentFrame, PathCtr.currentActionID);
@@ -1159,6 +1247,7 @@ class PathContainer extends Sprite {
     
     PathCtr.currentFrame = frame;
     PathCtr.currentActionID = Object.keys(this.actionList).indexOf(actionName);
+    this.actionList[actionName].currentFrame = frame;
     
     this.bones.forEach(id=>{
       this.groups[id].control(this);
@@ -1166,6 +1255,13 @@ class PathContainer extends Sprite {
     this.groups.forEach(group=>{
       group.preprocessing(this);
     });
+    
+    Object.keys(this.actionList).forEach(actionName=>{
+      let action = this.actionList[actionName];
+      if(!action.smartBoneID) return;
+      action.currentFrame = this.groups[action.smartBoneID].getSmartFrame(action.totalFrames);
+    });
+    
     this.rootGroups.forEach(id=>{
       this.groups[id].update(this, (new Sprite().setSprite(this)));
     });
@@ -1379,8 +1475,9 @@ var BinaryLoader = {
     if(actionListNum > 0) {
       for(let i = 0; i < actionListNum; ++i) {
         pathContainer.actionList[getString()] = {
-          id : getUint8(),
-          totalFrames : getUint16(),
+          id: getUint8(),
+          totalFrames: getUint16(),
+          currentFrame: 0,
         };
       }
     }
@@ -1472,6 +1569,24 @@ var BoneLoader = {
             return;
           }
           pathContainer.groups[id].setFlexiBones(pathContainer, ret.flexi[name]);
+        });
+      }
+      
+      if(!!ret.smartAction) {
+        Object.keys(ret.smartAction).forEach(name=>{
+          let action = pathContainer.actionList[name];
+          if(!action) {
+            console.error("smart action is not found : " + name);
+            return;
+          }
+          let boneName = ret.smartAction[name];
+          let id = pathContainer.groupNameToIDList[boneName];
+          if(!id) {
+            console.error("smart bone is not found : " + boneName);
+            return;
+          }
+          action.smartBoneID = id;
+          PathCtr.loadState("smartAction: " + name + " - " + id + "(" + boneName + ")");
         });
       }
       

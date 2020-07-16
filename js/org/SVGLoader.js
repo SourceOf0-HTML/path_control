@@ -130,10 +130,6 @@ var SVGLoader = {
     let pathDataList = null;
     if(!!pathDOM) {
       pathDataList = this.makePathDataList(pathDOM.getAttribute("d"));
-    } else if( path.hasActionList.length == 0 ) {
-      pathDataList = path.pathDataList.concat();
-    } else {
-      pathDataList = path.pathDataList[0][0].concat();
     }
     
     path.addAction(
@@ -238,8 +234,6 @@ var SVGLoader = {
     let pathDataList = null;
     if(!!pathDOM) {
       pathDataList = this.makeBonePathDataList(pathDOM.getAttribute("d"));
-    } else {
-      pathDataList = path.pathDataList[0][0].concat();
     }
     
     path.addAction(
@@ -551,8 +545,9 @@ var SVGLoader = {
         let actionID = Object.keys(pathContainer.actionList).length;
         
         pathContainer.actionList[actionName] = {
-          id : actionID,
-          totalFrames : totalFrames,
+          id: actionID,
+          totalFrames: totalFrames,
+          currentFrame: 0,
         };
         
         SVGLoader.addActionFromList(pathContainer, domList, actionID);

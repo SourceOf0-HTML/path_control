@@ -44,13 +44,13 @@ class GroupObj extends Sprite {
     nameList.forEach(name=> {
       if(name in pathContainer.groupNameToIDList) {
         let id = pathContainer.groupNameToIDList[name];
+        PathCtr.loadState("  flexi:");
         if(pathContainer.bones.includes(id)) {
-          //this.flexi.unshift(id);
           this.flexi.push(id);
+          PathCtr.loadState("    " + id + "(" + name +")");
         }
       }
     });
-    PathCtr.loadState("flexi:" + this.flexi.toString());
   };
   
   /**
@@ -63,7 +63,7 @@ class GroupObj extends Sprite {
     if( this.hasActionList.length == 0 ) {
       return this.childGroups;
     }
-    if( this.childGroups[actionID] == null || this.childGroups[actionID][frame] == null ) {
+    if( typeof this.childGroups[actionID] === "undefined" || typeof this.childGroups[actionID][frame] === "undefined" ) {
       return this.childGroups[0][0];
     }
     return this.childGroups[actionID][frame];
@@ -96,42 +96,43 @@ class GroupObj extends Sprite {
       pathContainer.groups[childGroup].update(pathContainer, groupSprite, flexi);
     });
     
-    this.paths.forEach(path=>{
-      path.resultPath.pathDataList.forEach(d=>{
-        if(!d.pos || d.pos.length == 0) return;
-        let points = d.pos;
-        let pointsNum = points.length;
-        for(let i = 0; i < pointsNum; i += 2) {
-          if(flexi.length == 1) {
-            let id = flexi[0];
-            if(pathContainer.groups[id].strength == 0) continue;
-            pathContainer.groups[id].effectSprite.getMatrix().applyToPoint(points, i);
-            continue;
+    if(flexi.length > 0) {
+      this.paths.forEach(path=>{
+        path.resultPath.pathDataList.forEach(d=>{
+          if(!d.pos || d.pos.length == 0) return;
+          let points = d.pos;
+          let pointsNum = points.length;
+          for(let i = 0; i < pointsNum; i += 2) {
+            if(flexi.length == 1) {
+              let id = flexi[0];
+              if(pathContainer.groups[id].strength == 0) continue;
+              pathContainer.groups[id].effectSprite.getMatrix().applyToPoint(points, i);
+              continue;
+            }
+            
+            let x = points[i];
+            let y = points[i+1];
+            
+            let ratioList = [];
+            let sum = 0;
+            flexi.forEach(id=>{
+              let val = pathContainer.groups[id].calc(x, y);
+              sum += val;
+              ratioList.push(val);
+            });
+            
+            if(sum == 0) continue;
+            
+            points[i] = 0;
+            points[i+1] = 0;
+            
+            flexi.forEach((id, j)=>{
+              pathContainer.groups[id].effectSprite.getMatrix().multAndAddPoint(1 - ratioList[j]/sum, x, y, points, i);
+            });
           }
-          
-          let x = points[i];
-          let y = points[i+1];
-          
-          let ratioList = [];
-          let sum = 0;
-          flexi.forEach(id=>{
-            let val = pathContainer.groups[id].calc(x, y);
-            sum += val;
-            ratioList.push(val);
-          });
-          
-          if(sum == 0) continue;
-          
-          points[i] = 0;
-          points[i+1] = 0;
-          
-          flexi.forEach((id, j)=>{
-            pathContainer.groups[id].effectSprite.getMatrix().multAndAddPoint(1 - ratioList[j]/sum, x, y, points, i);
-          });
-        }
+        });
       });
-    });
-    
+    }
   };
   
   /**

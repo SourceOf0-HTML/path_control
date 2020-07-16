@@ -63,6 +63,7 @@ class PathContainer extends Sprite {
     
     PathCtr.currentFrame = frame;
     PathCtr.currentActionID = Object.keys(this.actionList).indexOf(actionName);
+    this.actionList[actionName].currentFrame = frame;
     
     this.bones.forEach(id=>{
       this.groups[id].control(this);
@@ -70,6 +71,13 @@ class PathContainer extends Sprite {
     this.groups.forEach(group=>{
       group.preprocessing(this);
     });
+    
+    Object.keys(this.actionList).forEach(actionName=>{
+      let action = this.actionList[actionName];
+      if(!action.smartBoneID) return;
+      action.currentFrame = this.groups[action.smartBoneID].getSmartFrame(action.totalFrames);
+    });
+    
     this.rootGroups.forEach(id=>{
       this.groups[id].update(this, (new Sprite().setSprite(this)));
     });

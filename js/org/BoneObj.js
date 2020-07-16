@@ -44,23 +44,39 @@ class BoneObj extends GroupObj {
     
     if("parent" in data && data.parent in pathContainer.groupNameToIDList) {
       this.parentID = pathContainer.groupNameToIDList[data.parent];
-      PathCtr.loadState("parentID:" + this.parentID);
+      PathCtr.loadState("  parentID:" + this.parentID + "(" + data.parent + ")");
     }
     
     if("isParentPin" in data && (typeof data.isParentPin === "boolean")) {
       this.isParentPin = data.isParentPin;
-      PathCtr.loadState("isParentPin:" + this.isParentPin);
+      PathCtr.loadState("  isParentPin:" + this.isParentPin);
     }
     
     if("feedback" in data && (typeof data.feedback === "boolean")) {
       this.feedback = data.feedback;
-      PathCtr.loadState("feedback:" + this.feedback);
+      PathCtr.loadState("  feedback:" + this.feedback);
     }
     
     if("strength" in data && Number.isFinite(data.strength)) {
       this.strength = data.strength;
-      PathCtr.loadState("strength:" + this.strength);
+      PathCtr.loadState("  strength:" + this.strength);
     }
+    
+    if("isSmartBone" in data && (typeof data.isSmartBone === "boolean")) {
+      this.isSmartBone = data.isSmartBone;
+      PathCtr.loadState("  isSmartBone:" + this.isSmartBone);
+    }
+    
+    if("smartBase" in data && Number.isFinite(data.smartBase)) {
+      this.smartBase = data.smartBase/180 * Math.PI;
+      PathCtr.loadState("  smartBase:" + this.smartBase);
+    }
+    
+    if("smartMax" in data && Number.isFinite(data.smartMax)) {
+      this.smartMax = data.smartMax/180 * Math.PI;
+      PathCtr.loadState("  smartMax:" + this.smartMax);
+    }
+    
   };
   
   /**
@@ -82,6 +98,23 @@ class BoneObj extends GroupObj {
     this.effectSprite.scaleY = distance / this.defState.distance;
     this.effectSprite.rotation = angle - this.defState.angle;
     this.isReady = true;
+  };
+  
+  /**
+   * @param {Integer} totalFrames - action total frames
+   */
+  getSmartFrame(totalFrames) {
+    if(!this.isSmartBone) {
+      console.error("It is not bone: " + this.id);
+      return 0;
+    }
+    
+    let angle = -this.currentState.angle;
+    angle -= this.smartBase;
+    
+    if(angle < 0) angle += Math.PI*2;
+    if(angle > this.smartMax) angle = this.smartMax;
+    return ((angle/this.smartMax * (totalFrames-2))^0) + 1;
   };
   
   /**
@@ -108,7 +141,6 @@ class BoneObj extends GroupObj {
    * @param {PathContainer} pathContainer
    */
   preprocessing(pathContainer) {
-    
     if(!this.defState || this.isReady) return;
     
     let pathDataList = this.paths[0].getPathDataList(PathCtr.currentFrame, PathCtr.currentActionID);

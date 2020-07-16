@@ -1,7 +1,6 @@
 {
   "bones": {
     "bone1_clothes": {
-      "parent": "",
       "strength": 0.05
     },
     
@@ -55,6 +54,48 @@
     "bone11_hair": {
       "parent": "bone4_head",
       "strength": 0.05
+    },
+    
+    "bone12_left_leg_S": {
+      "isSmartBone": true,
+      "smartBase": 90,
+      "smartMax": 360
+    },
+    
+    "bone13_right_leg_S": {
+      "isSmartBone": true,
+      "smartBase": 90,
+      "smartMax": 360
+    },
+    
+    "bone14_left_arm_S": {
+      "isSmartBone": true,
+      "smartBase": 90,
+      "smartMax": 90
+    },
+    
+    "bone15_jacket_S": {
+      "isSmartBone": true,
+      "smartBase": 90,
+      "smartMax": 360
+    },
+    
+    "bone16_pupils_S": {
+      "isSmartBone": true,
+      "smartBase": 0,
+      "smartMax": 180
+    },
+    
+    "bone17_eyelids_S": {
+      "isSmartBone": true,
+      "smartBase": 90,
+      "smartMax": 90
+    },
+    
+    "bone18_face_S": {
+      "isSmartBone": true,
+      "smartBase": 0,
+      "smartMax": 90
     }
   },
   
@@ -69,5 +110,15 @@
     "layer_left_leg": ["bone9_left_leg"],
     "layer_right_leg": ["bone10_right_leg"],
     "hair": ["bone11_hair"]
+  },
+  
+  "smartAction": {
+    "left_leg": "bone12_left_leg_S",
+    "right_leg": "bone13_right_leg_S",
+    "left_arm": "bone14_left_arm_S",
+    "jacket": "bone15_jacket_S",
+    "pupils": "bone16_pupils_S",
+    "eyelids": "bone17_eyelids_S",
+    "face": "bone18_face_S"
   }
 }

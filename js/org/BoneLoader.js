@@ -37,6 +37,24 @@ var BoneLoader = {
         });
       }
       
+      if(!!ret.smartAction) {
+        Object.keys(ret.smartAction).forEach(name=>{
+          let action = pathContainer.actionList[name];
+          if(!action) {
+            console.error("smart action is not found : " + name);
+            return;
+          }
+          let boneName = ret.smartAction[name];
+          let id = pathContainer.groupNameToIDList[boneName];
+          if(!id) {
+            console.error("smart bone is not found : " + boneName);
+            return;
+          }
+          action.smartBoneID = id;
+          PathCtr.loadState("smartAction: " + name + " - " + id + "(" + boneName + ")");
+        });
+      }
+      
       PathCtr.loadState("bones JSON load complete.");
       PathCtr.loadState(pathContainer);
     }

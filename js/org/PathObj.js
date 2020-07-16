@@ -19,7 +19,9 @@ class PathObj {
   };
   
   addAction(pathDataList, fillStyle, lineWidth, strokeStyle, frame, actionID) {
-    if(this.defPath.pathDataList.length != pathDataList.length) {
+    if(!pathDataList) {
+      pathDataList = this.defPath.pathDataList.slice();
+    } else if(this.defPath.pathDataList.length != pathDataList.length) {
       console.error("The number of paths does not match.");
       console.log(this.defPath.pathDataList);
       console.log(pathDataList);
@@ -90,19 +92,72 @@ class PathObj {
   };
   
   /**
+   * @param {PathContainer} pathContainer
+   * @param {Integer} frame - frame number
+   * @param {Integer} actionID - action ID
+   * @return {Array} - pathDataList
+   */
+  getMergePathDataList(pathContainer, frame = 0, actionID = 0) {
+    let ret = [];
+    
+    let makeData =(pathDiffList)=> {
+      this.defPath.pathDataList.forEach((d, i)=>{
+        ret.push({
+          type: d.type,
+          pos: (!d.pos)? undefined : d.pos.map((val, j)=>val+pathDiffList[i][j]),
+        });
+      });
+      return ret;
+    }
+    
+    if( this.hasActionList.length == 0 ) {
+      return makeData(this.pathDiffList);
+    }
+    
+    let actionNameList = Object.keys(pathContainer.actionList);
+    if(actionNameList.length == 1) {
+      if( !this.hasActionList[actionID] ) {
+        actionID = 0;
+        frame = 0;
+      }
+      return makeData(this.pathDiffList[actionID][Math.min(frame, this.pathDiffList[actionID].length)]);
+    }
+    
+    if( !this.hasActionList[actionID] ) {
+      actionID = 0;
+      frame = 0;
+    }
+    let pathDataList = makeData(this.pathDiffList[actionID][Math.min(frame, this.pathDiffList[actionID].length)]);
+    
+    actionNameList.forEach(actionName=>{
+      let action = pathContainer.actionList[actionName];
+      if(actionID == action.id) return;
+      if( !this.hasActionList[action.id] ) return;
+      frame = action.currentFrame;
+      
+      this.pathDiffList[action.id][Math.min(frame, this.pathDiffList[action.id].length)].forEach((list, i)=>{
+        if(!list) return;
+        list.forEach((val, j)=>{
+          if(!val) return;
+          pathDataList[i].pos[j] += val;
+        });
+      });
+    });
+    return pathDataList;
+  };
+  
+  /**
    * @param {Integer} frame - frame number
    * @param {Integer} actionID - action ID
    * @param {PathContainer} pathContainer
    * @param {Matrix} matrix - used to transform the path
    */
   update(frame, actionID, pathContainer, matrix) {
-    this.resultPath = {};
-    
     let updatePath =d=>{
       if(!!d.pos) matrix.applyToArray(d.pos);
     };
     
-    let pathDataList = this.getPathDataList(frame, actionID);
+    let pathDataList = this.getMergePathDataList(pathContainer, frame, actionID);
     pathDataList.forEach(updatePath);
     this.resultPath.pathDataList = pathDataList;
     

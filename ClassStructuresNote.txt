@@ -10,7 +10,14 @@ PathContainer
   groupNameToIDList = { groupName : groupID, ... }; // list of group name and group ID
   masks = { maskName : groupID };                   // list of mask name and group ID
   bones = [ groupID, ... ];                         // list of bone ID
-  actionList = { actionName : { id : actionID, totalFrames : totalFrames } };  // action info list
+  actionList = {  // action info list
+    actionName : {
+      id : actionID,
+      totalFrames : totalFrames,
+      smartBoneID: smartBoneID,
+      currentFrame: currentFrame,
+    }
+  };
 
 
 GroupObj (no action data)
@@ -78,6 +85,9 @@ BoneObj - extends GroupObj
   isParentPin = isParentPin;      // parent bone is pin bone
   feedback = receiveFeedback;     // receive feedback from other bones
   strength = strength;            // scope of influence of bone
+  isSmartBone = isSmartBone;      // is smart bone or not
+  smartBase = smartBase;          // base angle
+  smartMax = smartMax;            // max angle
   effectSprite = <Sprite>;        // actual effect sprite
   isReady = isReady;              // can be used for calculation
   defState = { x0, y0, x1, y1, distance, angle }      // default bone state
