@@ -736,4 +736,27 @@ var SVGLoader = {
     delete dv;
     return buffer.slice(0, sumLength);
   },
+  
+  /**
+   * @param {PathContainer} pathContainer
+   */
+  outputBin: function(pathContainer) {
+    if(!pathContainer) return;
+    
+    let buffer = SVGLoader.toBin(PathCtr.pathContainer);
+    
+    var a = document.createElement("a");
+    document.body.appendChild(a);
+    a.style = "display: none";
+    console.log(a);
+    
+    var blob = new Blob([buffer], {type: "octet/stream"}),
+    url = window.URL.createObjectURL(blob);
+    
+    a.href = url;
+    a.download = "path_data.bin";
+    a.click();
+    window.URL.revokeObjectURL(url);
+    a.remove();
+  },
 };

@@ -41,14 +41,14 @@ var DebugPath = {
     window.addEventListener("mousemove", e=>{move(e.clientX/pathContainer.pathRatio, e.clientY/pathContainer.pathRatio)});
     window.addEventListener("touchmove", e=>{move(e.touches[0].pageX/pathContainer.pathRatio, e.touches[0].pageY/pathContainer.pathRatio)});
     
-    window.addEventListener("keyup", function(e) {
+    window.addEventListener("keyup", e=>{
       switch(e.code) {
         case "Space":
-          DebugPath.isStop = !DebugPath.isStop;
-          console.log(DebugPath.isStop? "--STOP--":"--START--");
+          this.isStop = !this.isStop;
+          console.log(this.isStop? "--STOP--":"--START--");
           break;
         case "ArrowRight":
-          DebugPath.isStep = true;
+          this.isStep = true;
           break;
         case "KeyD":
           PathCtr.isOutputDebugPrint = !PathCtr.isOutputDebugPrint;
@@ -57,13 +57,16 @@ var DebugPath = {
           PathCtr.isOutputLoadState = !PathCtr.isOutputLoadState;
           break;
         case "KeyB":
-          DebugPath.isShowBones = !DebugPath.isShowBones;
+          this.isShowBones = !this.isShowBones;
           break;
         case "KeyC":
-          DebugPath.isShowControls = !DebugPath.isShowControls;
+          this.isShowControls = !this.isShowControls;
           break;
         case "KeyP":
-          DebugPath.isShowPoints = !DebugPath.isShowPoints;
+          this.isShowPoints = !this.isShowPoints;
+          break;
+        case "KeyO":
+          this.outputPathContainer(PathCtr.pathContainer);
           break;
       }
     });
@@ -71,5 +74,18 @@ var DebugPath = {
   
   isDebugDraw: function() {
     return this.isShowBones || this.isShowPoints || this.isShowControls;
+  },
+  
+  outputPathContainer: function(pathContainer) {
+    let data = JSON.stringify(pathContainer, null, 2);
+    let a = document.createElement("a");
+    document.body.appendChild(a);
+    a.style = "display: none";
+    console.log(a);
+    
+    a.href = "data:text/plain," + encodeURIComponent(data);
+    a.download = "pathContainer_" + PathCtr.currentFrame + ".json";
+    a.click();
+    a.remove();
   },
 }
