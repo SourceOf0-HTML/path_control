@@ -40,8 +40,8 @@ var BinaryLoader = {
     };
     
     let getArray=(lengFunc, getFunc)=>{
-      let ret = [];
-      let num = lengFunc();
+      let ret = Array(lengFunc());
+      let num = ret.length;
       for(let i = 0; i < num;) {
         let count = getUint16();
         if(count == 0) {
@@ -99,7 +99,8 @@ var BinaryLoader = {
     let getPathDiff=()=>getArray(getUint16, ()=>getArray(getUint16, getPos));
     
     let getPath=()=>{
-      let maskIdToUse = getUint16();
+      let maskIdToUse = getUint16() - 1;
+      if(maskIdToUse < 0) maskIdToUse = null;
       let fillRule = (getUint8() == 0 ? "nonzero" : "evenodd");
       
       let pathDataList = getPathData();
@@ -146,7 +147,8 @@ var BinaryLoader = {
       let name = getString();
       pathContainer.groupNameToIDList[name] = i;
       
-      let maskIdToUse = getUint16();
+      let maskIdToUse = getUint16() - 1;
+      if(maskIdToUse < 0) maskIdToUse = null;
       let paths = getArray(getUint16, getPath);
       
       let hasAction = (getUint8() > 0);

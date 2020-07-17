@@ -77,7 +77,10 @@ var DebugPath = {
   },
   
   outputPathContainer: function(pathContainer) {
-    let data = JSON.stringify(pathContainer, null, 2);
+    let data = JSON.stringify(pathContainer, (key, val)=>{
+      if(key == "resultPath") return undefined;
+      return val;
+    }, 2);
     let a = document.createElement("a");
     document.body.appendChild(a);
     a.style = "display: none";

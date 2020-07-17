@@ -117,7 +117,7 @@ var PathCtr = {
         return;
       }
       
-      if(typeof(timestamp) == "undefined") return;
+      if(typeof timestamp === "undefined") return;
       
       let elapsed = (timestamp - prevTimestamp) / 1000;
       average = (average + elapsed) / 2;

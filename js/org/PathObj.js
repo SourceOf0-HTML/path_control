@@ -8,9 +8,14 @@ class PathObj {
     this.lineWidth = lineWidth;        // strokeWidth ( context2D.lineWidth )
     this.strokeStyle = strokeStyle;    // strokeColor ( context2D.strokeStyle )
     this.hasActionList = [];           // if true, have action
-    this.resultPath = {};              // path data for drawing
+    this.resultPath = {                // path data for drawing
+      pathDataList,
+      fillStyle,
+      lineWidth,
+      strokeStyle,
+    };
     
-    this.defPath = {  // default path data
+    this.defPath = {                   // default path data
       pathDataList,
       fillStyle,
       lineWidth,
@@ -49,6 +54,7 @@ class PathObj {
       this.fillStyle = [[this.fillStyle]];        // fillColor ( context2D.fillStyle )
       this.lineWidth = [[this.lineWidth]];        // strokeWidth ( context2D.lineWidth )
       this.strokeStyle = [[this.strokeStyle]];    // strokeColor ( context2D.strokeStyle )
+      this.hasActionList[0] = true;
     }
     if( !this.hasActionList[actionID] ) {
       this.pathDiffList[actionID] = [this.pathDiffList[0][0]];
@@ -208,12 +214,15 @@ class PathObj {
     let actionNameList = Object.keys(pathContainer.actionList);
     actionNameList.forEach(actionName=>{
       let action = pathContainer.actionList[actionName];
-      actionID = action.id;
-      if( !this.hasActionList[actionID] ) return;
+      if(action.pastFrame == action.currentFrame) return;
       
-      let targetLineWidth = this.lineWidth[actionID];
-      let targetStrokeStyle = this.strokeStyle[actionID];
-      let targetFillStyle = this.fillStyle[actionID];
+      let targetActionID = action.id;
+      if( actionID != 0 && targetActionID == 0) return;
+      if( !this.hasActionList[targetActionID] ) return;
+      
+      let targetLineWidth = this.lineWidth[targetActionID];
+      let targetStrokeStyle = this.strokeStyle[targetActionID];
+      let targetFillStyle = this.fillStyle[targetActionID];
       
       let setData=()=>{
         if(typeof lineWidth === "undefined") lineWidth = targetLineWidth[Math.min(frame, targetLineWidth.length)];

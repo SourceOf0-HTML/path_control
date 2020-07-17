@@ -477,7 +477,7 @@ var SVGLoader = {
     
     groupsDOMArr.forEach((targetDom, frame)=>{
       if(frame == 0) return;
-      PathCtr.loadState("add action : " + actionID + " - " + frame);
+      if(frame % 10 == 0) PathCtr.loadState("add action : " + actionID + " - " + frame);
       Object.keys(actionGroup).forEach(key=>{
         this.addActionGroup(targetDom.getElementById(key), key, frame, actionID);
       });
@@ -530,7 +530,7 @@ var SVGLoader = {
         
         delete request;
         if(loadFrame <= totalFrames) {
-          PathCtr.loadState("load file : " + loadFrame);
+          if(loadFrame % 10 == 0) PathCtr.loadState("load file : " + loadFrame);
           request = new XMLHttpRequest();
           request.open("GET", filePath + getFrameNum(loadFrame++), true);
           request.onreadystatechange = loadSVG;
@@ -610,17 +610,17 @@ var SVGLoader = {
       for(let i = 0; i < num;) {
         let val = arr[i];
         let j = 1;
-        if(typeof(val) == "undefined") {
+        if(typeof val === "undefined") {
           setUint16(0);
           for(; j < num; ++j) {
-            if(typeof(arr[i + j]) != "undefined") break;
+            if(typeof arr[i + j] !== "undefined") break;
           }
           setUint16(j);
           i += j;
           continue;
         }
         for(; j < num; ++j) {
-          if(typeof(arr[i + j]) == "undefined" || JSON.stringify(val) != JSON.stringify(arr[i + j])) break;
+          if(typeof arr[i + j] === "undefined" || JSON.stringify(val) != JSON.stringify(arr[i + j])) break;
         }
         setUint16(j);
         i += j;
@@ -671,7 +671,7 @@ var SVGLoader = {
     };
     
     let setPath=path=>{
-      setUint16(path.maskIdToUse);
+      setUint16(path.maskIdToUse == null? 0 : path.maskIdToUse+1);
       setUint8(path.fillRule == "nonzero" ? 0 : 1);
       
       setPathData(path.defPath.pathDataList);
@@ -694,7 +694,7 @@ var SVGLoader = {
     
     let setGroup=group=>{
       setString(group.id);
-      setUint16(group.maskIdToUse);
+      setUint16(group.maskIdToUse == null? 0 : group.maskIdToUse+1);
       setArray(group.paths, setUint16, setPath);
       
       let hasAction = (group.hasActionList.length > 0);
