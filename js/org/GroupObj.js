@@ -83,8 +83,6 @@ class GroupObj extends Sprite {
   update(pathContainer, sprite, flexiIDList = []) {
     let actionID = PathCtr.currentActionID;
     let frame = PathCtr.currentFrame;
-    //let actionID = 0;
-    //let frame = 0;
     let groupSprite = sprite.compSprite(this);
     let flexi = flexiIDList.concat(this.flexi);
     let groupMatrix = groupSprite.getMatrix();

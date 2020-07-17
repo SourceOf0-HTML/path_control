@@ -107,6 +107,11 @@ var PathCtr = {
     let average = 0;
     
     let draw =(timestamp)=> {
+      if(typeof DebugPath !== "undefined" && DebugPath.isStop) {
+        if(!DebugPath.isStep) return;
+        DebugPath.isStep = false;
+        console.log("--STEP--");
+      }
       if(!canvas.parentNode) {
         this.cancelRequestAnimation();
         return;
@@ -115,9 +120,9 @@ var PathCtr = {
       if(typeof(timestamp) == "undefined") return;
       
       let elapsed = (timestamp - prevTimestamp) / 1000;
-      //this.debugPrint(elapsed, average, fixFrameTime);
       average = (average + elapsed) / 2;
       prevTimestamp = timestamp;
+      this.debugPrint((average * 100000)^0);
       
       if(!this.pathContainer) return;
       
@@ -469,10 +474,48 @@ class PathObj {
       this.strokeStyle[actionID] = [this.strokeStyle[0][0]];
       this.hasActionList[actionID] = true;
     }
+    
     this.pathDiffList[actionID][frame] = pathDiffList;
-    this.fillStyle[actionID][frame] = fillStyle;
-    this.lineWidth[actionID][frame] = lineWidth;
-    this.strokeStyle[actionID][frame] = strokeStyle;
+    
+    let isEmpty = true;
+    for(let i = this.lineWidth[actionID].length - 1; i >= 0; --i) {
+      if(typeof this.lineWidth[actionID][i] === "undefined") continue;
+      if(this.lineWidth[actionID][i] == lineWidth) break;
+      this.lineWidth[actionID][frame] = lineWidth;
+      isEmpty = false;
+      break;
+    }
+    if(isEmpty) {
+      this.lineWidth[actionID][frame] = undefined;
+    } else {
+      isEmpty = true;
+    }
+    
+    for(let i = this.strokeStyle[actionID].length - 1; i >= 0; --i) {
+      if(typeof this.strokeStyle[actionID][i] === "undefined") continue;
+      if(this.strokeStyle[actionID][i] == strokeStyle) break;
+      this.strokeStyle[actionID][frame] = strokeStyle;
+      isEmpty = false;
+      break;
+    }
+    if(isEmpty) {
+      this.strokeStyle[actionID][frame] = undefined;
+    } else {
+      isEmpty = true;
+    }
+    
+    for(let i = this.fillStyle[actionID].length - 1; i >= 0; --i) {
+      if(typeof this.fillStyle[actionID][i] === "undefined") continue;
+      if(this.fillStyle[actionID][i] == fillStyle) break;
+      this.fillStyle[actionID][frame] = fillStyle;
+      isEmpty = false;
+      break;
+    }
+    if(isEmpty) {
+      this.fillStyle[actionID][frame] = undefined;
+    } else {
+      isEmpty = true;
+    }
   };
   
   /**
@@ -526,20 +569,14 @@ class PathObj {
       return makeData(this.pathDiffList);
     }
     
-    let actionNameList = Object.keys(pathContainer.actionList);
-    if(actionNameList.length == 1) {
-      if( !this.hasActionList[actionID] ) {
-        actionID = 0;
-        frame = 0;
-      }
-      return makeData(this.pathDiffList[actionID][Math.min(frame, this.pathDiffList[actionID].length)]);
-    }
-    
     if( !this.hasActionList[actionID] ) {
       actionID = 0;
       frame = 0;
     }
     let pathDataList = makeData(this.pathDiffList[actionID][Math.min(frame, this.pathDiffList[actionID].length)]);
+    
+    let actionNameList = Object.keys(pathContainer.actionList);
+    if(actionNameList.length == 1) return pathDataList;
     
     actionNameList.forEach(actionName=>{
       let action = pathContainer.actionList[actionName];
@@ -583,9 +620,54 @@ class PathObj {
       frame = 0;
     }
     
-    this.resultPath.lineWidth = this.lineWidth[actionID][Math.min(frame, this.lineWidth[actionID].length)];
-    this.resultPath.strokeStyle = this.strokeStyle[actionID][Math.min(frame, this.strokeStyle[actionID].length)];
-    this.resultPath.fillStyle = this.fillStyle[actionID][Math.min(frame, this.fillStyle[actionID].length)];
+    let lineWidth, strokeStyle, fillStyle;
+    
+    let actionNameList = Object.keys(pathContainer.actionList);
+    actionNameList.forEach(actionName=>{
+      let action = pathContainer.actionList[actionName];
+      actionID = action.id;
+      if( !this.hasActionList[actionID] ) return;
+      
+      let targetLineWidth = this.lineWidth[actionID];
+      let targetStrokeStyle = this.strokeStyle[actionID];
+      let targetFillStyle = this.fillStyle[actionID];
+      
+      let setData=()=>{
+        if(typeof lineWidth === "undefined") lineWidth = targetLineWidth[Math.min(frame, targetLineWidth.length)];
+        if(!strokeStyle) strokeStyle = targetStrokeStyle[Math.min(frame, targetStrokeStyle.length)];
+        if(!fillStyle) fillStyle = targetFillStyle[Math.min(frame, targetFillStyle.length)];
+      };
+      
+      if(action.pastFrame <= action.currentFrame) {
+        for(frame = action.currentFrame; frame >= action.pastFrame; --frame) setData();
+      } else {
+        for(frame = action.pastFrame; frame >= action.currentFrame; --frame) setData();
+        if(typeof lineWidth !== "undefined") {
+          lineWidth = null;
+          for(frame = action.currentFrame; frame >= 0; --frame) {
+            lineWidth = targetLineWidth[Math.min(frame, targetLineWidth.length)];
+            if(typeof lineWidth !== "undefined") break;
+          }
+        }
+        if(!!strokeStyle) {
+          strokeStyle = null;
+          for(frame = action.currentFrame; frame >= 0; --frame) {
+            strokeStyle = targetStrokeStyle[Math.min(frame, targetStrokeStyle.length)];
+            if(!!strokeStyle) break;
+          }
+        }
+        if(!!fillStyle) {
+          fillStyle = null;
+          for(frame = action.currentFrame; frame >= 0; --frame) {
+            fillStyle = targetFillStyle[Math.min(frame, targetFillStyle.length)];
+            if(!!fillStyle) break;
+          }
+        }
+      }
+    });
+    if(!!lineWidth) this.resultPath.lineWidth = lineWidth;
+    if(!!strokeStyle) this.resultPath.strokeStyle = strokeStyle;
+    if(!!fillStyle) this.resultPath.fillStyle = fillStyle;
   };
   
   /**
@@ -761,8 +843,6 @@ class GroupObj extends Sprite {
   update(pathContainer, sprite, flexiIDList = []) {
     let actionID = PathCtr.currentActionID;
     let frame = PathCtr.currentFrame;
-    //let actionID = 0;
-    //let frame = 0;
     let groupSprite = sprite.compSprite(this);
     let flexi = flexiIDList.concat(this.flexi);
     let groupMatrix = groupSprite.getMatrix();
@@ -1221,6 +1301,22 @@ class PathContainer extends Sprite {
   };
   
   /**
+   * @param {String} actionName
+   * @param {String} actionID
+   * @param {Integer} totalFrames
+   * @return {Action}
+   */
+  addAction(actionName, actionID, totalFrames) {
+    if(actionID < 0) actionID = Object.keys(this.actionList).length;
+    return this.actionList[actionName] = {
+      id: actionID,
+      totalFrames: totalFrames,
+      pastFrame: 0,
+      currentFrame: 0,
+    };
+  };
+  
+  /**
    * @param {Number} width - reference width
    * @param {Number} height - reference height
    */
@@ -1247,7 +1343,9 @@ class PathContainer extends Sprite {
     
     PathCtr.currentFrame = frame;
     PathCtr.currentActionID = Object.keys(this.actionList).indexOf(actionName);
-    this.actionList[actionName].currentFrame = frame;
+    let action = this.actionList[actionName];
+    action.pastFrame = action.currentFrame;
+    action.currentFrame = frame;
     
     this.bones.forEach(id=>{
       this.groups[id].control(this);
@@ -1256,10 +1354,11 @@ class PathContainer extends Sprite {
       group.preprocessing(this);
     });
     
-    Object.keys(this.actionList).forEach(actionName=>{
-      let action = this.actionList[actionName];
-      if(!action.smartBoneID) return;
-      action.currentFrame = this.groups[action.smartBoneID].getSmartFrame(action.totalFrames);
+    Object.keys(this.actionList).forEach((targetActionName)=>{
+      let targetAction = this.actionList[targetActionName];
+      if(!targetAction.smartBoneID) return;
+      targetAction.pastFrame = targetAction.currentFrame;
+      targetAction.currentFrame = this.groups[targetAction.smartBoneID].getSmartFrame(targetAction.totalFrames);
     });
     
     this.rootGroups.forEach(id=>{
@@ -1474,11 +1573,7 @@ var BinaryLoader = {
     let actionListNum = getUint8();
     if(actionListNum > 0) {
       for(let i = 0; i < actionListNum; ++i) {
-        pathContainer.actionList[getString()] = {
-          id: getUint8(),
-          totalFrames: getUint16(),
-          currentFrame: 0,
-        };
+        pathContainer.addAction(getString(), getUint8(), getUint16());
       }
     }
     
@@ -2141,15 +2236,9 @@ var SVGLoader = {
           pathContainer = SVGLoader.init(domList[0]);
         }
         
-        let actionID = Object.keys(pathContainer.actionList).length;
+        let action = pathContainer.addAction(actionName, -1, totalFrames);
         
-        pathContainer.actionList[actionName] = {
-          id: actionID,
-          totalFrames: totalFrames,
-          currentFrame: 0,
-        };
-        
-        SVGLoader.addActionFromList(pathContainer, domList, actionID);
+        SVGLoader.addActionFromList(pathContainer, domList, action.id);
         PathCtr.loadState("loading completed");
         PathCtr.loadState(pathContainer);
         

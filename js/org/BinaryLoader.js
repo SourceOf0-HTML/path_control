@@ -184,11 +184,7 @@ var BinaryLoader = {
     let actionListNum = getUint8();
     if(actionListNum > 0) {
       for(let i = 0; i < actionListNum; ++i) {
-        pathContainer.actionList[getString()] = {
-          id: getUint8(),
-          totalFrames: getUint16(),
-          currentFrame: 0,
-        };
+        pathContainer.addAction(getString(), getUint8(), getUint16());
       }
     }
     

@@ -37,6 +37,22 @@ class PathContainer extends Sprite {
   };
   
   /**
+   * @param {String} actionName
+   * @param {String} actionID
+   * @param {Integer} totalFrames
+   * @return {Action}
+   */
+  addAction(actionName, actionID, totalFrames) {
+    if(actionID < 0) actionID = Object.keys(this.actionList).length;
+    return this.actionList[actionName] = {
+      id: actionID,
+      totalFrames: totalFrames,
+      pastFrame: 0,
+      currentFrame: 0,
+    };
+  };
+  
+  /**
    * @param {Number} width - reference width
    * @param {Number} height - reference height
    */
@@ -63,7 +79,9 @@ class PathContainer extends Sprite {
     
     PathCtr.currentFrame = frame;
     PathCtr.currentActionID = Object.keys(this.actionList).indexOf(actionName);
-    this.actionList[actionName].currentFrame = frame;
+    let action = this.actionList[actionName];
+    action.pastFrame = action.currentFrame;
+    action.currentFrame = frame;
     
     this.bones.forEach(id=>{
       this.groups[id].control(this);
@@ -72,10 +90,11 @@ class PathContainer extends Sprite {
       group.preprocessing(this);
     });
     
-    Object.keys(this.actionList).forEach(actionName=>{
-      let action = this.actionList[actionName];
-      if(!action.smartBoneID) return;
-      action.currentFrame = this.groups[action.smartBoneID].getSmartFrame(action.totalFrames);
+    Object.keys(this.actionList).forEach((targetActionName)=>{
+      let targetAction = this.actionList[targetActionName];
+      if(!targetAction.smartBoneID) return;
+      targetAction.pastFrame = targetAction.currentFrame;
+      targetAction.currentFrame = this.groups[targetAction.smartBoneID].getSmartFrame(targetAction.totalFrames);
     });
     
     this.rootGroups.forEach(id=>{

@@ -15,6 +15,7 @@ PathContainer
       id : actionID,
       totalFrames : totalFrames,
       smartBoneID: smartBoneID,
+      pastFrame: pastFrame,
       currentFrame: currentFrame,
     }
   };

@@ -107,6 +107,11 @@ var PathCtr = {
     let average = 0;
     
     let draw =(timestamp)=> {
+      if(typeof DebugPath !== "undefined" && DebugPath.isStop) {
+        if(!DebugPath.isStep) return;
+        DebugPath.isStep = false;
+        console.log("--STEP--");
+      }
       if(!canvas.parentNode) {
         this.cancelRequestAnimation();
         return;
@@ -115,9 +120,9 @@ var PathCtr = {
       if(typeof(timestamp) == "undefined") return;
       
       let elapsed = (timestamp - prevTimestamp) / 1000;
-      //this.debugPrint(elapsed, average, fixFrameTime);
       average = (average + elapsed) / 2;
       prevTimestamp = timestamp;
+      this.debugPrint((average * 100000)^0);
       
       if(!this.pathContainer) return;
       

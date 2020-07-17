@@ -57,10 +57,48 @@ class PathObj {
       this.strokeStyle[actionID] = [this.strokeStyle[0][0]];
       this.hasActionList[actionID] = true;
     }
+    
     this.pathDiffList[actionID][frame] = pathDiffList;
-    this.fillStyle[actionID][frame] = fillStyle;
-    this.lineWidth[actionID][frame] = lineWidth;
-    this.strokeStyle[actionID][frame] = strokeStyle;
+    
+    let isEmpty = true;
+    for(let i = this.lineWidth[actionID].length - 1; i >= 0; --i) {
+      if(typeof this.lineWidth[actionID][i] === "undefined") continue;
+      if(this.lineWidth[actionID][i] == lineWidth) break;
+      this.lineWidth[actionID][frame] = lineWidth;
+      isEmpty = false;
+      break;
+    }
+    if(isEmpty) {
+      this.lineWidth[actionID][frame] = undefined;
+    } else {
+      isEmpty = true;
+    }
+    
+    for(let i = this.strokeStyle[actionID].length - 1; i >= 0; --i) {
+      if(typeof this.strokeStyle[actionID][i] === "undefined") continue;
+      if(this.strokeStyle[actionID][i] == strokeStyle) break;
+      this.strokeStyle[actionID][frame] = strokeStyle;
+      isEmpty = false;
+      break;
+    }
+    if(isEmpty) {
+      this.strokeStyle[actionID][frame] = undefined;
+    } else {
+      isEmpty = true;
+    }
+    
+    for(let i = this.fillStyle[actionID].length - 1; i >= 0; --i) {
+      if(typeof this.fillStyle[actionID][i] === "undefined") continue;
+      if(this.fillStyle[actionID][i] == fillStyle) break;
+      this.fillStyle[actionID][frame] = fillStyle;
+      isEmpty = false;
+      break;
+    }
+    if(isEmpty) {
+      this.fillStyle[actionID][frame] = undefined;
+    } else {
+      isEmpty = true;
+    }
   };
   
   /**
@@ -114,20 +152,14 @@ class PathObj {
       return makeData(this.pathDiffList);
     }
     
-    let actionNameList = Object.keys(pathContainer.actionList);
-    if(actionNameList.length == 1) {
-      if( !this.hasActionList[actionID] ) {
-        actionID = 0;
-        frame = 0;
-      }
-      return makeData(this.pathDiffList[actionID][Math.min(frame, this.pathDiffList[actionID].length)]);
-    }
-    
     if( !this.hasActionList[actionID] ) {
       actionID = 0;
       frame = 0;
     }
     let pathDataList = makeData(this.pathDiffList[actionID][Math.min(frame, this.pathDiffList[actionID].length)]);
+    
+    let actionNameList = Object.keys(pathContainer.actionList);
+    if(actionNameList.length == 1) return pathDataList;
     
     actionNameList.forEach(actionName=>{
       let action = pathContainer.actionList[actionName];
@@ -171,9 +203,54 @@ class PathObj {
       frame = 0;
     }
     
-    this.resultPath.lineWidth = this.lineWidth[actionID][Math.min(frame, this.lineWidth[actionID].length)];
-    this.resultPath.strokeStyle = this.strokeStyle[actionID][Math.min(frame, this.strokeStyle[actionID].length)];
-    this.resultPath.fillStyle = this.fillStyle[actionID][Math.min(frame, this.fillStyle[actionID].length)];
+    let lineWidth, strokeStyle, fillStyle;
+    
+    let actionNameList = Object.keys(pathContainer.actionList);
+    actionNameList.forEach(actionName=>{
+      let action = pathContainer.actionList[actionName];
+      actionID = action.id;
+      if( !this.hasActionList[actionID] ) return;
+      
+      let targetLineWidth = this.lineWidth[actionID];
+      let targetStrokeStyle = this.strokeStyle[actionID];
+      let targetFillStyle = this.fillStyle[actionID];
+      
+      let setData=()=>{
+        if(typeof lineWidth === "undefined") lineWidth = targetLineWidth[Math.min(frame, targetLineWidth.length)];
+        if(!strokeStyle) strokeStyle = targetStrokeStyle[Math.min(frame, targetStrokeStyle.length)];
+        if(!fillStyle) fillStyle = targetFillStyle[Math.min(frame, targetFillStyle.length)];
+      };
+      
+      if(action.pastFrame <= action.currentFrame) {
+        for(frame = action.currentFrame; frame >= action.pastFrame; --frame) setData();
+      } else {
+        for(frame = action.pastFrame; frame >= action.currentFrame; --frame) setData();
+        if(typeof lineWidth !== "undefined") {
+          lineWidth = null;
+          for(frame = action.currentFrame; frame >= 0; --frame) {
+            lineWidth = targetLineWidth[Math.min(frame, targetLineWidth.length)];
+            if(typeof lineWidth !== "undefined") break;
+          }
+        }
+        if(!!strokeStyle) {
+          strokeStyle = null;
+          for(frame = action.currentFrame; frame >= 0; --frame) {
+            strokeStyle = targetStrokeStyle[Math.min(frame, targetStrokeStyle.length)];
+            if(!!strokeStyle) break;
+          }
+        }
+        if(!!fillStyle) {
+          fillStyle = null;
+          for(frame = action.currentFrame; frame >= 0; --frame) {
+            fillStyle = targetFillStyle[Math.min(frame, targetFillStyle.length)];
+            if(!!fillStyle) break;
+          }
+        }
+      }
+    });
+    if(!!lineWidth) this.resultPath.lineWidth = lineWidth;
+    if(!!strokeStyle) this.resultPath.strokeStyle = strokeStyle;
+    if(!!fillStyle) this.resultPath.fillStyle = fillStyle;
   };
   
   /**

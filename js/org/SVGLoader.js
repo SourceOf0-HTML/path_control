@@ -542,15 +542,9 @@ var SVGLoader = {
           pathContainer = SVGLoader.init(domList[0]);
         }
         
-        let actionID = Object.keys(pathContainer.actionList).length;
+        let action = pathContainer.addAction(actionName, -1, totalFrames);
         
-        pathContainer.actionList[actionName] = {
-          id: actionID,
-          totalFrames: totalFrames,
-          currentFrame: 0,
-        };
-        
-        SVGLoader.addActionFromList(pathContainer, domList, actionID);
+        SVGLoader.addActionFromList(pathContainer, domList, action.id);
         PathCtr.loadState("loading completed");
         PathCtr.loadState(pathContainer);
         
