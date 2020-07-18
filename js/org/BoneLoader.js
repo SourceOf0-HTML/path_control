@@ -39,7 +39,7 @@ var BoneLoader = {
       
       if(!!ret.smartAction) {
         Object.keys(ret.smartAction).forEach(name=>{
-          let action = pathContainer.actionList[name];
+          let action = pathContainer.actionList.find(data=>data.name == name);
           if(!action) {
             console.error("smart action is not found : " + name);
             return;

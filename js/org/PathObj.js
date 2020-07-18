@@ -164,11 +164,9 @@ class PathObj {
     }
     let pathDataList = makeData(this.pathDiffList[actionID][Math.min(frame, this.pathDiffList[actionID].length)]);
     
-    let actionNameList = Object.keys(pathContainer.actionList);
-    if(actionNameList.length == 1) return pathDataList;
+    if(pathContainer.actionList.length == 1) return pathDataList;
     
-    actionNameList.forEach(actionName=>{
-      let action = pathContainer.actionList[actionName];
+    pathContainer.actionList.forEach(action=>{
       if(actionID == action.id) return;
       if( !this.hasActionList[action.id] ) return;
       frame = action.currentFrame;
@@ -211,9 +209,7 @@ class PathObj {
     
     let lineWidth, strokeStyle, fillStyle;
     
-    let actionNameList = Object.keys(pathContainer.actionList);
-    actionNameList.forEach(actionName=>{
-      let action = pathContainer.actionList[actionName];
+    pathContainer.actionList.forEach(action=>{
       if(action.pastFrame == action.currentFrame) return;
       
       let targetActionID = action.id;

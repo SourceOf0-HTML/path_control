@@ -715,11 +715,11 @@ var SVGLoader = {
     setUint16(pathContainer.originalWidth);
     setUint16(pathContainer.originalHeight);
     
-    setUint8(Object.keys(pathContainer.actionList).length);
-    Object.keys(pathContainer.actionList).forEach(key=>{
-      setString(key);
-      setUint8(pathContainer.actionList[key].id);
-      setUint16(pathContainer.actionList[key].totalFrames);
+    setUint8(pathContainer.actionList.length);
+    pathContainer.actionList.forEach(action=>{
+      setString(action.name);
+      setUint8(action.id);
+      setUint16(action.totalFrames);
     });
     
     setArray(pathContainer.rootGroups, setUint8, setUint16);

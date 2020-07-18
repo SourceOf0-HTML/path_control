@@ -10,15 +10,17 @@ PathContainer
   groupNameToIDList = { groupName : groupID, ... }; // list of group name and group ID
   masks = { maskName : groupID };                   // list of mask name and group ID
   bones = [ groupID, ... ];                         // list of bone ID
-  actionList = {  // action info list
-    actionName : {
+  actionList = [  // action info list
+    {
+      name : actionName,
       id : actionID,
       totalFrames : totalFrames,
       smartBoneID: smartBoneID,
       pastFrame: pastFrame,
       currentFrame: currentFrame,
-    }
-  };
+    },
+    ...
+  ];
 
 
 GroupObj (no action data)

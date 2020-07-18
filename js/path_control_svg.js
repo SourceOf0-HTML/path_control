@@ -581,11 +581,9 @@ class PathObj {
     }
     let pathDataList = makeData(this.pathDiffList[actionID][Math.min(frame, this.pathDiffList[actionID].length)]);
     
-    let actionNameList = Object.keys(pathContainer.actionList);
-    if(actionNameList.length == 1) return pathDataList;
+    if(pathContainer.actionList.length == 1) return pathDataList;
     
-    actionNameList.forEach(actionName=>{
-      let action = pathContainer.actionList[actionName];
+    pathContainer.actionList.forEach(action=>{
       if(actionID == action.id) return;
       if( !this.hasActionList[action.id] ) return;
       frame = action.currentFrame;
@@ -628,9 +626,7 @@ class PathObj {
     
     let lineWidth, strokeStyle, fillStyle;
     
-    let actionNameList = Object.keys(pathContainer.actionList);
-    actionNameList.forEach(actionName=>{
-      let action = pathContainer.actionList[actionName];
+    pathContainer.actionList.forEach(action=>{
       if(action.pastFrame == action.currentFrame) return;
       
       let targetActionID = action.id;
@@ -1287,7 +1283,7 @@ class PathContainer extends Sprite {
     this.groupNameToIDList = {};  // list of group name and group ID
     this.masks = {};              // list of mask name and group ID
     this.bones = [];              // list of bone ID
-    this.actionList = {};         // action info list
+    this.actionList = [];         // action info list
   };
   
   /**
@@ -1316,8 +1312,9 @@ class PathContainer extends Sprite {
    * @return {Action}
    */
   addAction(actionName, actionID, totalFrames) {
-    if(actionID < 0) actionID = Object.keys(this.actionList).length;
-    return this.actionList[actionName] = {
+    if(actionID < 0) actionID = this.actionList.length;
+    return this.actionList[actionID] = {
+      name: actionName,
       id: actionID,
       totalFrames: totalFrames,
       pastFrame: 0,
@@ -1350,11 +1347,12 @@ class PathContainer extends Sprite {
       return;
     }
     
-    PathCtr.currentFrame = frame;
-    PathCtr.currentActionID = Object.keys(this.actionList).indexOf(actionName);
-    let action = this.actionList[actionName];
+    let action = this.actionList.find(data=>data.name == actionName);
     action.pastFrame = action.currentFrame;
     action.currentFrame = frame;
+    
+    PathCtr.currentFrame = frame;
+    PathCtr.currentActionID = action.id;
     
     this.bones.forEach(id=>{
       this.groups[id].control(this);
@@ -1363,8 +1361,7 @@ class PathContainer extends Sprite {
       group.preprocessing(this);
     });
     
-    Object.keys(this.actionList).forEach((targetActionName)=>{
-      let targetAction = this.actionList[targetActionName];
+    this.actionList.forEach(targetAction=>{
       if(!targetAction.smartBoneID) return;
       targetAction.pastFrame = targetAction.currentFrame;
       targetAction.currentFrame = this.groups[targetAction.smartBoneID].getSmartFrame(targetAction.totalFrames);
@@ -1680,7 +1677,7 @@ var BoneLoader = {
       
       if(!!ret.smartAction) {
         Object.keys(ret.smartAction).forEach(name=>{
-          let action = pathContainer.actionList[name];
+          let action = pathContainer.actionList.find(data=>data.name == name);
           if(!action) {
             console.error("smart action is not found : " + name);
             return;
@@ -2420,11 +2417,11 @@ var SVGLoader = {
     setUint16(pathContainer.originalWidth);
     setUint16(pathContainer.originalHeight);
     
-    setUint8(Object.keys(pathContainer.actionList).length);
-    Object.keys(pathContainer.actionList).forEach(key=>{
-      setString(key);
-      setUint8(pathContainer.actionList[key].id);
-      setUint16(pathContainer.actionList[key].totalFrames);
+    setUint8(pathContainer.actionList.length);
+    pathContainer.actionList.forEach(action=>{
+      setString(action.name);
+      setUint8(action.id);
+      setUint16(action.totalFrames);
     });
     
     setArray(pathContainer.rootGroups, setUint8, setUint16);
