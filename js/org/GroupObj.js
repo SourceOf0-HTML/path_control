@@ -85,7 +85,7 @@ class GroupObj extends Sprite {
     let flexi = flexiIDList.concat(this.flexi);
     let groupMatrix = groupSprite.getMatrix();
     
-    let getChildGroups =(id, f)=>this.childGroups[id][Math.min(f, this.childGroups[id].length)];
+    let getChildGroups =(id, f)=>this.childGroups[id][Math.min(f, this.childGroups[id].length-1)];
     
     this.paths.forEach(path=>{
       path.update(frame, actionID, pathContainer, groupMatrix);

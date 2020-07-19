@@ -132,7 +132,7 @@ class PathObj {
       actionID = 0;
       frame = 0;
     }
-    return makeData(this.pathDiffList[actionID][Math.min(frame, this.pathDiffList[actionID].length)]);
+    return makeData(this.pathDiffList[actionID][Math.min(frame, this.pathDiffList[actionID].length-1)]);
   };
   
   /**
@@ -162,7 +162,7 @@ class PathObj {
       actionID = 0;
       frame = 0;
     }
-    let pathDataList = makeData(this.pathDiffList[actionID][Math.min(frame, this.pathDiffList[actionID].length)]);
+    let pathDataList = makeData(this.pathDiffList[actionID][Math.min(frame, this.pathDiffList[actionID].length-1)]);
     
     if(pathContainer.actionList.length == 1) return pathDataList;
     
@@ -171,7 +171,7 @@ class PathObj {
       if( !this.hasActionList[action.id] ) return;
       frame = action.currentFrame;
       
-      this.pathDiffList[action.id][Math.min(frame, this.pathDiffList[action.id].length)].forEach((list, i)=>{
+      this.pathDiffList[action.id][Math.min(frame, this.pathDiffList[action.id].length-1)].forEach((list, i)=>{
         if(!list) return;
         list.forEach((val, j)=>{
           if(!val) return;
@@ -221,9 +221,9 @@ class PathObj {
       let targetFillStyle = this.fillStyle[targetActionID];
       
       let setData=()=>{
-        if(typeof lineWidth === "undefined") lineWidth = targetLineWidth[Math.min(frame, targetLineWidth.length)];
-        if(!strokeStyle) strokeStyle = targetStrokeStyle[Math.min(frame, targetStrokeStyle.length)];
-        if(!fillStyle) fillStyle = targetFillStyle[Math.min(frame, targetFillStyle.length)];
+        if(typeof lineWidth === "undefined") lineWidth = targetLineWidth[Math.min(frame, targetLineWidth.length-1)];
+        if(!strokeStyle) strokeStyle = targetStrokeStyle[Math.min(frame, targetStrokeStyle.length-1)];
+        if(!fillStyle) fillStyle = targetFillStyle[Math.min(frame, targetFillStyle.length-1)];
       };
       
       if(action.pastFrame <= action.currentFrame) {
@@ -233,21 +233,21 @@ class PathObj {
         if(typeof lineWidth !== "undefined") {
           lineWidth = null;
           for(frame = action.currentFrame; frame >= 0; --frame) {
-            lineWidth = targetLineWidth[Math.min(frame, targetLineWidth.length)];
+            lineWidth = targetLineWidth[Math.min(frame, targetLineWidth.length-1)];
             if(typeof lineWidth !== "undefined") break;
           }
         }
         if(!!strokeStyle) {
           strokeStyle = null;
           for(frame = action.currentFrame; frame >= 0; --frame) {
-            strokeStyle = targetStrokeStyle[Math.min(frame, targetStrokeStyle.length)];
+            strokeStyle = targetStrokeStyle[Math.min(frame, targetStrokeStyle.length-1)];
             if(!!strokeStyle) break;
           }
         }
         if(!!fillStyle) {
           fillStyle = null;
           for(frame = action.currentFrame; frame >= 0; --frame) {
-            fillStyle = targetFillStyle[Math.min(frame, targetFillStyle.length)];
+            fillStyle = targetFillStyle[Math.min(frame, targetFillStyle.length-1)];
             if(!!fillStyle) break;
           }
         }

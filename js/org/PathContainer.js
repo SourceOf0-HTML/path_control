@@ -79,6 +79,10 @@ class PathContainer extends Sprite {
     }
     
     let action = this.actionList.find(data=>data.name == actionName);
+    if(!action) {
+      console.error("target action is not found: " + actionName);
+      return;
+    }
     action.pastFrame = action.currentFrame;
     action.currentFrame = frame;
     
