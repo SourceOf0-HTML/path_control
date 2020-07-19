@@ -777,13 +777,16 @@ class GroupObj extends Sprite {
     
     if(hasAction) {
       this.childGroups.forEach((val, i)=>(this.hasActionList[i] = true));
+      this.resultGroups = childGroups[0][0];
+    } else {
+      this.resultGroups = childGroups;
     }
   };
   
   addAction(childGroups, frame, actionID) {
     if( childGroups.length == 0 ) return;
     if( this.hasActionList.length == 0 ) {
-      if( JSON.stringify(childGroups) == JSON.stringify(this.childGroups) ) return;
+      if( JSON.stringify(this.childGroups) == JSON.stringify(childGroups) ) return;
       
       // init action data
       this.childGroups = [[this.childGroups]];   // list of group id
@@ -793,7 +796,18 @@ class GroupObj extends Sprite {
       this.childGroups[actionID] = [this.childGroups[0][0].concat()];
       this.hasActionList[actionID] = true;
     }
-    this.childGroups[actionID][frame] = childGroups;
+    
+    let isEmpty = true;
+    for(let i = this.childGroups[actionID].length - 1; i >= 0; --i) {
+      if(typeof this.childGroups[actionID][i] === "undefined") continue;
+      if(JSON.stringify(childGroups) == JSON.stringify(this.childGroups[actionID][i])) break;
+      this.childGroups[actionID][frame] = childGroups;
+      isEmpty = false;
+      break;
+    }
+    if(isEmpty) {
+      this.childGroups[actionID][frame] = undefined;
+    }
   };
   
   /**
@@ -819,22 +833,6 @@ class GroupObj extends Sprite {
   };
   
   /**
-   * @param {Integer} frame - frame number
-   * @param {Integer} actionID - action ID
-   * @return {Array} - group id array
-   */
-  getChildGroups(frame, actionID) {
-    if( this.childGroups.length == 0 ) return this.childGroups;
-    if( this.hasActionList.length == 0 ) {
-      return this.childGroups;
-    }
-    if( typeof this.childGroups[actionID] === "undefined" || typeof this.childGroups[actionID][frame] === "undefined" ) {
-      return this.childGroups[0][0];
-    }
-    return this.childGroups[actionID][frame];
-  };
-  
-  /**
    * @param {PathContainer} pathContainer
    */
   preprocessing(pathContainer) {
@@ -852,10 +850,46 @@ class GroupObj extends Sprite {
     let flexi = flexiIDList.concat(this.flexi);
     let groupMatrix = groupSprite.getMatrix();
     
+    let getChildGroups =(id, f)=>this.childGroups[id][Math.min(f, this.childGroups[id].length)];
+    
     this.paths.forEach(path=>{
       path.update(frame, actionID, pathContainer, groupMatrix);
     });
-    this.getChildGroups(frame, actionID).forEach(childGroup=>{
+    
+    let childGroups = null;
+    if(this.hasActionList[actionID]) {
+      childGroups = getChildGroups(actionID, frame);
+    }
+    pathContainer.actionList.forEach(action=>{
+      if(!this.hasActionList[action.id]) return;
+      if(action.pastFrame == action.currentFrame) return;
+      if(action.pastFrame <= action.currentFrame) {
+        for(let targetFrame = action.currentFrame; targetFrame >= action.pastFrame; --targetFrame) {
+          let targetGroups = getChildGroups(action.id, targetFrame);
+          if(!targetGroups) continue;
+          childGroups = targetGroups;
+          break;
+        }
+      } else {
+        for(let targetFrame = action.pastFrame; targetFrame >= action.currentFrame; --targetFrame) {
+          let targetGroups = getChildGroups(action.id, targetFrame);
+          if(!targetGroups) continue;
+          
+          for(let targetFrame = action.currentFrame; targetFrame >= 0; --targetFrame) {
+            targetGroups = getChildGroups(action.id, targetFrame);
+            if(!targetGroups) continue;
+            childGroups = targetGroups;
+            break;
+          }
+          break;
+        }
+      }
+    });
+    if(!!childGroups) {
+      this.resultGroups = childGroups;
+    }
+    
+    this.resultGroups.forEach(childGroup=>{
       pathContainer.groups[childGroup].update(pathContainer, groupSprite, flexi);
     });
     
@@ -954,7 +988,7 @@ class GroupObj extends Sprite {
     
     let actionID = PathCtr.currentActionID;
     let frame = PathCtr.currentFrame;
-    this.getChildGroups(frame, actionID).forEach(childGroup=>{
+    this.resultGroups.forEach(childGroup=>{
       pathContainer.groups[childGroup].draw(pathContainer, context, isMask);
     });
     
@@ -1001,7 +1035,7 @@ class GroupObj extends Sprite {
     
     let actionID = PathCtr.currentActionID;
     let frame = PathCtr.currentFrame;
-    this.getChildGroups(frame, actionID).forEach(childGroup=>{
+    this.resultGroups.forEach(childGroup=>{
       pathContainer.groups[childGroup].debugDraw(pathContainer, context);
     });
   };
@@ -1261,7 +1295,7 @@ class BoneObj extends GroupObj {
     
     let actionID = PathCtr.currentActionID;
     let frame = PathCtr.currentFrame;
-    this.getChildGroups(frame, actionID).forEach(childGroup=>{
+    this.resultGroups.forEach(childGroup=>{
       pathContainer.groups[childGroup].debugDraw(pathContainer, context);
     });
   };
@@ -1958,10 +1992,10 @@ var SVGLoader = {
     let childGroups = [];
     let children = Array.prototype.slice.call(groupDOM.children);
     let isBone = name.startsWith(PathCtr.defaultBoneName);
+    let isPathSkip = (!isBone && this.initKind === this.FILE_KIND_BONE);
     
-    if(!isBone && this.initKind === this.FILE_KIND_BONE) {
-      PathCtr.loadState("  skip load : " + name);
-      return null;
+    if(isPathSkip) {
+      PathCtr.loadState("  path skip load : " + name);
     }
     
     children.forEach(child=>{
@@ -1969,6 +2003,7 @@ var SVGLoader = {
       PathCtr.debugPrint("make group : " + name + " : " + tagName);
       switch(tagName) {
         case "path":
+          if(isPathSkip) break;
           if(isBone) {
             paths.push( this.makeBonePath(child) );
           } else {
@@ -2028,10 +2063,10 @@ var SVGLoader = {
     let childGroups = [];
     let dataIndex = 0;
     let isBone = PathCtr.initTarget.bones.includes(id);
+    let isPathSkip = (!isBone && this.initKind === this.FILE_KIND_BONE);
     
-    if(!isBone && this.initKind === this.FILE_KIND_BONE) {
-      PathCtr.loadState("  skip load : " + name);
-      return;
+    if(isPathSkip) {
+      PathCtr.loadState("  path skip load : " + name);
     }
     
     if(!!groupDOM) {
@@ -2040,6 +2075,7 @@ var SVGLoader = {
         let name = child.tagName;
         switch(name) {
           case "path":
+            if(isPathSkip) break;
             if(isBone) {
               this.addBoneActionPath(targetGroup.paths[dataIndex++], child, frame, actionID);
             } else {

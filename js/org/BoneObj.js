@@ -252,7 +252,7 @@ class BoneObj extends GroupObj {
     
     let actionID = PathCtr.currentActionID;
     let frame = PathCtr.currentFrame;
-    this.getChildGroups(frame, actionID).forEach(childGroup=>{
+    this.resultGroups.forEach(childGroup=>{
       pathContainer.groups[childGroup].debugDraw(pathContainer, context);
     });
   };

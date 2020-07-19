@@ -25,17 +25,18 @@ PathContainer
 
 GroupObj (no action data)
   id = id;   // g tag ID
-  flexi = [ id, ... ];  // ID of a flexi-bonded target
-  maskIdToUse = maskIdToUse;  // ID of the mask to use
-  paths = [<PathObj>, ... ];  // list of PathObj
-  hasActionList = [];   // if true, have action
+  flexi = [ id, ... ];             // ID of a flexi-bonded target
+  maskIdToUse = maskIdToUse;       // ID of the mask to use
+  paths = [<PathObj>, ... ];       // list of PathObj
+  hasActionList = [];              // if true, have action
   childGroups = [groupID, ... ];   // list of group id
+  resultGroups = [groupID, ... ]   // list of group id for drawing
 
 GroupObj (after add action data)
-  id = id;   // g tag ID
-  flexi = [ id, ... ];  // ID of a flexi-bonded target
-  maskIdToUse = maskIdToUse;   // ID of the mask to use
-  paths = [<PathObj>, ... ];  // list of PathObj
+  id = id;                              // g tag ID
+  flexi = [ id, ... ];                  // ID of a flexi-bonded target
+  maskIdToUse = maskIdToUse;            // ID of the mask to use
+  paths = [<PathObj>, ... ];            // list of PathObj
   hasActionList = [ hasAction, ... ];   // if true, have action
   childGroups = [actionID, ... ][frame, ... ][groupID, ... ]; // list of group id
 
@@ -62,8 +63,8 @@ PathObj (no action data)
   };
 
 PathObj (after add action data)
-  maskIdToUse = maskIdToUse;    // ID of the mask to use
-  fillRule = fillRule;          // "nonzero" or "evenodd"
+  maskIdToUse = maskIdToUse;            // ID of the mask to use
+  fillRule = fillRule;                  // "nonzero" or "evenodd"
   hasActionList = [ hasAction, ... ];   // if true, have action
   fillStyle = [actionID, ... ][frame, ... ] = fillStyle;        // fillColor ( context2D.fillStyle )
   lineWidth = [actionID, ... ][frame, ... ] = lineWidth;        // strokeWidth ( context2D.lineWidth )
@@ -75,7 +76,7 @@ PathObj (after add action data)
     lineWidth: lineWidth,
     strokeStyle: strokeStyle,
   };
-  this.resultPath = {  // path data for drawing
+  this.resultPath = {           // path data for drawing
     pathDataList: [],
     fillStyle: fillStyle,
     lineWidth: lineWidth,

@@ -256,10 +256,10 @@ var SVGLoader = {
     let childGroups = [];
     let children = Array.prototype.slice.call(groupDOM.children);
     let isBone = name.startsWith(PathCtr.defaultBoneName);
+    let isPathSkip = (!isBone && this.initKind === this.FILE_KIND_BONE);
     
-    if(!isBone && this.initKind === this.FILE_KIND_BONE) {
-      PathCtr.loadState("  skip load : " + name);
-      return null;
+    if(isPathSkip) {
+      PathCtr.loadState("  path skip load : " + name);
     }
     
     children.forEach(child=>{
@@ -267,6 +267,7 @@ var SVGLoader = {
       PathCtr.debugPrint("make group : " + name + " : " + tagName);
       switch(tagName) {
         case "path":
+          if(isPathSkip) break;
           if(isBone) {
             paths.push( this.makeBonePath(child) );
           } else {
@@ -326,10 +327,10 @@ var SVGLoader = {
     let childGroups = [];
     let dataIndex = 0;
     let isBone = PathCtr.initTarget.bones.includes(id);
+    let isPathSkip = (!isBone && this.initKind === this.FILE_KIND_BONE);
     
-    if(!isBone && this.initKind === this.FILE_KIND_BONE) {
-      PathCtr.loadState("  skip load : " + name);
-      return;
+    if(isPathSkip) {
+      PathCtr.loadState("  path skip load : " + name);
     }
     
     if(!!groupDOM) {
@@ -338,6 +339,7 @@ var SVGLoader = {
         let name = child.tagName;
         switch(name) {
           case "path":
+            if(isPathSkip) break;
             if(isBone) {
               this.addBoneActionPath(targetGroup.paths[dataIndex++], child, frame, actionID);
             } else {
