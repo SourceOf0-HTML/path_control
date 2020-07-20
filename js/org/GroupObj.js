@@ -79,8 +79,8 @@ class GroupObj extends Sprite {
    * @param {Sprite} sprite - used to transform the path
    */
   update(pathContainer, sprite, flexiIDList = []) {
-    let actionID = PathCtr.currentActionID;
-    let frame = PathCtr.currentFrame;
+    let actionID = pathContainer.currentActionID;
+    let frame = pathContainer.actionList[actionID].currentFrame;
     let groupSprite = sprite.compSprite(this);
     let flexi = flexiIDList.concat(this.flexi);
     let groupMatrix = groupSprite.getMatrix();
@@ -221,8 +221,6 @@ class GroupObj extends Sprite {
       }
     });
     
-    let actionID = PathCtr.currentActionID;
-    let frame = PathCtr.currentFrame;
     this.resultGroups.forEach(childGroup=>{
       pathContainer.groups[childGroup].draw(pathContainer, context, isMask);
     });
@@ -268,8 +266,6 @@ class GroupObj extends Sprite {
       path.debugDraw(pathContainer, context);
     });
     
-    let actionID = PathCtr.currentActionID;
-    let frame = PathCtr.currentFrame;
     this.resultGroups.forEach(childGroup=>{
       pathContainer.groups[childGroup].debugDraw(pathContainer, context);
     });

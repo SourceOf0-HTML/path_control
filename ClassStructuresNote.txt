@@ -1,16 +1,17 @@
 
 PathContainer
-  originalWidth = originalWidth;   // original svg width
-  originalHeight = originalHeight; // original svg height
-  displayWidth = displayWidth;     // display width
-  displayHeight = displayHeight;   // display height
-  context = <CanvasRenderingContext2D>;             // canvas.getContext("2d")
-  rootGroups = [ groupID, ... ];                    // root groups IDs
-  groups = [ <GroupObj>, ... ];                     // list of groups
-  groupNameToIDList = { groupName : groupID, ... }; // list of group name and group ID
-  masks = { maskName : groupID };                   // list of mask name and group ID
-  bones = [ groupID, ... ];                         // list of bone ID
-  actionList = [  // action info list
+  originalWidth = originalWidth;         // original svg width
+  originalHeight = originalHeight;       // original svg height
+  displayWidth = displayWidth;           // display width
+  displayHeight = displayHeight;         // display height
+  context = <CanvasRenderingContext2D>;  // canvas.getContext("2d")
+  rootGroups = [ groupID, ... ];         // root groups IDs
+  groups = [ <GroupObj>, ... ];          // list of groups
+  groupNameToIDList = {groupName: groupID, ... };  // list of group name and group ID
+  masks = { maskName: groupID };         // list of mask name and group ID
+  bones = [ groupID, ... ];              // list of bone ID
+  currentActionID = currentActionID;     // current action ID
+  actionList = [                         // action info list
     {
       name : actionName,
       id : actionID,

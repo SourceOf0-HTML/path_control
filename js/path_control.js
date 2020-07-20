@@ -25,8 +25,6 @@ var PathCtr = {
   defaultActionName: "base",
   defaultBoneName: "bone",
   initTarget: null,  // instance to be initialized
-  currentFrame: 0,
-  currentActionID: -1,
   binDataPosRange: 20000, // correction value of coordinates when saving to binary data
   
   pathContainer: null,
@@ -133,7 +131,7 @@ var PathCtr = {
       
       this.subContext.clearRect(0, 0, this.viewWidth, this.viewHeight);
       this.pathContainer.draw();
-      frameNumber = (frameNumber + 1) % totalFrames;
+      frameNumber = frameNumber % totalFrames + 1;
       
       this.context.clearRect(0, 0, this.viewWidth, this.viewHeight);
       let imagedata = this.subContext.getImageData(0, 0, this.viewWidth, this.viewHeight);
@@ -844,8 +842,8 @@ class GroupObj extends Sprite {
    * @param {Sprite} sprite - used to transform the path
    */
   update(pathContainer, sprite, flexiIDList = []) {
-    let actionID = PathCtr.currentActionID;
-    let frame = PathCtr.currentFrame;
+    let actionID = pathContainer.currentActionID;
+    let frame = pathContainer.actionList[actionID].currentFrame;
     let groupSprite = sprite.compSprite(this);
     let flexi = flexiIDList.concat(this.flexi);
     let groupMatrix = groupSprite.getMatrix();
@@ -986,8 +984,6 @@ class GroupObj extends Sprite {
       }
     });
     
-    let actionID = PathCtr.currentActionID;
-    let frame = PathCtr.currentFrame;
     this.resultGroups.forEach(childGroup=>{
       pathContainer.groups[childGroup].draw(pathContainer, context, isMask);
     });
@@ -1033,8 +1029,6 @@ class GroupObj extends Sprite {
       path.debugDraw(pathContainer, context);
     });
     
-    let actionID = PathCtr.currentActionID;
-    let frame = PathCtr.currentFrame;
     this.resultGroups.forEach(childGroup=>{
       pathContainer.groups[childGroup].debugDraw(pathContainer, context);
     });
@@ -1168,7 +1162,7 @@ class BoneObj extends GroupObj {
     
     this.isReady = false;
     
-    let pathDataList = this.paths[0].getPathDataList(PathCtr.currentFrame, PathCtr.currentActionID);
+    let pathDataList = this.paths[0].getPathDataList(pathContainer.actionList[pathContainer.currentActionID].currentFrame, pathContainer.currentActionID);
     
     if(this.parentID >= 0 || pathDataList.length != 2) return;
     
@@ -1186,7 +1180,7 @@ class BoneObj extends GroupObj {
   preprocessing(pathContainer) {
     if(!this.defState || this.isReady) return;
     
-    let pathDataList = this.paths[0].getPathDataList(PathCtr.currentFrame, PathCtr.currentActionID);
+    let pathDataList = this.paths[0].getPathDataList(pathContainer.actionList[pathContainer.currentActionID].currentFrame, pathContainer.currentActionID);
     
     if(pathDataList.length != 2) return;
     
@@ -1293,8 +1287,6 @@ class BoneObj extends GroupObj {
       path2D = null;
     });
     
-    let actionID = PathCtr.currentActionID;
-    let frame = PathCtr.currentFrame;
     this.resultGroups.forEach(childGroup=>{
       pathContainer.groups[childGroup].debugDraw(pathContainer, context);
     });
@@ -1318,6 +1310,7 @@ class PathContainer extends Sprite {
     this.masks = {};              // list of mask name and group ID
     this.bones = [];              // list of bone ID
     this.actionList = [];         // action info list
+    this.currentActionID = -1;    // current action ID
   };
   
   /**
@@ -1389,8 +1382,7 @@ class PathContainer extends Sprite {
     action.pastFrame = action.currentFrame;
     action.currentFrame = frame;
     
-    PathCtr.currentFrame = frame;
-    PathCtr.currentActionID = action.id;
+    this.currentActionID = action.id;
     
     this.bones.forEach(id=>{
       this.groups[id].control(this);

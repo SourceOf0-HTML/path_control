@@ -125,7 +125,7 @@ class BoneObj extends GroupObj {
     
     this.isReady = false;
     
-    let pathDataList = this.paths[0].getPathDataList(PathCtr.currentFrame, PathCtr.currentActionID);
+    let pathDataList = this.paths[0].getPathDataList(pathContainer.actionList[pathContainer.currentActionID].currentFrame, pathContainer.currentActionID);
     
     if(this.parentID >= 0 || pathDataList.length != 2) return;
     
@@ -143,7 +143,7 @@ class BoneObj extends GroupObj {
   preprocessing(pathContainer) {
     if(!this.defState || this.isReady) return;
     
-    let pathDataList = this.paths[0].getPathDataList(PathCtr.currentFrame, PathCtr.currentActionID);
+    let pathDataList = this.paths[0].getPathDataList(pathContainer.actionList[pathContainer.currentActionID].currentFrame, pathContainer.currentActionID);
     
     if(pathDataList.length != 2) return;
     
@@ -250,8 +250,6 @@ class BoneObj extends GroupObj {
       path2D = null;
     });
     
-    let actionID = PathCtr.currentActionID;
-    let frame = PathCtr.currentFrame;
     this.resultGroups.forEach(childGroup=>{
       pathContainer.groups[childGroup].debugDraw(pathContainer, context);
     });

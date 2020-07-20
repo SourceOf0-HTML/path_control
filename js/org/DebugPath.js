@@ -66,7 +66,9 @@ var DebugPath = {
           this.isShowPoints = !this.isShowPoints;
           break;
         case "KeyO":
-          this.outputPathContainer(PathCtr.pathContainer);
+          if(confirm("現在の状態をJSONに出力します")) {
+            this.outputPathContainer(PathCtr.pathContainer);
+          }
           break;
       }
     });
@@ -87,7 +89,7 @@ var DebugPath = {
     console.log(a);
     
     a.href = "data:text/plain," + encodeURIComponent(data);
-    a.download = "pathContainer_" + PathCtr.currentFrame + ".json";
+    a.download = "pathContainer.json";
     a.click();
     a.remove();
   },

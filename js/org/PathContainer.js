@@ -15,6 +15,7 @@ class PathContainer extends Sprite {
     this.masks = {};              // list of mask name and group ID
     this.bones = [];              // list of bone ID
     this.actionList = [];         // action info list
+    this.currentActionID = -1;    // current action ID
   };
   
   /**
@@ -86,8 +87,7 @@ class PathContainer extends Sprite {
     action.pastFrame = action.currentFrame;
     action.currentFrame = frame;
     
-    PathCtr.currentFrame = frame;
-    PathCtr.currentActionID = action.id;
+    this.currentActionID = action.id;
     
     this.bones.forEach(id=>{
       this.groups[id].control(this);

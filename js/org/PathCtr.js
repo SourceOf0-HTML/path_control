@@ -25,8 +25,6 @@ var PathCtr = {
   defaultActionName: "base",
   defaultBoneName: "bone",
   initTarget: null,  // instance to be initialized
-  currentFrame: 0,
-  currentActionID: -1,
   binDataPosRange: 20000, // correction value of coordinates when saving to binary data
   
   pathContainer: null,
@@ -133,7 +131,7 @@ var PathCtr = {
       
       this.subContext.clearRect(0, 0, this.viewWidth, this.viewHeight);
       this.pathContainer.draw();
-      frameNumber = (frameNumber + 1) % totalFrames;
+      frameNumber = frameNumber % totalFrames + 1;
       
       this.context.clearRect(0, 0, this.viewWidth, this.viewHeight);
       let imagedata = this.subContext.getImageData(0, 0, this.viewWidth, this.viewHeight);
