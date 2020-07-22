@@ -96,6 +96,6 @@ BoneObj - extends GroupObj
   effectSprite = <Sprite>;        // actual effect sprite
   isReady = isReady;              // can be used for calculation
   defState = { x0, y0, x1, y1, distance, angle }      // default bone state
-  currentState = { x0, y0, x1, y1, distance, angle }  // current bone state
+  currentState = { [x0, y0, x1, y1], distance, angle }  // current bone state
 
 
