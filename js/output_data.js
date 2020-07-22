@@ -9,7 +9,8 @@ function setPathContainer() {
 }
 SVGLoader.load([
   [SVGLoader.FILE_KIND_BASE,   1, "base", "./resource/base/base_"],
-  [SVGLoader.FILE_KIND_BONE, 260, "walk", "./resource/walk/walk_"],
+//  [SVGLoader.FILE_KIND_BONE, 260, "walk", "./resource/walk/walk_"],
+  [SVGLoader.FILE_KIND_BONE, 260, "walk", "./resource/walk_original/walk_original_"],
   [SVGLoader.FILE_KIND_SMRT,  50, "face", "./resource/face/face_"],
   [SVGLoader.FILE_KIND_SMRT, 100, "pupils", "./resource/pupils/pupils_"],
   [SVGLoader.FILE_KIND_SMRT, 100, "eyelids", "./resource/eyelids/eyelids_"],

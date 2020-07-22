@@ -26,20 +26,17 @@ var DebugPath = {
    * @param {PathContainer} pathContainer
    */
   addEvents: function(pathContainer) {
+    let mouseX = 0;
+    let mouseY = 0;
     
-    let move =(x, y)=>{
-      let bone = pathContainer.getGroup("bone1_clothes");
-      let x0 = 0.35;
-      let y0 = 0.6;
-      /*
-      let bone = pathContainer.getGroup("bone18_face_S");
-      let x0 = 0.7;
-      let y0 = 0.5;
-      */
-      bone.rotation = Math.atan2(x - x0 - pathContainer.x, - y + y0);
+    let bone = pathContainer.getGroup("bone1_clothes");
+    bone.control = function(pathContainer) {
+      this.rotation = Math.atan2(mouseX - this.currentState.pos[0] - pathContainer.x, - mouseY + this.currentState.pos[1]);
+      //this.x = mouseX;
+      //this.y = mouseY;
     };
-    window.addEventListener("mousemove", e=>{move(e.clientX/pathContainer.pathRatio, e.clientY/pathContainer.pathRatio)});
-    window.addEventListener("touchmove", e=>{move(e.touches[0].pageX/pathContainer.pathRatio, e.touches[0].pageY/pathContainer.pathRatio)});
+    window.addEventListener("mousemove", e=>{mouseX = e.clientX/pathContainer.pathRatio; mouseY = e.clientY/pathContainer.pathRatio});
+    window.addEventListener("touchmove", e=>{mouseX = e.touches[0].pageX/pathContainer.pathRatio; mouseY = e.touches[0].pageY/pathContainer.pathRatio});
     
     window.addEventListener("keyup", e=>{
       switch(e.code) {

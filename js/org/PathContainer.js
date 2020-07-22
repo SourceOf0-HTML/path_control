@@ -89,11 +89,13 @@ class PathContainer extends Sprite {
     
     this.currentActionID = action.id;
     
-    this.bones.forEach(id=>{
-      this.groups[id].control(this);
-    });
     this.groups.forEach(group=>{
       group.preprocessing(this);
+    });
+    this.bones.forEach(id=>{
+      let bone = this.groups[id];
+      bone.control(this);
+      bone.diff(this);
     });
     
     this.actionList.forEach(targetAction=>{
