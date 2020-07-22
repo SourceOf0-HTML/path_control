@@ -103,7 +103,6 @@ var PathCtr = {
     let frameNumber = 0;
     let prevTimestamp = 0;
     let average = 0;
-    let isDraw = false;
     
     let draw =(timestamp)=> {
       if(typeof DebugPath !== "undefined" && DebugPath.isStop) {
@@ -128,13 +127,7 @@ var PathCtr = {
       canvas.width = subCanvas.width = this.viewWidth;
       canvas.height = subCanvas.height = this.viewHeight;
       
-      if(!isDraw) {
-        isDraw = true;
-        this.pathContainer.update(frameNumber, "walk");
-        isDraw = false;
-      } else {
-        console.error("skip update");
-      }
+      this.pathContainer.update(frameNumber, "walk");
       
       this.subContext.clearRect(0, 0, this.viewWidth, this.viewHeight);
       this.pathContainer.draw();

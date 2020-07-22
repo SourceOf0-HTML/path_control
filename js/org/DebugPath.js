@@ -26,11 +26,12 @@ var DebugPath = {
    * @param {PathContainer} pathContainer
    */
   addEvents: function(pathContainer) {
-    let mouseX = 0;
-    let mouseY = 0;
+    let mouseX = null;
+    let mouseY = null;
     
     let bone = pathContainer.getGroup("bone1_clothes");
     bone.control = function(pathContainer) {
+      if(mouseX == null && mouseY == null) return;
       this.rotation = Math.atan2(mouseX - this.currentState.pos[0] - pathContainer.x, - mouseY + this.currentState.pos[1]);
       //this.x = mouseX;
       //this.y = mouseY;
