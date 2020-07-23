@@ -300,7 +300,6 @@ var SVGLoader = {
         name,
         paths,
         childGroups,
-        false,
       );
       PathCtr.initTarget.bones.push(SVGLoader.groupNameToIDList[name]);
     } else {
@@ -309,7 +308,6 @@ var SVGLoader = {
         name,
         paths,
         childGroups,
-        false,
         this.getMaskId(groupDOM.getAttribute("mask"))
       );
     }
@@ -637,10 +635,16 @@ var SVGLoader = {
       }
     };
     
-    let setAction=(ids, func)=>{
-      setArray(ids, setUint8, frames=>{
-        setArray(frames, setUint16, func);
-      });
+    let setAction=(actionContainer, func)=>{
+      if(actionContainer.hasAction) {
+        setUint8(1);
+        setArray(actionContainer.data, setUint8, frames=>{
+          setArray(frames, setUint16, func);
+        });
+      } else {
+        setUint8(0);
+        func(actionContainer.data);
+      }
     };
     
     let setPathData=pathDataList=>{
@@ -683,22 +687,12 @@ var SVGLoader = {
       setUint16(path.maskIdToUse == null? 0 : path.maskIdToUse+1);
       setUint8(path.fillRule == "nonzero" ? 0 : 1);
       
-      setPathData(path.defPath.pathDataList);
+      setPathData(path.defPathList);
       
-      let hasAction = (path.hasActionList.length > 0);
-      if(hasAction) {
-        setUint8(1);
-        setAction(path.lineWidth, setFloat32);
-        setAction(path.fillStyle, setColor);
-        setAction(path.strokeStyle, setColor);
-        setAction(path.pathDiffList, setPathDiff);
-      } else {
-        setUint8(0);
-        setFloat32(path.lineWidth);
-        setColor(path.fillStyle);
-        setColor(path.strokeStyle);
-        setPathDiff(path.pathDiffList);
-      }
+      setAction(path.lineWidth, setFloat32);
+      setAction(path.fillStyle, setColor);
+      setAction(path.strokeStyle, setColor);
+      setAction(path.pathDiffList, setPathDiff);
     };
     
     let setGroup=group=>{
@@ -706,16 +700,9 @@ var SVGLoader = {
       setUint16(group.maskIdToUse == null? 0 : group.maskIdToUse+1);
       setArray(group.paths, setUint16, setPath);
       
-      let hasAction = (group.hasActionList.length > 0);
-      if(hasAction) {
-        setUint8(1);
-        setAction(group.childGroups, childGroups=>{
-          setArray(childGroups, setUint8, setUint16);
-        });
-      } else {
-        setUint8(0);
-        setArray(group.childGroups, setUint8, setUint16);
-      }
+      setAction(group.childGroups, childGroups=>{
+        setArray(childGroups, setUint8, setUint16);
+      });
     };
     
     

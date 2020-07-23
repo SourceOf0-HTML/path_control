@@ -1,49 +1,18 @@
 
 class GroupObj extends Sprite {
-  constructor(uid, id, paths, childGroups, hasAction, maskIdToUse) {
+  constructor(uid, id, paths, childGroups, maskIdToUse) {
     super();
     this.visible = true;              // display when true
     this.uid = uid;                   // uniq id
     this.id = id;                     // g tag ID
     this.paths = paths;               // list of PathObj
-    this.childGroups = childGroups;   // list of group id
+    this.childGroups = new ActionContainer(childGroups, val=>Array.isArray(val) && val.some(v=>Number.isFinite(v)));  // list of group id
     this.maskIdToUse = maskIdToUse;   // ID of the mask to use
-    this.hasActionList = [];          // if true, have action
     this.flexi = [];                  // ID of a flexi-bonded target
-    
-    if(hasAction) {
-      this.childGroups.forEach((val, i)=>(this.hasActionList[i] = true));
-      this.resultGroups = childGroups[0][0];
-    } else {
-      this.resultGroups = childGroups;
-    }
   };
   
   addAction(childGroups, frame, actionID) {
-    if( childGroups.length == 0 ) return;
-    if( this.hasActionList.length == 0 ) {
-      if( JSON.stringify(this.childGroups) == JSON.stringify(childGroups) ) return;
-      
-      // init action data
-      this.childGroups = [[this.childGroups]];   // list of group id
-      this.hasActionList[0] = true;
-    }
-    if( !this.hasActionList[actionID] ) {
-      this.childGroups[actionID] = [this.childGroups[0][0].concat()];
-      this.hasActionList[actionID] = true;
-    }
-    
-    let isEmpty = true;
-    for(let i = this.childGroups[actionID].length - 1; i >= 0; --i) {
-      if(typeof this.childGroups[actionID][i] === "undefined") continue;
-      if(JSON.stringify(childGroups) == JSON.stringify(this.childGroups[actionID][i])) break;
-      this.childGroups[actionID][frame] = childGroups;
-      isEmpty = false;
-      break;
-    }
-    if(isEmpty) {
-      this.childGroups[actionID][frame] = undefined;
-    }
+    this.childGroups.addAction(childGroups, actionID, frame);
   };
   
   /**
@@ -84,52 +53,19 @@ class GroupObj extends Sprite {
     let flexi = flexiIDList.concat(this.flexi);
     let groupMatrix = groupSprite.getMatrix();
     
-    let getChildGroups =(id, f)=>this.childGroups[id][Math.min(f, this.childGroups[id].length-1)];
-    
     this.paths.forEach(path=>{
       path.update(frame, actionID, pathContainer, groupMatrix);
     });
     
-    let childGroups = null;
-    if(this.hasActionList[actionID]) {
-      childGroups = getChildGroups(actionID, frame);
-    }
-    pathContainer.actionList.forEach(action=>{
-      if(!this.hasActionList[action.id]) return;
-      if(action.pastFrame == action.currentFrame) return;
-      if(action.pastFrame <= action.currentFrame) {
-        for(let targetFrame = action.currentFrame; targetFrame >= action.pastFrame; --targetFrame) {
-          let targetGroups = getChildGroups(action.id, targetFrame);
-          if(!targetGroups) continue;
-          childGroups = targetGroups;
-          break;
-        }
-      } else {
-        for(let targetFrame = action.pastFrame; targetFrame >= action.currentFrame; --targetFrame) {
-          let targetGroups = getChildGroups(action.id, targetFrame);
-          if(!targetGroups) continue;
-          
-          for(let targetFrame = action.currentFrame; targetFrame >= 0; --targetFrame) {
-            targetGroups = getChildGroups(action.id, targetFrame);
-            if(!targetGroups) continue;
-            childGroups = targetGroups;
-            break;
-          }
-          break;
-        }
-      }
-    });
-    if(!!childGroups) {
-      this.resultGroups = childGroups;
-    }
+    let childGroups = this.childGroups.update(pathContainer, actionID, frame);
     
-    this.resultGroups.forEach(childGroup=>{
+    this.childGroups.result.forEach(childGroup=>{
       pathContainer.groups[childGroup].update(pathContainer, groupSprite, flexi);
     });
     
     if(flexi.length > 0) {
       this.paths.forEach(path=>{
-        path.resultPath.pathDataList.forEach(d=>{
+        path.resultPathList.forEach(d=>{
           if(!d.pos || d.pos.length == 0) return;
           let points = d.pos;
           let pointsNum = points.length;
@@ -220,7 +156,7 @@ class GroupObj extends Sprite {
       }
     });
     
-    this.resultGroups.forEach(childGroup=>{
+    this.childGroups.result.forEach(childGroup=>{
       pathContainer.groups[childGroup].draw(pathContainer, context, isMask);
     });
     
@@ -265,7 +201,7 @@ class GroupObj extends Sprite {
       path.debugDraw(pathContainer, context);
     });
     
-    this.resultGroups.forEach(childGroup=>{
+    this.childGroups.result.forEach(childGroup=>{
       pathContainer.groups[childGroup].debugDraw(pathContainer, context);
     });
   };

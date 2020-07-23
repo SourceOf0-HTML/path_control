@@ -414,45 +414,137 @@ class Sprite {
 };
 
 
+class ActionContainer {
+  constructor(data, checkFunc) {
+    this.data = data;
+    this.hasAction = Array.isArray(data) && data.some(val=>Array.isArray(val) && val.some(checkFunc));
+    this.result = this.hasAction? data[0][0] : data;
+  };
+  
+  addAction(data, actionID, frame) {
+    if(!this.hasAction) {
+      if( JSON.stringify(this.data) == JSON.stringify(data) ) return;
+      
+      // init action data
+      this.data = [[this.data]];
+      this.hasAction = true;
+    }
+    if(typeof this.data[actionID] === "undefined") {
+      this.data[actionID] = [this.data[0][0].concat()];
+    }
+    
+    let isEmpty = true;
+    for(let i = this.data[actionID].length - 1; i >= 0; --i) {
+      if(typeof this.data[actionID][i] === "undefined") continue;
+      if(JSON.stringify(data) == JSON.stringify(this.data[actionID][i])) break;
+      this.data[actionID][frame] = data;
+      isEmpty = false;
+      break;
+    }
+    if(isEmpty) {
+      this.data[actionID][frame] = undefined;
+    }
+  };
+  
+  hasActionID(actionID) {
+    if(!this.hasAction) return false;
+    return typeof this.data[actionID] !== "undefined";
+  };
+  
+  getData(actionID = 0, frame = 0) {
+    if(!this.hasAction) return this.data;
+    return this.data[actionID][Math.min(frame, this.data[actionID].length-1)];
+  };
+  
+  getAvailableData(actionID = 0, frame = 0) {
+    if(!this.hasAction) {
+      return this.data;
+    }
+    if(!this.hasActionID(actionID)) {
+      return this.data[0][0];
+    }
+    
+    for(let targetFrame = frame; targetFrame >= 0; --targetFrame) {
+      let targetData = this.getData(actionID, targetFrame);
+      if(targetData != undefined) return targetData;
+    }
+    return undefined;
+  };
+  
+  update(pathContainer, actionID = 0, frame = 0) {
+    if(!this.hasAction) return;
+    
+    if(!this.hasActionID(actionID)) {
+      actionID = 0;
+      frame = 0;
+    }
+    
+    let data = this.getData(actionID, frame);
+    pathContainer.actionList.forEach(action=> {
+      if(action.pastFrame == action.currentFrame) return;
+      
+      let targetActionID = action.id;
+      if(!this.hasActionID(targetActionID)) return;
+      
+      let pastFrame = action.pastFrame;
+      let currentFrame = action.currentFrame;
+      if(pastFrame <= currentFrame) {
+        for(let targetFrame = currentFrame; targetFrame >= pastFrame; --targetFrame) {
+          let targetData = this.getData(targetActionID, targetFrame);
+          if(targetData == undefined) continue;
+          data = targetData;
+          break;
+        }
+      } else {
+        for(let targetFrame = pastFrame; targetFrame >= currentFrame; --targetFrame) {
+          let targetData = this.getData(targetActionID, targetFrame);
+          if(targetData == undefined) continue;
+          
+          for(let targetFrame = currentFrame; targetFrame >= 0; --targetFrame) {
+            targetData = this.getData(targetActionID, targetFrame);
+            if(targetData == undefined) continue;
+            data = targetData;
+            break;
+          }
+          break;
+        }
+      }
+    });
+    
+    if(!!data) {
+      this.result = data;
+    }
+  };
+};
+
+
 class PathObj {
   constructor(maskIdToUse, pathDataList, pathDiffList, fillRule, fillStyle, lineWidth, strokeStyle) {
     this.maskIdToUse = maskIdToUse;    // ID of the mask to use
-    this.pathDiffList = pathDiffList;  // diff pos data array
     this.fillRule = fillRule;          // "nonzero" or "evenodd"
-    this.fillStyle = fillStyle;        // fillColor ( context2D.fillStyle )
-    this.lineWidth = lineWidth;        // strokeWidth ( context2D.lineWidth )
-    this.strokeStyle = strokeStyle;    // strokeColor ( context2D.strokeStyle )
-    this.hasActionList = [];           // if true, have action
-    this.resultPath = {                // path data for drawing
-      pathDataList,
-      fillStyle,
-      lineWidth,
-      strokeStyle,
-    };
-    
-    this.defPath = {                   // default path data
-      pathDataList,
-      fillStyle,
-      lineWidth,
-      strokeStyle,
-    };
+    this.pathDiffList = new ActionContainer(pathDiffList, val=>Array.isArray(val) && val.some(v=>Array.isArray(v)));  // diff pos data array
+    this.fillStyle = new ActionContainer(fillStyle, val=>typeof val === "string");  // fillColor ( context2D.fillStyle )
+    this.lineWidth = new ActionContainer(lineWidth, val=>Number.isFinite(val));  // strokeWidth ( context2D.lineWidth )
+    this.strokeStyle = new ActionContainer(strokeStyle, val=>typeof val === "string");  // strokeColor ( context2D.strokeStyle )
+    this.resultPathList = pathDataList;  // path data for drawing
+    this.defPathList = pathDataList;     // default path data
   };
   
   addAction(pathDataList, fillStyle, lineWidth, strokeStyle, frame, actionID) {
     if(!pathDataList) {
-      pathDataList = this.defPath.pathDataList.slice();
-    } else if(this.defPath.pathDataList.length != pathDataList.length) {
+      pathDataList = this.defPathList.slice();
+    } else if(this.defPathList.length != pathDataList.length) {
       console.error("The number of paths does not match.");
-      console.log(this.defPath.pathDataList);
+      console.log(this.defPathList);
       console.log(pathDataList);
-      pathDataList = this.defPath.pathDataList.slice();
+      pathDataList = this.defPathList.slice();
     }
     
     let pathDiffList = [];
-    this.defPath.pathDataList.forEach((d, i)=>{
+    this.defPathList.forEach((d, i)=>{
       if(d.type != pathDataList[i].type) {
         console.error("type does not match.");
-        console.log(this.defPath.pathDataList);
+        console.log(this.defPathList);
         console.log(pathDataList);
         return;
       }
@@ -463,63 +555,10 @@ class PathObj {
       });
     });
     
-    if( this.hasActionList.length == 0 ) {
-      // init action data
-      this.pathDiffList = [[this.pathDiffList]];  // path data array
-      this.fillStyle = [[this.fillStyle]];        // fillColor ( context2D.fillStyle )
-      this.lineWidth = [[this.lineWidth]];        // strokeWidth ( context2D.lineWidth )
-      this.strokeStyle = [[this.strokeStyle]];    // strokeColor ( context2D.strokeStyle )
-      this.hasActionList[0] = true;
-    }
-    if( !this.hasActionList[actionID] ) {
-      this.pathDiffList[actionID] = [this.pathDiffList[0][0]];
-      this.fillStyle[actionID] = [this.fillStyle[0][0]];
-      this.lineWidth[actionID] = [this.lineWidth[0][0]];
-      this.strokeStyle[actionID] = [this.strokeStyle[0][0]];
-      this.hasActionList[actionID] = true;
-    }
-    
-    this.pathDiffList[actionID][frame] = pathDiffList;
-    
-    let isEmpty = true;
-    for(let i = this.lineWidth[actionID].length - 1; i >= 0; --i) {
-      if(typeof this.lineWidth[actionID][i] === "undefined") continue;
-      if(this.lineWidth[actionID][i] == lineWidth) break;
-      this.lineWidth[actionID][frame] = lineWidth;
-      isEmpty = false;
-      break;
-    }
-    if(isEmpty) {
-      this.lineWidth[actionID][frame] = undefined;
-    } else {
-      isEmpty = true;
-    }
-    
-    for(let i = this.strokeStyle[actionID].length - 1; i >= 0; --i) {
-      if(typeof this.strokeStyle[actionID][i] === "undefined") continue;
-      if(this.strokeStyle[actionID][i] == strokeStyle) break;
-      this.strokeStyle[actionID][frame] = strokeStyle;
-      isEmpty = false;
-      break;
-    }
-    if(isEmpty) {
-      this.strokeStyle[actionID][frame] = undefined;
-    } else {
-      isEmpty = true;
-    }
-    
-    for(let i = this.fillStyle[actionID].length - 1; i >= 0; --i) {
-      if(typeof this.fillStyle[actionID][i] === "undefined") continue;
-      if(this.fillStyle[actionID][i] == fillStyle) break;
-      this.fillStyle[actionID][frame] = fillStyle;
-      isEmpty = false;
-      break;
-    }
-    if(isEmpty) {
-      this.fillStyle[actionID][frame] = undefined;
-    } else {
-      isEmpty = true;
-    }
+    this.pathDiffList.addAction(pathDiffList, actionID, frame);
+    this.fillStyle.addAction(fillStyle, actionID, frame);
+    this.lineWidth.addAction(lineWidth, actionID, frame);
+    this.strokeStyle.addAction(strokeStyle, actionID, frame);
   };
   
   /**
@@ -531,7 +570,7 @@ class PathObj {
     let ret = [];
     
     let makeData =(pathDiffList)=> {
-      this.defPath.pathDataList.forEach((d, i)=>{
+      this.defPathList.forEach((d, i)=>{
         ret.push({
           type: d.type,
           pos: (!d.pos)? undefined : d.pos.map((val, j)=>val+pathDiffList[i][j]),
@@ -540,14 +579,7 @@ class PathObj {
       return ret;
     }
     
-    if( this.hasActionList.length == 0 ) {
-      return makeData(this.pathDiffList);
-    }
-    if( !this.hasActionList[actionID] ) {
-      actionID = 0;
-      frame = 0;
-    }
-    return makeData(this.pathDiffList[actionID][Math.min(frame, this.pathDiffList[actionID].length-1)]);
+    return makeData(this.pathDiffList.getAvailableData(actionID, frame));
   };
   
   /**
@@ -560,7 +592,7 @@ class PathObj {
     let ret = [];
     
     let makeData =(pathDiffList)=> {
-      this.defPath.pathDataList.forEach((d, i)=>{
+      this.defPathList.forEach((d, i)=>{
         ret.push({
           type: d.type,
           pos: (!d.pos)? undefined : d.pos.map((val, j)=>val+pathDiffList[i][j]),
@@ -569,24 +601,24 @@ class PathObj {
       return ret;
     }
     
-    if( this.hasActionList.length == 0 ) {
-      return makeData(this.pathDiffList);
+    if(!this.pathDiffList.hasAction) {
+      return makeData(this.pathDiffList.getData());
     }
     
-    if( !this.hasActionList[actionID] ) {
+    if(!this.pathDiffList.hasActionID(actionID)) {
       actionID = 0;
       frame = 0;
     }
-    let pathDataList = makeData(this.pathDiffList[actionID][Math.min(frame, this.pathDiffList[actionID].length-1)]);
     
-    if(pathContainer.actionList.length == 1) return pathDataList;
+    let pathDataList = makeData(this.pathDiffList.getAvailableData(actionID, frame));
+    if(pathContainer.actionList.length == 1) {
+      return pathDataList;
+    }
     
     pathContainer.actionList.forEach(action=>{
       if(actionID == action.id) return;
-      if( !this.hasActionList[action.id] ) return;
-      frame = action.currentFrame;
-      
-      this.pathDiffList[action.id][Math.min(frame, this.pathDiffList[action.id].length-1)].forEach((list, i)=>{
+      if(!this.pathDiffList.hasActionID(action.id)) return;
+      this.pathDiffList.getAvailableData(action.id, action.currentFrame).forEach((list, i)=>{
         if(!list) return;
         list.forEach((val, j)=>{
           if(!val) return;
@@ -610,67 +642,11 @@ class PathObj {
     
     let pathDataList = this.getMergePathDataList(pathContainer, frame, actionID);
     pathDataList.forEach(updatePath);
-    this.resultPath.pathDataList = pathDataList;
+    this.resultPathList = pathDataList;
     
-    if( this.hasActionList.length == 0) {
-      this.resultPath.lineWidth = this.lineWidth;
-      this.resultPath.strokeStyle = this.strokeStyle;
-      this.resultPath.fillStyle = this.fillStyle;
-      return;
-    } else if( !this.hasActionList[actionID] ) {
-      actionID = 0;
-      frame = 0;
-    }
-    
-    let lineWidth, strokeStyle, fillStyle;
-    
-    pathContainer.actionList.forEach(action=>{
-      if(action.pastFrame == action.currentFrame) return;
-      
-      let targetActionID = action.id;
-      if( actionID != 0 && targetActionID == 0) return;
-      if( !this.hasActionList[targetActionID] ) return;
-      
-      let targetLineWidth = this.lineWidth[targetActionID];
-      let targetStrokeStyle = this.strokeStyle[targetActionID];
-      let targetFillStyle = this.fillStyle[targetActionID];
-      
-      let setData=()=>{
-        if(typeof lineWidth === "undefined") lineWidth = targetLineWidth[Math.min(frame, targetLineWidth.length-1)];
-        if(!strokeStyle) strokeStyle = targetStrokeStyle[Math.min(frame, targetStrokeStyle.length-1)];
-        if(!fillStyle) fillStyle = targetFillStyle[Math.min(frame, targetFillStyle.length-1)];
-      };
-      
-      if(action.pastFrame <= action.currentFrame) {
-        for(frame = action.currentFrame; frame >= action.pastFrame; --frame) setData();
-      } else {
-        for(frame = action.pastFrame; frame >= action.currentFrame; --frame) setData();
-        if(typeof lineWidth !== "undefined") {
-          lineWidth = null;
-          for(frame = action.currentFrame; frame >= 0; --frame) {
-            lineWidth = targetLineWidth[Math.min(frame, targetLineWidth.length-1)];
-            if(typeof lineWidth !== "undefined") break;
-          }
-        }
-        if(!!strokeStyle) {
-          strokeStyle = null;
-          for(frame = action.currentFrame; frame >= 0; --frame) {
-            strokeStyle = targetStrokeStyle[Math.min(frame, targetStrokeStyle.length-1)];
-            if(!!strokeStyle) break;
-          }
-        }
-        if(!!fillStyle) {
-          fillStyle = null;
-          for(frame = action.currentFrame; frame >= 0; --frame) {
-            fillStyle = targetFillStyle[Math.min(frame, targetFillStyle.length-1)];
-            if(!!fillStyle) break;
-          }
-        }
-      }
-    });
-    if(!!lineWidth) this.resultPath.lineWidth = lineWidth;
-    if(!!strokeStyle) this.resultPath.strokeStyle = strokeStyle;
-    if(!!fillStyle) this.resultPath.fillStyle = fillStyle;
+    this.fillStyle.update(pathContainer, actionID, frame);
+    this.lineWidth.update(pathContainer, actionID, frame);
+    this.strokeStyle.update(pathContainer, actionID, frame);
   };
   
   /**
@@ -680,7 +656,7 @@ class PathObj {
    * @param {Boolean} isMask - when true, draw as a mask
    */
   draw(pathContainer, context, path2D, isMask) {
-    this.resultPath.pathDataList.forEach(d=>{
+    this.resultPathList.forEach(d=>{
       let pos = d.pos;
       let ratio = pathContainer.pathRatio;
       switch(d.type) {
@@ -702,14 +678,14 @@ class PathObj {
       }
     });
     if(isMask) return;
-    if(!!this.resultPath.lineWidth) {
+    if(!!this.lineWidth.result) {
       context.lineJoin = "round";
       context.lineCap = "round";
-      context.lineWidth = this.resultPath.lineWidth;
-      context.strokeStyle = this.resultPath.strokeStyle;
+      context.lineWidth = this.lineWidth.result;
+      context.strokeStyle = this.strokeStyle.result;
       context.stroke(path2D);
     }
-    context.fillStyle = this.resultPath.fillStyle;
+    context.fillStyle = this.fillStyle.result;
     context.fill(path2D, this.fillRule);
   };
   
@@ -737,7 +713,7 @@ class PathObj {
       context.fill(path2D, "nonzero");
     };
     
-    this.resultPath.pathDataList.forEach(d=>{
+    this.resultPathList.forEach(d=>{
       let pos = d.pos;
       let ratio = pathContainer.pathRatio;
       switch(d.type) {
@@ -763,50 +739,19 @@ class PathObj {
 
 
 class GroupObj extends Sprite {
-  constructor(uid, id, paths, childGroups, hasAction, maskIdToUse) {
+  constructor(uid, id, paths, childGroups, maskIdToUse) {
     super();
     this.visible = true;              // display when true
     this.uid = uid;                   // uniq id
     this.id = id;                     // g tag ID
     this.paths = paths;               // list of PathObj
-    this.childGroups = childGroups;   // list of group id
+    this.childGroups = new ActionContainer(childGroups, val=>Array.isArray(val) && val.some(v=>Number.isFinite(v)));  // list of group id
     this.maskIdToUse = maskIdToUse;   // ID of the mask to use
-    this.hasActionList = [];          // if true, have action
     this.flexi = [];                  // ID of a flexi-bonded target
-    
-    if(hasAction) {
-      this.childGroups.forEach((val, i)=>(this.hasActionList[i] = true));
-      this.resultGroups = childGroups[0][0];
-    } else {
-      this.resultGroups = childGroups;
-    }
   };
   
   addAction(childGroups, frame, actionID) {
-    if( childGroups.length == 0 ) return;
-    if( this.hasActionList.length == 0 ) {
-      if( JSON.stringify(this.childGroups) == JSON.stringify(childGroups) ) return;
-      
-      // init action data
-      this.childGroups = [[this.childGroups]];   // list of group id
-      this.hasActionList[0] = true;
-    }
-    if( !this.hasActionList[actionID] ) {
-      this.childGroups[actionID] = [this.childGroups[0][0].concat()];
-      this.hasActionList[actionID] = true;
-    }
-    
-    let isEmpty = true;
-    for(let i = this.childGroups[actionID].length - 1; i >= 0; --i) {
-      if(typeof this.childGroups[actionID][i] === "undefined") continue;
-      if(JSON.stringify(childGroups) == JSON.stringify(this.childGroups[actionID][i])) break;
-      this.childGroups[actionID][frame] = childGroups;
-      isEmpty = false;
-      break;
-    }
-    if(isEmpty) {
-      this.childGroups[actionID][frame] = undefined;
-    }
+    this.childGroups.addAction(childGroups, actionID, frame);
   };
   
   /**
@@ -847,52 +792,19 @@ class GroupObj extends Sprite {
     let flexi = flexiIDList.concat(this.flexi);
     let groupMatrix = groupSprite.getMatrix();
     
-    let getChildGroups =(id, f)=>this.childGroups[id][Math.min(f, this.childGroups[id].length-1)];
-    
     this.paths.forEach(path=>{
       path.update(frame, actionID, pathContainer, groupMatrix);
     });
     
-    let childGroups = null;
-    if(this.hasActionList[actionID]) {
-      childGroups = getChildGroups(actionID, frame);
-    }
-    pathContainer.actionList.forEach(action=>{
-      if(!this.hasActionList[action.id]) return;
-      if(action.pastFrame == action.currentFrame) return;
-      if(action.pastFrame <= action.currentFrame) {
-        for(let targetFrame = action.currentFrame; targetFrame >= action.pastFrame; --targetFrame) {
-          let targetGroups = getChildGroups(action.id, targetFrame);
-          if(!targetGroups) continue;
-          childGroups = targetGroups;
-          break;
-        }
-      } else {
-        for(let targetFrame = action.pastFrame; targetFrame >= action.currentFrame; --targetFrame) {
-          let targetGroups = getChildGroups(action.id, targetFrame);
-          if(!targetGroups) continue;
-          
-          for(let targetFrame = action.currentFrame; targetFrame >= 0; --targetFrame) {
-            targetGroups = getChildGroups(action.id, targetFrame);
-            if(!targetGroups) continue;
-            childGroups = targetGroups;
-            break;
-          }
-          break;
-        }
-      }
-    });
-    if(!!childGroups) {
-      this.resultGroups = childGroups;
-    }
+    let childGroups = this.childGroups.update(pathContainer, actionID, frame);
     
-    this.resultGroups.forEach(childGroup=>{
+    this.childGroups.result.forEach(childGroup=>{
       pathContainer.groups[childGroup].update(pathContainer, groupSprite, flexi);
     });
     
     if(flexi.length > 0) {
       this.paths.forEach(path=>{
-        path.resultPath.pathDataList.forEach(d=>{
+        path.resultPathList.forEach(d=>{
           if(!d.pos || d.pos.length == 0) return;
           let points = d.pos;
           let pointsNum = points.length;
@@ -983,7 +895,7 @@ class GroupObj extends Sprite {
       }
     });
     
-    this.resultGroups.forEach(childGroup=>{
+    this.childGroups.result.forEach(childGroup=>{
       pathContainer.groups[childGroup].draw(pathContainer, context, isMask);
     });
     
@@ -1028,7 +940,7 @@ class GroupObj extends Sprite {
       path.debugDraw(pathContainer, context);
     });
     
-    this.resultGroups.forEach(childGroup=>{
+    this.childGroups.result.forEach(childGroup=>{
       pathContainer.groups[childGroup].debugDraw(pathContainer, context);
     });
   };
@@ -1036,14 +948,13 @@ class GroupObj extends Sprite {
 
 
 class BoneObj extends Sprite {
-  constructor(uid, id, paths, childGroups, hasAction) {
+  constructor(uid, id, paths, childGroups) {
     super();
     this.visible = true;              // display when true
     this.uid = uid;                   // uniq id
     this.id = id;                     // g tag ID
     this.paths = paths;               // list of PathObj
-    this.childGroups = childGroups;   // list of group id
-    this.hasActionList = [];          // if true, have action
+    this.childGroups = new ActionContainer(childGroups, val=>Array.isArray(val) && val.some(v=>Number.isFinite(v)));  // list of group id
     
     this.parentID = -1;                // parent bone id
     this.isParentPin = false;          // parent bone is pin bone
@@ -1051,13 +962,6 @@ class BoneObj extends Sprite {
     this.strength = 0;                 // scope of influence of bone
     this.effectSprite = new Sprite();  // actual effect sprite
     this.isReady = false;              // can be used for calculation
-    
-    if(hasAction) {
-      this.childGroups.forEach((val, i)=>(this.hasActionList[i] = true));
-      this.resultGroups = childGroups[0][0];
-    } else {
-      this.resultGroups = childGroups;
-    }
     
     if(!!paths && paths.length > 0) {
       let pathDataList = paths[0].getPathDataList();
@@ -1084,30 +988,7 @@ class BoneObj extends Sprite {
   };
   
   addAction(childGroups, frame, actionID) {
-    if( childGroups.length == 0 ) return;
-    if( this.hasActionList.length == 0 ) {
-      if( JSON.stringify(this.childGroups) == JSON.stringify(childGroups) ) return;
-      
-      // init action data
-      this.childGroups = [[this.childGroups]];   // list of group id
-      this.hasActionList[0] = true;
-    }
-    if( !this.hasActionList[actionID] ) {
-      this.childGroups[actionID] = [this.childGroups[0][0].concat()];
-      this.hasActionList[actionID] = true;
-    }
-    
-    let isEmpty = true;
-    for(let i = this.childGroups[actionID].length - 1; i >= 0; --i) {
-      if(typeof this.childGroups[actionID][i] === "undefined") continue;
-      if(JSON.stringify(childGroups) == JSON.stringify(this.childGroups[actionID][i])) break;
-      this.childGroups[actionID][frame] = childGroups;
-      isEmpty = false;
-      break;
-    }
-    if(isEmpty) {
-      this.childGroups[actionID][frame] = undefined;
-    }
+    this.childGroups.addAction(childGroups, actionID, frame);
   };
   
   /**
@@ -1357,7 +1238,7 @@ class BoneObj extends Sprite {
       */
     });
     
-    this.resultGroups.forEach(childGroup=>{
+    this.childGroups.result.forEach(childGroup=>{
       pathContainer.groups[childGroup].debugDraw(pathContainer, context);
     });
   };
@@ -1565,7 +1446,13 @@ var BinaryLoader = {
       return ret;
     };
     
-    let getAction=func=>getArray(getUint8, ()=>getArray(getUint16, ()=>func()));
+    let getAction=func=> {
+      if(getUint8()) {
+        return getArray(getUint8, ()=>getArray(getUint16, ()=>func()));
+      } else {
+        return func();
+      }
+    };
     
     let getPathData=()=>{
       let retNum = getUint16();
@@ -1602,28 +1489,10 @@ var BinaryLoader = {
       
       let pathDataList = getPathData();
       
-      let hasAction = getUint8();
-      if(!hasAction) {
-        let lineWidth = getFloat32();
-        let fillStyle = getColor();
-        let strokeStyle = getColor();
-        let pathDiffList = getPathDiff();
-        return new PathObj(
-          maskIdToUse,
-          pathDataList,
-          pathDiffList,
-          fillRule,
-          fillStyle,
-          lineWidth,
-          strokeStyle,
-        );
-      }
-      
       let lineWidth = getAction(getFloat32);
       let fillStyle = getAction(getColor);
       let strokeStyle = getAction(getColor);
       let pathDiffList = getAction(getPathDiff);
-      
       let pathObj = new PathObj(
         maskIdToUse,
         pathDataList,
@@ -1633,10 +1502,6 @@ var BinaryLoader = {
         lineWidth,
         strokeStyle,
       );
-      pathObj.lineWidth.forEach((val, i)=>(pathObj.hasActionList[i] = true));
-      pathObj.fillStyle.forEach((val, i)=>(pathObj.hasActionList[i] = true));
-      pathObj.strokeStyle.forEach((val, i)=>(pathObj.hasActionList[i] = true));
-      pathObj.pathDiffList.forEach((val, i)=>(pathObj.hasActionList[i] = true));
       return pathObj;
     };
     
@@ -1646,22 +1511,14 @@ var BinaryLoader = {
       let maskIdToUse = getUint16() - 1;
       if(maskIdToUse < 0) maskIdToUse = null;
       let paths = getArray(getUint16, getPath);
-      
-      let hasAction = (getUint8() > 0);
-      let childGroups;
-      if(hasAction) {
-        childGroups = getAction(()=>getArray(getUint8, getUint16));
-      } else {
-        childGroups = getArray(getUint8, getUint16);
-      }
+      let childGroups = getAction(()=>getArray(getUint8, getUint16));
       
       if(name.startsWith(PathCtr.defaultBoneName)) {
         return new BoneObj(
           i,
           name,
           paths,
-          childGroups,
-          hasAction
+          childGroups
         );
       } else {
         return new GroupObj(
@@ -1669,7 +1526,6 @@ var BinaryLoader = {
           name,
           paths,
           childGroups,
-          hasAction,
           maskIdToUse
         );
       }
@@ -2107,7 +1963,6 @@ var SVGLoader = {
         name,
         paths,
         childGroups,
-        false,
       );
       PathCtr.initTarget.bones.push(SVGLoader.groupNameToIDList[name]);
     } else {
@@ -2116,7 +1971,6 @@ var SVGLoader = {
         name,
         paths,
         childGroups,
-        false,
         this.getMaskId(groupDOM.getAttribute("mask"))
       );
     }
@@ -2444,10 +2298,16 @@ var SVGLoader = {
       }
     };
     
-    let setAction=(ids, func)=>{
-      setArray(ids, setUint8, frames=>{
-        setArray(frames, setUint16, func);
-      });
+    let setAction=(actionContainer, func)=>{
+      if(actionContainer.hasAction) {
+        setUint8(1);
+        setArray(actionContainer.data, setUint8, frames=>{
+          setArray(frames, setUint16, func);
+        });
+      } else {
+        setUint8(0);
+        func(actionContainer.data);
+      }
     };
     
     let setPathData=pathDataList=>{
@@ -2490,22 +2350,12 @@ var SVGLoader = {
       setUint16(path.maskIdToUse == null? 0 : path.maskIdToUse+1);
       setUint8(path.fillRule == "nonzero" ? 0 : 1);
       
-      setPathData(path.defPath.pathDataList);
+      setPathData(path.defPathList);
       
-      let hasAction = (path.hasActionList.length > 0);
-      if(hasAction) {
-        setUint8(1);
-        setAction(path.lineWidth, setFloat32);
-        setAction(path.fillStyle, setColor);
-        setAction(path.strokeStyle, setColor);
-        setAction(path.pathDiffList, setPathDiff);
-      } else {
-        setUint8(0);
-        setFloat32(path.lineWidth);
-        setColor(path.fillStyle);
-        setColor(path.strokeStyle);
-        setPathDiff(path.pathDiffList);
-      }
+      setAction(path.lineWidth, setFloat32);
+      setAction(path.fillStyle, setColor);
+      setAction(path.strokeStyle, setColor);
+      setAction(path.pathDiffList, setPathDiff);
     };
     
     let setGroup=group=>{
@@ -2513,16 +2363,9 @@ var SVGLoader = {
       setUint16(group.maskIdToUse == null? 0 : group.maskIdToUse+1);
       setArray(group.paths, setUint16, setPath);
       
-      let hasAction = (group.hasActionList.length > 0);
-      if(hasAction) {
-        setUint8(1);
-        setAction(group.childGroups, childGroups=>{
-          setArray(childGroups, setUint8, setUint16);
-        });
-      } else {
-        setUint8(0);
-        setArray(group.childGroups, setUint8, setUint16);
-      }
+      setAction(group.childGroups, childGroups=>{
+        setArray(childGroups, setUint8, setUint16);
+      });
     };
     
     

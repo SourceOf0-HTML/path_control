@@ -1,13 +1,12 @@
 
 class BoneObj extends Sprite {
-  constructor(uid, id, paths, childGroups, hasAction) {
+  constructor(uid, id, paths, childGroups) {
     super();
     this.visible = true;              // display when true
     this.uid = uid;                   // uniq id
     this.id = id;                     // g tag ID
     this.paths = paths;               // list of PathObj
-    this.childGroups = childGroups;   // list of group id
-    this.hasActionList = [];          // if true, have action
+    this.childGroups = new ActionContainer(childGroups, val=>Array.isArray(val) && val.some(v=>Number.isFinite(v)));  // list of group id
     
     this.parentID = -1;                // parent bone id
     this.isParentPin = false;          // parent bone is pin bone
@@ -15,13 +14,6 @@ class BoneObj extends Sprite {
     this.strength = 0;                 // scope of influence of bone
     this.effectSprite = new Sprite();  // actual effect sprite
     this.isReady = false;              // can be used for calculation
-    
-    if(hasAction) {
-      this.childGroups.forEach((val, i)=>(this.hasActionList[i] = true));
-      this.resultGroups = childGroups[0][0];
-    } else {
-      this.resultGroups = childGroups;
-    }
     
     if(!!paths && paths.length > 0) {
       let pathDataList = paths[0].getPathDataList();
@@ -48,30 +40,7 @@ class BoneObj extends Sprite {
   };
   
   addAction(childGroups, frame, actionID) {
-    if( childGroups.length == 0 ) return;
-    if( this.hasActionList.length == 0 ) {
-      if( JSON.stringify(this.childGroups) == JSON.stringify(childGroups) ) return;
-      
-      // init action data
-      this.childGroups = [[this.childGroups]];   // list of group id
-      this.hasActionList[0] = true;
-    }
-    if( !this.hasActionList[actionID] ) {
-      this.childGroups[actionID] = [this.childGroups[0][0].concat()];
-      this.hasActionList[actionID] = true;
-    }
-    
-    let isEmpty = true;
-    for(let i = this.childGroups[actionID].length - 1; i >= 0; --i) {
-      if(typeof this.childGroups[actionID][i] === "undefined") continue;
-      if(JSON.stringify(childGroups) == JSON.stringify(this.childGroups[actionID][i])) break;
-      this.childGroups[actionID][frame] = childGroups;
-      isEmpty = false;
-      break;
-    }
-    if(isEmpty) {
-      this.childGroups[actionID][frame] = undefined;
-    }
+    this.childGroups.addAction(childGroups, actionID, frame);
   };
   
   /**
@@ -321,7 +290,7 @@ class BoneObj extends Sprite {
       */
     });
     
-    this.resultGroups.forEach(childGroup=>{
+    this.childGroups.result.forEach(childGroup=>{
       pathContainer.groups[childGroup].debugDraw(pathContainer, context);
     });
   };

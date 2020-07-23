@@ -68,7 +68,13 @@ var BinaryLoader = {
       return ret;
     };
     
-    let getAction=func=>getArray(getUint8, ()=>getArray(getUint16, ()=>func()));
+    let getAction=func=> {
+      if(getUint8()) {
+        return getArray(getUint8, ()=>getArray(getUint16, ()=>func()));
+      } else {
+        return func();
+      }
+    };
     
     let getPathData=()=>{
       let retNum = getUint16();
@@ -105,28 +111,10 @@ var BinaryLoader = {
       
       let pathDataList = getPathData();
       
-      let hasAction = getUint8();
-      if(!hasAction) {
-        let lineWidth = getFloat32();
-        let fillStyle = getColor();
-        let strokeStyle = getColor();
-        let pathDiffList = getPathDiff();
-        return new PathObj(
-          maskIdToUse,
-          pathDataList,
-          pathDiffList,
-          fillRule,
-          fillStyle,
-          lineWidth,
-          strokeStyle,
-        );
-      }
-      
       let lineWidth = getAction(getFloat32);
       let fillStyle = getAction(getColor);
       let strokeStyle = getAction(getColor);
       let pathDiffList = getAction(getPathDiff);
-      
       let pathObj = new PathObj(
         maskIdToUse,
         pathDataList,
@@ -136,10 +124,6 @@ var BinaryLoader = {
         lineWidth,
         strokeStyle,
       );
-      pathObj.lineWidth.forEach((val, i)=>(pathObj.hasActionList[i] = true));
-      pathObj.fillStyle.forEach((val, i)=>(pathObj.hasActionList[i] = true));
-      pathObj.strokeStyle.forEach((val, i)=>(pathObj.hasActionList[i] = true));
-      pathObj.pathDiffList.forEach((val, i)=>(pathObj.hasActionList[i] = true));
       return pathObj;
     };
     
@@ -149,22 +133,14 @@ var BinaryLoader = {
       let maskIdToUse = getUint16() - 1;
       if(maskIdToUse < 0) maskIdToUse = null;
       let paths = getArray(getUint16, getPath);
-      
-      let hasAction = (getUint8() > 0);
-      let childGroups;
-      if(hasAction) {
-        childGroups = getAction(()=>getArray(getUint8, getUint16));
-      } else {
-        childGroups = getArray(getUint8, getUint16);
-      }
+      let childGroups = getAction(()=>getArray(getUint8, getUint16));
       
       if(name.startsWith(PathCtr.defaultBoneName)) {
         return new BoneObj(
           i,
           name,
           paths,
-          childGroups,
-          hasAction
+          childGroups
         );
       } else {
         return new GroupObj(
@@ -172,7 +148,6 @@ var BinaryLoader = {
           name,
           paths,
           childGroups,
-          hasAction,
           maskIdToUse
         );
       }

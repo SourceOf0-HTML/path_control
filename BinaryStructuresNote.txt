@@ -2,18 +2,6 @@
 PathContainer
  originalWidth  : Uint16
  originalHeight : Uint16
- masks
-   length : Uint8
-   key
-     groupID : Uint16
-   values
-     groupID : Uint16
- rootGroups
-   length : Uint8
-   groupID : Uint16
- groups
-   length : Uint16
-   GroupObj
  actionList
    length : Uint8
    key
@@ -22,6 +10,18 @@ PathContainer
    values
      id : Uint8
      totalFrames : Uint16
+ rootGroups
+   length : Uint8
+   groupID : Uint16
+ groups
+   length : Uint16
+   GroupObj
+ masks
+   length : Uint8
+   key
+     groupID : Uint16
+   values
+     groupID : Uint16
 
 
 GroupObj
@@ -33,11 +33,9 @@ GroupObj
  paths
    length : Uint16
    Array : PathObj
- hasAction
-   false = 0, true = 1 : Uint8 ( == true : add @ data )
  childGroups
-   actionID(length) : Uint8 @
-     frame(length) : Uint16 @
+   ActionContainer
+     <Data>
        length : Uint8
        groupID : Uint16
 
@@ -47,22 +45,20 @@ PathObj
    groupID : Uint16
  fillRule
    nonzero = 0, evenodd = 1 : Uint8
- hasAction
-   false = 0, true = 1 : Uint8 ( == true : add @ data )
  lineWidth
-   actionID(length) : Uint8 @
-     frame(length) : Uint16 @
+   ActionContainer
+     <Data>
      val : Float32
  fillStyle
-   actionID(length) : Uint8 @
-     frame(length) : Uint16 @
+   ActionContainer
+     <Data>
      A : Uint8
      R : Uint8
      G : Uint8
      B : Uint8
  strokeStyle
-   actionID(length) : Uint8 @
-     frame(length) : Uint16 @
+   ActionContainer
+     <Data>
      A : Uint8
      R : Uint8
      G : Uint8
@@ -71,10 +67,10 @@ PathObj
    length : Uint16
    Array : PathData
  pathDiffList
-   actionID(length) : Uint8 @
-     frame(length) : Uint16 @
-       length : Uint16
-       Array : PathData.pos
+   ActionContainer
+     <Data>
+     length : Uint16
+     Array : PathData.pos
 
 PathData
  type
@@ -82,3 +78,11 @@ PathData
  pos
    Array : Int16Array ( length: M = 2, C = 6, Z = 0 )
 
+
+ActionContainer
+ hasAction
+   false = 0, true = 1 : Uint8 ( == true : add @ data )
+ data
+   actionID(length) : Uint8 @
+     frame(length) : Uint16 @
+       <Data>
