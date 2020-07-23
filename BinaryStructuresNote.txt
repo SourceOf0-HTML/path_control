@@ -16,12 +16,6 @@ PathContainer
  groups
    length : Uint16
    GroupObj
- masks
-   length : Uint8
-   key
-     groupID : Uint16
-   values
-     groupID : Uint16
 
 
 GroupObj

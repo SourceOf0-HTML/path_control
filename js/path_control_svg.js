@@ -1257,7 +1257,6 @@ class PathContainer extends Sprite {
     this.context = null;          // CanvasRenderingContext2D ( canvas.getContext("2d") )
     this.rootGroups = [];         // root group IDs
     this.groups = [];             // list of groups
-    this.masks = {};              // list of mask name and group ID
     this.bones = [];              // list of bone ID
     this.actionList = [];         // action info list
     this.currentActionID = -1;    // current action ID
@@ -1672,6 +1671,7 @@ var SVGLoader = {
   FILE_KIND_SMRT: "SMRT",
   initKind: "",
   groupNameToIDList: null,
+  masksList: null,
   
   /**
    * @param {String} maskStr - mask attribute of element
@@ -1680,8 +1680,8 @@ var SVGLoader = {
   getMaskId: function(maskStr) {
     if(!maskStr) return null;
     let maskID = maskStr.replace(/^url\(#/, "").replace(/\)$/, "");
-    if(!!PathCtr.initTarget.masks[maskID]) {
-      return PathCtr.initTarget.masks[maskID];
+    if(!!SVGLoader.masksList[maskID]) {
+      return SVGLoader.masksList[maskID];
     }
     console.error("unknown mask name : " + maskStr);
     return null;
@@ -2064,7 +2064,7 @@ var SVGLoader = {
       let maskChildren = Array.prototype.slice.call(mask.children);
       maskChildren.forEach(child=>{
         if( child.tagName == "use" ) {
-          pathContainer.masks[mask.getAttribute("id")] = SVGLoader.groupNameToIDList[child.getAttribute("xlink:href").slice(1)];
+          SVGLoader.masksList[mask.getAttribute("id")] = SVGLoader.groupNameToIDList[child.getAttribute("xlink:href").slice(1)];
         } else {
           console.error("unknown mask data");
           console.log(child);
@@ -2118,11 +2118,11 @@ var SVGLoader = {
       let masks = Array.prototype.slice.call(targetDom.getElementsByTagName("mask"));
       masks.forEach(mask=>{
         let maskID = mask.getAttribute("id");
-        if(pathContainer.masks[maskID]) return;
+        if(SVGLoader.masksList[maskID]) return;
         let maskChildren = Array.prototype.slice.call(mask.children);
         maskChildren.forEach(child=>{
           if( child.tagName == "use" ) {
-            pathContainer.masks[maskID] = SVGLoader.groupNameToIDList[child.getAttribute("xlink:href").slice(1)];
+            SVGLoader.masksList[maskID] = SVGLoader.groupNameToIDList[child.getAttribute("xlink:href").slice(1)];
           } else {
             console.error("unknown mask data");
             console.log(child);
@@ -2174,6 +2174,7 @@ var SVGLoader = {
     let getFrameNum=i=>("00000".substr(0, 5 - i.toString().length) + i + ".svg");
     
     SVGLoader.groupNameToIDList = {};
+    SVGLoader.masksList = {};
     
     let loadFile=fileInfo=>{
       this.initKind = fileInfo[0];
@@ -2226,6 +2227,7 @@ var SVGLoader = {
           loadFile(fileInfoList[fileIndex]);
         } else {
           SVGLoader.groupNameToIDList = null;
+          SVGLoader.masksList = null;
           PathCtr.loadComplete(pathContainer);
           if(!!completeFunc) {
             completeFunc();

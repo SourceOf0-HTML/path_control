@@ -1257,7 +1257,6 @@ class PathContainer extends Sprite {
     this.context = null;          // CanvasRenderingContext2D ( canvas.getContext("2d") )
     this.rootGroups = [];         // root group IDs
     this.groups = [];             // list of groups
-    this.masks = {};              // list of mask name and group ID
     this.bones = [];              // list of bone ID
     this.actionList = [];         // action info list
     this.currentActionID = -1;    // current action ID
