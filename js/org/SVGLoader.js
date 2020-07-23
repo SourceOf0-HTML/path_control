@@ -333,7 +333,7 @@ var SVGLoader = {
     let isPathSkip = (!isBone && this.initKind === this.FILE_KIND_BONE);
     
     if(isPathSkip) {
-      PathCtr.loadState("  path skip load : " + name);
+      PathCtr.loadState("  skip load : " + name);
     }
     
     if(!!groupDOM) {
@@ -367,7 +367,7 @@ var SVGLoader = {
         this.addActionPath(child, null, null, frame, actionID);
       });
     }
-    targetGroup.addAction(childGroups, frame, actionID);
+    if(!isBone) targetGroup.addAction(childGroups, frame, actionID);
   },
   
   /**
@@ -703,9 +703,13 @@ var SVGLoader = {
       setUint16(group.maskIdToUse == null? 0 : group.maskIdToUse+1);
       setArray(group.paths, setUint16, setPath);
       
-      setAction(group.childGroups, childGroups=>{
-        setArray(childGroups, setUint8, setUint16);
-      });
+      if(BoneObj.prototype.isPrototypeOf(group)) {
+        setArray(group.childGroups, setUint8, setUint16);
+      } else {
+        setAction(group.childGroups, childGroups=>{
+          setArray(childGroups, setUint8, setUint16);
+        });
+      }
     };
     
     

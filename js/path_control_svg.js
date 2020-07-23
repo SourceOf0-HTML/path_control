@@ -954,7 +954,7 @@ class BoneObj extends Sprite {
     this.uid = uid;                   // uniq id
     this.id = id;                     // g tag ID
     this.paths = paths;               // list of PathObj
-    this.childGroups = new ActionContainer(childGroups, val=>Array.isArray(val) && val.some(v=>Number.isFinite(v)));  // list of group id
+    this.childGroups = childGroups;   // list of group id
     
     this.parentID = -1;                // parent bone id
     this.isParentPin = false;          // parent bone is pin bone
@@ -985,10 +985,6 @@ class BoneObj extends Sprite {
         angle,
       };
     }
-  };
-  
-  addAction(childGroups, frame, actionID) {
-    this.childGroups.addAction(childGroups, actionID, frame);
   };
   
   /**
@@ -1238,7 +1234,7 @@ class BoneObj extends Sprite {
       */
     });
     
-    this.childGroups.result.forEach(childGroup=>{
+    this.childGroups.forEach(childGroup=>{
       pathContainer.groups[childGroup].debugDraw(pathContainer, context);
     });
   };
@@ -1510,21 +1506,20 @@ var BinaryLoader = {
       let maskIdToUse = getUint16() - 1;
       if(maskIdToUse < 0) maskIdToUse = null;
       let paths = getArray(getUint16, getPath);
-      let childGroups = getAction(()=>getArray(getUint8, getUint16));
       
       if(name.startsWith(PathCtr.defaultBoneName)) {
         return new BoneObj(
           i,
           name,
           paths,
-          childGroups
+          getArray(getUint8, getUint16)
         );
       } else {
         return new GroupObj(
           i,
           name,
           paths,
-          childGroups,
+          getAction(()=>getArray(getUint8, getUint16)),
           maskIdToUse
         );
       }
@@ -1995,7 +1990,7 @@ var SVGLoader = {
     let isPathSkip = (!isBone && this.initKind === this.FILE_KIND_BONE);
     
     if(isPathSkip) {
-      PathCtr.loadState("  path skip load : " + name);
+      PathCtr.loadState("  skip load : " + name);
     }
     
     if(!!groupDOM) {
@@ -2029,7 +2024,7 @@ var SVGLoader = {
         this.addActionPath(child, null, null, frame, actionID);
       });
     }
-    targetGroup.addAction(childGroups, frame, actionID);
+    if(!isBone) targetGroup.addAction(childGroups, frame, actionID);
   },
   
   /**
@@ -2365,9 +2360,13 @@ var SVGLoader = {
       setUint16(group.maskIdToUse == null? 0 : group.maskIdToUse+1);
       setArray(group.paths, setUint16, setPath);
       
-      setAction(group.childGroups, childGroups=>{
-        setArray(childGroups, setUint8, setUint16);
-      });
+      if(BoneObj.prototype.isPrototypeOf(group)) {
+        setArray(group.childGroups, setUint8, setUint16);
+      } else {
+        setAction(group.childGroups, childGroups=>{
+          setArray(childGroups, setUint8, setUint16);
+        });
+      }
     };
     
     

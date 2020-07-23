@@ -133,21 +133,20 @@ var BinaryLoader = {
       let maskIdToUse = getUint16() - 1;
       if(maskIdToUse < 0) maskIdToUse = null;
       let paths = getArray(getUint16, getPath);
-      let childGroups = getAction(()=>getArray(getUint8, getUint16));
       
       if(name.startsWith(PathCtr.defaultBoneName)) {
         return new BoneObj(
           i,
           name,
           paths,
-          childGroups
+          getArray(getUint8, getUint16)
         );
       } else {
         return new GroupObj(
           i,
           name,
           paths,
-          childGroups,
+          getAction(()=>getArray(getUint8, getUint16)),
           maskIdToUse
         );
       }
