@@ -6,16 +6,19 @@
     
     "bone2_clothes": {
       "parent": "bone1_clothes",
+      "feedback": true,
       "strength": 0.05
     },
     
     "bone3_neck": {
       "parent": "bone2_clothes",
+      "feedback": true,
       "strength": 0.05
     },
     
     "bone4_head": {
       "parent": "bone3_neck",
+      "feedback": true,
       "strength": 0.1
     },
     
@@ -26,6 +29,7 @@
     
     "bone6_left_arm": {
       "parent": "bone5_left_arm",
+      "feedback": true,
       "strength": 0.05
     },
     
@@ -36,6 +40,7 @@
     
     "bone8_right_arm": {
       "parent": "bone7_right_arm",
+      "feedback": true,
       "strength": 0.05
     },
     

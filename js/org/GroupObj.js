@@ -1,8 +1,9 @@
 
 class GroupObj extends Sprite {
-  constructor(id, paths, childGroups, hasAction, maskIdToUse) {
+  constructor(uid, id, paths, childGroups, hasAction, maskIdToUse) {
     super();
     this.visible = true;              // display when true
+    this.uid = uid;                   // uniq id
     this.id = id;                     // g tag ID
     this.paths = paths;               // list of PathObj
     this.childGroups = childGroups;   // list of group id
@@ -56,13 +57,11 @@ class GroupObj extends Sprite {
     this.flexi.length = 0;
     
     nameList.forEach(name=> {
-      if(name in pathContainer.groupNameToIDList) {
-        let id = pathContainer.groupNameToIDList[name];
+      let bone = pathContainer.getBone(name);
+      if(!!bone) {
         PathCtr.loadState("  flexi:");
-        if(pathContainer.bones.includes(id)) {
-          this.flexi.push(id);
-          PathCtr.loadState("    " + id + "(" + name +")");
-        }
+        this.flexi.push(bone.uid);
+        PathCtr.loadState("    " + name);
       }
     });
   };

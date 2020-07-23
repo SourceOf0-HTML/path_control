@@ -1,7 +1,7 @@
 
 class BoneObj extends GroupObj {
-  constructor(id, paths, childGroups, hasAction) {
-    super(id, paths, childGroups, hasAction, "");
+  constructor(uid, id, paths, childGroups, hasAction) {
+    super(uid, id, paths, childGroups, hasAction, "");
     this.parentID = -1;                // parent bone id
     this.isParentPin = false;          // parent bone is pin bone
     this.feedback = false;             // receive feedback from other bones
@@ -41,8 +41,9 @@ class BoneObj extends GroupObj {
     if(!pathContainer || !data) return;
     PathCtr.loadState("BONE:" + this.id);
     
-    if("parent" in data && data.parent in pathContainer.groupNameToIDList) {
-      this.parentID = pathContainer.groupNameToIDList[data.parent];
+    let bone = pathContainer.getBone(data.parent);
+    if("parent" in data && !!bone) {
+      this.parentID = bone.uid;
       PathCtr.loadState("  parentID:" + this.parentID + "(" + data.parent + ")");
     }
     

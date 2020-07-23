@@ -145,7 +145,6 @@ var BinaryLoader = {
     
     let getGroup=i=>{
       let name = getString();
-      pathContainer.groupNameToIDList[name] = i;
       
       let maskIdToUse = getUint16() - 1;
       if(maskIdToUse < 0) maskIdToUse = null;
@@ -161,6 +160,7 @@ var BinaryLoader = {
       
       if(name.startsWith(PathCtr.defaultBoneName)) {
         return new BoneObj(
+          i,
           name,
           paths,
           childGroups,
@@ -168,6 +168,7 @@ var BinaryLoader = {
         );
       } else {
         return new GroupObj(
+          i,
           name,
           paths,
           childGroups,
@@ -197,11 +198,13 @@ var BinaryLoader = {
       PathCtr.debugPrint("count : " + i);
       PathCtr.debugPrint(i);
       PathCtr.debugPrint(sumLength);
-      pathContainer.groups[i] = getGroup(i);
-      if(BoneObj.prototype.isPrototypeOf(pathContainer.groups[i])) {
-        pathContainer.bones.push(i);
+      
+      let group = getGroup(i);
+      pathContainer.groups[i] = group;
+      if(BoneObj.prototype.isPrototypeOf(group)) {
+        pathContainer.bones.push(group.uid);
       }
-      PathCtr.debugPrint(pathContainer.groups[i]);
+      PathCtr.debugPrint(group);
     }
     
     PathCtr.initTarget = null;

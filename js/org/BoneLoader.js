@@ -28,12 +28,12 @@ var BoneLoader = {
       }
       if(!!ret.flexi) {
         Object.keys(ret.flexi).forEach(name=>{
-          let id = pathContainer.groupNameToIDList[name];
-          if(!id) {
+          let group = pathContainer.getGroup(name);
+          if(!group) {
             console.error("group is not found : " + name);
             return;
           }
-          pathContainer.groups[id].setFlexiBones(pathContainer, ret.flexi[name]);
+          group.setFlexiBones(pathContainer, ret.flexi[name]);
         });
       }
       
@@ -45,13 +45,13 @@ var BoneLoader = {
             return;
           }
           let boneName = ret.smartAction[name];
-          let id = pathContainer.groupNameToIDList[boneName];
-          if(!id) {
+          let bone = pathContainer.getBone(boneName);
+          if(!bone) {
             console.error("smart bone is not found : " + boneName);
             return;
           }
-          action.smartBoneID = id;
-          PathCtr.loadState("smartAction: " + name + " - " + id + "(" + boneName + ")");
+          action.smartBoneID = bone.uid;
+          PathCtr.loadState("smartAction: " + name + " - " + boneName);
         });
       }
       

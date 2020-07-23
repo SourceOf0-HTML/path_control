@@ -8,6 +8,7 @@ var SVGLoader = {
   FILE_KIND_BONE: "BONE",
   FILE_KIND_SMRT: "SMRT",
   initKind: "",
+  groupNameToIDList: null,
   
   /**
    * @param {String} maskStr - mask attribute of element
@@ -269,9 +270,9 @@ var SVGLoader = {
         case "path":
           if(isPathSkip) break;
           if(isBone) {
-            paths.push( this.makeBonePath(child) );
+            paths.push(this.makeBonePath(child));
           } else {
-            paths.push( this.makePath(child, window.getComputedStyle(child)) );
+            paths.push(this.makePath(child, window.getComputedStyle(child)));
           }
           break;
         case "mask":
@@ -281,7 +282,7 @@ var SVGLoader = {
           // TODO
           break;
         case "g":
-          childGroups.push(PathCtr.initTarget.groupNameToIDList[child.getAttribute("id")]);
+          childGroups.push(SVGLoader.groupNameToIDList[child.getAttribute("id")]);
           this.makeGroup(child);
           break;
         default:
@@ -291,17 +292,20 @@ var SVGLoader = {
       }
     });
     
+    let uid = SVGLoader.groupNameToIDList[name];
     let ret;
     if(isBone) {
       ret = new BoneObj(
+        uid,
         name,
         paths,
         childGroups,
         false,
       );
-      PathCtr.initTarget.bones.push(PathCtr.initTarget.groupNameToIDList[name]);
+      PathCtr.initTarget.bones.push(SVGLoader.groupNameToIDList[name]);
     } else {
       ret = new GroupObj(
+        uid,
         name,
         paths,
         childGroups,
@@ -310,7 +314,7 @@ var SVGLoader = {
       );
     }
     
-    PathCtr.initTarget.groups[PathCtr.initTarget.groupNameToIDList[name]] = ret;
+    PathCtr.initTarget.groups[uid] = ret;
     
     return ret;
   },
@@ -322,7 +326,7 @@ var SVGLoader = {
    * @param {Integer} actionID - action ID
    */
   addActionGroup: function(groupDOM, name, frame, actionID) {
-    let id = PathCtr.initTarget.groupNameToIDList[name];
+    let id = SVGLoader.groupNameToIDList[name];
     let targetGroup = PathCtr.initTarget.groups[id];
     let childGroups = [];
     let dataIndex = 0;
@@ -350,7 +354,7 @@ var SVGLoader = {
           case "clipPath":
             break;
           case "g":
-            childGroups.push(PathCtr.initTarget.groupNameToIDList[child.getAttribute("id")]);
+            childGroups.push(SVGLoader.groupNameToIDList[child.getAttribute("id")]);
             break;
           default:
             console.error("unknown element");
@@ -387,11 +391,11 @@ var SVGLoader = {
     let groups = Array.prototype.slice.call(groupsDOM.getElementsByTagName("g"));
     groups.forEach(group=>{
       let name = group.getAttribute("id");
-      if(pathContainer.groupNameToIDList[name] != null) {
+      if(SVGLoader.groupNameToIDList[name] != null) {
         console.error("group ID is duplicated : " + name);
         return;
       }
-      pathContainer.groupNameToIDList[name] = Object.keys(pathContainer.groupNameToIDList).length;
+      SVGLoader.groupNameToIDList[name] = Object.keys(SVGLoader.groupNameToIDList).length;
     });
     
     let masks = Array.prototype.slice.call(groupsDOM.getElementsByTagName("mask"));
@@ -399,7 +403,7 @@ var SVGLoader = {
       let maskChildren = Array.prototype.slice.call(mask.children);
       maskChildren.forEach(child=>{
         if( child.tagName == "use" ) {
-          pathContainer.masks[mask.getAttribute("id")] = pathContainer.groupNameToIDList[child.getAttribute("xlink:href").slice(1)];
+          pathContainer.masks[mask.getAttribute("id")] = SVGLoader.groupNameToIDList[child.getAttribute("xlink:href").slice(1)];
         } else {
           console.error("unknown mask data");
           console.log(child);
@@ -412,7 +416,7 @@ var SVGLoader = {
       if(child.tagName != "g") return;
       let group = this.makeGroup(child);
       if(!group) return;
-      pathContainer.rootGroups.push(pathContainer.groupNameToIDList[group.id]);
+      pathContainer.rootGroups.push(SVGLoader.groupNameToIDList[group.id]);
     });
     PathCtr.initTarget = null;
     
@@ -446,8 +450,8 @@ var SVGLoader = {
       let targetGroups = targetDom.getElementsByTagName("g");
       let targetIds = [].map.call(targetGroups, group=>group.getAttribute("id"));
       Array.prototype.forEach.call(targetIds, id=>{
-        if(pathContainer.groupNameToIDList[id] != null) return;
-        pathContainer.groupNameToIDList[id] = Object.keys(pathContainer.groupNameToIDList).length;
+        if(SVGLoader.groupNameToIDList[id] != null) return;
+        SVGLoader.groupNameToIDList[id] = Object.keys(SVGLoader.groupNameToIDList).length;
         this.makeGroup(targetDom.getElementById(id));
       });
       let masks = Array.prototype.slice.call(targetDom.getElementsByTagName("mask"));
@@ -457,7 +461,7 @@ var SVGLoader = {
         let maskChildren = Array.prototype.slice.call(mask.children);
         maskChildren.forEach(child=>{
           if( child.tagName == "use" ) {
-            pathContainer.masks[maskID] = pathContainer.groupNameToIDList[child.getAttribute("xlink:href").slice(1)];
+            pathContainer.masks[maskID] = SVGLoader.groupNameToIDList[child.getAttribute("xlink:href").slice(1)];
           } else {
             console.error("unknown mask data");
             console.log(child);
@@ -469,7 +473,7 @@ var SVGLoader = {
     PathCtr.loadState(pathContainer);
     PathCtr.loadState("check diff");
     groupsDOMArr.forEach(targetDom=>{
-      Object.keys(pathContainer.groupNameToIDList).forEach(name=>{
+      Object.keys(SVGLoader.groupNameToIDList).forEach(name=>{
         let base = baseDom.getElementById(name);
         if( !base || !targetDom || !base.isEqualNode(targetDom.getElementById(name)) ) {
           actionGroup[name] = true;
@@ -507,6 +511,8 @@ var SVGLoader = {
     let fileIndex = 0;
     let domList = [];
     let getFrameNum=i=>("00000".substr(0, 5 - i.toString().length) + i + ".svg");
+    
+    SVGLoader.groupNameToIDList = {};
     
     let loadFile=fileInfo=>{
       this.initKind = fileInfo[0];
@@ -558,6 +564,7 @@ var SVGLoader = {
         if(++fileIndex < fileInfoList.length) {
           loadFile(fileInfoList[fileIndex]);
         } else {
+          SVGLoader.groupNameToIDList = null;
           PathCtr.loadComplete(pathContainer);
           if(!!completeFunc) {
             completeFunc();

@@ -763,9 +763,10 @@ class PathObj {
 
 
 class GroupObj extends Sprite {
-  constructor(id, paths, childGroups, hasAction, maskIdToUse) {
+  constructor(uid, id, paths, childGroups, hasAction, maskIdToUse) {
     super();
     this.visible = true;              // display when true
+    this.uid = uid;                   // uniq id
     this.id = id;                     // g tag ID
     this.paths = paths;               // list of PathObj
     this.childGroups = childGroups;   // list of group id
@@ -819,13 +820,11 @@ class GroupObj extends Sprite {
     this.flexi.length = 0;
     
     nameList.forEach(name=> {
-      if(name in pathContainer.groupNameToIDList) {
-        let id = pathContainer.groupNameToIDList[name];
+      let bone = pathContainer.getBone(name);
+      if(!!bone) {
         PathCtr.loadState("  flexi:");
-        if(pathContainer.bones.includes(id)) {
-          this.flexi.push(id);
-          PathCtr.loadState("    " + id + "(" + name +")");
-        }
+        this.flexi.push(bone.uid);
+        PathCtr.loadState("    " + name);
       }
     });
   };
@@ -1037,8 +1036,8 @@ class GroupObj extends Sprite {
 
 
 class BoneObj extends GroupObj {
-  constructor(id, paths, childGroups, hasAction) {
-    super(id, paths, childGroups, hasAction, "");
+  constructor(uid, id, paths, childGroups, hasAction) {
+    super(uid, id, paths, childGroups, hasAction, "");
     this.parentID = -1;                // parent bone id
     this.isParentPin = false;          // parent bone is pin bone
     this.feedback = false;             // receive feedback from other bones
@@ -1078,8 +1077,9 @@ class BoneObj extends GroupObj {
     if(!pathContainer || !data) return;
     PathCtr.loadState("BONE:" + this.id);
     
-    if("parent" in data && data.parent in pathContainer.groupNameToIDList) {
-      this.parentID = pathContainer.groupNameToIDList[data.parent];
+    let bone = pathContainer.getBone(data.parent);
+    if("parent" in data && !!bone) {
+      this.parentID = bone.uid;
       PathCtr.loadState("  parentID:" + this.parentID + "(" + data.parent + ")");
     }
     
@@ -1335,7 +1335,6 @@ class PathContainer extends Sprite {
     this.context = null;          // CanvasRenderingContext2D ( canvas.getContext("2d") )
     this.rootGroups = [];         // root group IDs
     this.groups = [];             // list of groups
-    this.groupNameToIDList = {};  // list of group name and group ID
     this.masks = {};              // list of mask name and group ID
     this.bones = [];              // list of bone ID
     this.actionList = [];         // action info list
@@ -1347,7 +1346,7 @@ class PathContainer extends Sprite {
    * @return {GroupObj}
    */
   getGroup(name) {
-    return this.groups[this.groupNameToIDList[name]];
+    return this.groups.find(data=>data.id == name);
   };
   
   /**
@@ -1355,10 +1354,11 @@ class PathContainer extends Sprite {
    * @return {BoneObj}
    */
   getBone(name) {
-    let id = this.groupNameToIDList[name];
-    if(this.bones.includes(id)) {
-      return this.groups[id];
+    let group = this.getGroup(name);
+    if(!!group && this.bones.includes(group.uid)) {
+      return this.groups[group.uid];
     }
+    return undefined;
   };
   
   /**
@@ -1601,7 +1601,6 @@ var BinaryLoader = {
     
     let getGroup=i=>{
       let name = getString();
-      pathContainer.groupNameToIDList[name] = i;
       
       let maskIdToUse = getUint16() - 1;
       if(maskIdToUse < 0) maskIdToUse = null;
@@ -1617,6 +1616,7 @@ var BinaryLoader = {
       
       if(name.startsWith(PathCtr.defaultBoneName)) {
         return new BoneObj(
+          i,
           name,
           paths,
           childGroups,
@@ -1624,6 +1624,7 @@ var BinaryLoader = {
         );
       } else {
         return new GroupObj(
+          i,
           name,
           paths,
           childGroups,
@@ -1653,11 +1654,13 @@ var BinaryLoader = {
       PathCtr.debugPrint("count : " + i);
       PathCtr.debugPrint(i);
       PathCtr.debugPrint(sumLength);
-      pathContainer.groups[i] = getGroup(i);
-      if(BoneObj.prototype.isPrototypeOf(pathContainer.groups[i])) {
-        pathContainer.bones.push(i);
+      
+      let group = getGroup(i);
+      pathContainer.groups[i] = group;
+      if(BoneObj.prototype.isPrototypeOf(group)) {
+        pathContainer.bones.push(group.uid);
       }
-      PathCtr.debugPrint(pathContainer.groups[i]);
+      PathCtr.debugPrint(group);
     }
     
     PathCtr.initTarget = null;
@@ -1727,12 +1730,12 @@ var BoneLoader = {
       }
       if(!!ret.flexi) {
         Object.keys(ret.flexi).forEach(name=>{
-          let id = pathContainer.groupNameToIDList[name];
-          if(!id) {
+          let group = pathContainer.getGroup(name);
+          if(!group) {
             console.error("group is not found : " + name);
             return;
           }
-          pathContainer.groups[id].setFlexiBones(pathContainer, ret.flexi[name]);
+          group.setFlexiBones(pathContainer, ret.flexi[name]);
         });
       }
       
@@ -1744,13 +1747,13 @@ var BoneLoader = {
             return;
           }
           let boneName = ret.smartAction[name];
-          let id = pathContainer.groupNameToIDList[boneName];
-          if(!id) {
+          let bone = pathContainer.getBone(boneName);
+          if(!bone) {
             console.error("smart bone is not found : " + boneName);
             return;
           }
-          action.smartBoneID = id;
-          PathCtr.loadState("smartAction: " + name + " - " + id + "(" + boneName + ")");
+          action.smartBoneID = bone.uid;
+          PathCtr.loadState("smartAction: " + name + " - " + boneName);
         });
       }
       
@@ -1771,6 +1774,7 @@ var SVGLoader = {
   FILE_KIND_BONE: "BONE",
   FILE_KIND_SMRT: "SMRT",
   initKind: "",
+  groupNameToIDList: null,
   
   /**
    * @param {String} maskStr - mask attribute of element
@@ -2032,9 +2036,9 @@ var SVGLoader = {
         case "path":
           if(isPathSkip) break;
           if(isBone) {
-            paths.push( this.makeBonePath(child) );
+            paths.push(this.makeBonePath(child));
           } else {
-            paths.push( this.makePath(child, window.getComputedStyle(child)) );
+            paths.push(this.makePath(child, window.getComputedStyle(child)));
           }
           break;
         case "mask":
@@ -2044,7 +2048,7 @@ var SVGLoader = {
           // TODO
           break;
         case "g":
-          childGroups.push(PathCtr.initTarget.groupNameToIDList[child.getAttribute("id")]);
+          childGroups.push(SVGLoader.groupNameToIDList[child.getAttribute("id")]);
           this.makeGroup(child);
           break;
         default:
@@ -2054,17 +2058,20 @@ var SVGLoader = {
       }
     });
     
+    let uid = SVGLoader.groupNameToIDList[name];
     let ret;
     if(isBone) {
       ret = new BoneObj(
+        uid,
         name,
         paths,
         childGroups,
         false,
       );
-      PathCtr.initTarget.bones.push(PathCtr.initTarget.groupNameToIDList[name]);
+      PathCtr.initTarget.bones.push(SVGLoader.groupNameToIDList[name]);
     } else {
       ret = new GroupObj(
+        uid,
         name,
         paths,
         childGroups,
@@ -2073,7 +2080,7 @@ var SVGLoader = {
       );
     }
     
-    PathCtr.initTarget.groups[PathCtr.initTarget.groupNameToIDList[name]] = ret;
+    PathCtr.initTarget.groups[uid] = ret;
     
     return ret;
   },
@@ -2085,7 +2092,7 @@ var SVGLoader = {
    * @param {Integer} actionID - action ID
    */
   addActionGroup: function(groupDOM, name, frame, actionID) {
-    let id = PathCtr.initTarget.groupNameToIDList[name];
+    let id = SVGLoader.groupNameToIDList[name];
     let targetGroup = PathCtr.initTarget.groups[id];
     let childGroups = [];
     let dataIndex = 0;
@@ -2113,7 +2120,7 @@ var SVGLoader = {
           case "clipPath":
             break;
           case "g":
-            childGroups.push(PathCtr.initTarget.groupNameToIDList[child.getAttribute("id")]);
+            childGroups.push(SVGLoader.groupNameToIDList[child.getAttribute("id")]);
             break;
           default:
             console.error("unknown element");
@@ -2150,11 +2157,11 @@ var SVGLoader = {
     let groups = Array.prototype.slice.call(groupsDOM.getElementsByTagName("g"));
     groups.forEach(group=>{
       let name = group.getAttribute("id");
-      if(pathContainer.groupNameToIDList[name] != null) {
+      if(SVGLoader.groupNameToIDList[name] != null) {
         console.error("group ID is duplicated : " + name);
         return;
       }
-      pathContainer.groupNameToIDList[name] = Object.keys(pathContainer.groupNameToIDList).length;
+      SVGLoader.groupNameToIDList[name] = Object.keys(SVGLoader.groupNameToIDList).length;
     });
     
     let masks = Array.prototype.slice.call(groupsDOM.getElementsByTagName("mask"));
@@ -2162,7 +2169,7 @@ var SVGLoader = {
       let maskChildren = Array.prototype.slice.call(mask.children);
       maskChildren.forEach(child=>{
         if( child.tagName == "use" ) {
-          pathContainer.masks[mask.getAttribute("id")] = pathContainer.groupNameToIDList[child.getAttribute("xlink:href").slice(1)];
+          pathContainer.masks[mask.getAttribute("id")] = SVGLoader.groupNameToIDList[child.getAttribute("xlink:href").slice(1)];
         } else {
           console.error("unknown mask data");
           console.log(child);
@@ -2175,7 +2182,7 @@ var SVGLoader = {
       if(child.tagName != "g") return;
       let group = this.makeGroup(child);
       if(!group) return;
-      pathContainer.rootGroups.push(pathContainer.groupNameToIDList[group.id]);
+      pathContainer.rootGroups.push(SVGLoader.groupNameToIDList[group.id]);
     });
     PathCtr.initTarget = null;
     
@@ -2209,8 +2216,8 @@ var SVGLoader = {
       let targetGroups = targetDom.getElementsByTagName("g");
       let targetIds = [].map.call(targetGroups, group=>group.getAttribute("id"));
       Array.prototype.forEach.call(targetIds, id=>{
-        if(pathContainer.groupNameToIDList[id] != null) return;
-        pathContainer.groupNameToIDList[id] = Object.keys(pathContainer.groupNameToIDList).length;
+        if(SVGLoader.groupNameToIDList[id] != null) return;
+        SVGLoader.groupNameToIDList[id] = Object.keys(SVGLoader.groupNameToIDList).length;
         this.makeGroup(targetDom.getElementById(id));
       });
       let masks = Array.prototype.slice.call(targetDom.getElementsByTagName("mask"));
@@ -2220,7 +2227,7 @@ var SVGLoader = {
         let maskChildren = Array.prototype.slice.call(mask.children);
         maskChildren.forEach(child=>{
           if( child.tagName == "use" ) {
-            pathContainer.masks[maskID] = pathContainer.groupNameToIDList[child.getAttribute("xlink:href").slice(1)];
+            pathContainer.masks[maskID] = SVGLoader.groupNameToIDList[child.getAttribute("xlink:href").slice(1)];
           } else {
             console.error("unknown mask data");
             console.log(child);
@@ -2232,7 +2239,7 @@ var SVGLoader = {
     PathCtr.loadState(pathContainer);
     PathCtr.loadState("check diff");
     groupsDOMArr.forEach(targetDom=>{
-      Object.keys(pathContainer.groupNameToIDList).forEach(name=>{
+      Object.keys(SVGLoader.groupNameToIDList).forEach(name=>{
         let base = baseDom.getElementById(name);
         if( !base || !targetDom || !base.isEqualNode(targetDom.getElementById(name)) ) {
           actionGroup[name] = true;
@@ -2270,6 +2277,8 @@ var SVGLoader = {
     let fileIndex = 0;
     let domList = [];
     let getFrameNum=i=>("00000".substr(0, 5 - i.toString().length) + i + ".svg");
+    
+    SVGLoader.groupNameToIDList = {};
     
     let loadFile=fileInfo=>{
       this.initKind = fileInfo[0];
@@ -2321,6 +2330,7 @@ var SVGLoader = {
         if(++fileIndex < fileInfoList.length) {
           loadFile(fileInfoList[fileIndex]);
         } else {
+          SVGLoader.groupNameToIDList = null;
           PathCtr.loadComplete(pathContainer);
           if(!!completeFunc) {
             completeFunc();

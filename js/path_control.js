@@ -763,9 +763,10 @@ class PathObj {
 
 
 class GroupObj extends Sprite {
-  constructor(id, paths, childGroups, hasAction, maskIdToUse) {
+  constructor(uid, id, paths, childGroups, hasAction, maskIdToUse) {
     super();
     this.visible = true;              // display when true
+    this.uid = uid;                   // uniq id
     this.id = id;                     // g tag ID
     this.paths = paths;               // list of PathObj
     this.childGroups = childGroups;   // list of group id
@@ -819,13 +820,11 @@ class GroupObj extends Sprite {
     this.flexi.length = 0;
     
     nameList.forEach(name=> {
-      if(name in pathContainer.groupNameToIDList) {
-        let id = pathContainer.groupNameToIDList[name];
+      let bone = pathContainer.getBone(name);
+      if(!!bone) {
         PathCtr.loadState("  flexi:");
-        if(pathContainer.bones.includes(id)) {
-          this.flexi.push(id);
-          PathCtr.loadState("    " + id + "(" + name +")");
-        }
+        this.flexi.push(bone.uid);
+        PathCtr.loadState("    " + name);
       }
     });
   };
@@ -1037,8 +1036,8 @@ class GroupObj extends Sprite {
 
 
 class BoneObj extends GroupObj {
-  constructor(id, paths, childGroups, hasAction) {
-    super(id, paths, childGroups, hasAction, "");
+  constructor(uid, id, paths, childGroups, hasAction) {
+    super(uid, id, paths, childGroups, hasAction, "");
     this.parentID = -1;                // parent bone id
     this.isParentPin = false;          // parent bone is pin bone
     this.feedback = false;             // receive feedback from other bones
@@ -1078,8 +1077,9 @@ class BoneObj extends GroupObj {
     if(!pathContainer || !data) return;
     PathCtr.loadState("BONE:" + this.id);
     
-    if("parent" in data && data.parent in pathContainer.groupNameToIDList) {
-      this.parentID = pathContainer.groupNameToIDList[data.parent];
+    let bone = pathContainer.getBone(data.parent);
+    if("parent" in data && !!bone) {
+      this.parentID = bone.uid;
       PathCtr.loadState("  parentID:" + this.parentID + "(" + data.parent + ")");
     }
     
@@ -1335,7 +1335,6 @@ class PathContainer extends Sprite {
     this.context = null;          // CanvasRenderingContext2D ( canvas.getContext("2d") )
     this.rootGroups = [];         // root group IDs
     this.groups = [];             // list of groups
-    this.groupNameToIDList = {};  // list of group name and group ID
     this.masks = {};              // list of mask name and group ID
     this.bones = [];              // list of bone ID
     this.actionList = [];         // action info list
@@ -1347,7 +1346,7 @@ class PathContainer extends Sprite {
    * @return {GroupObj}
    */
   getGroup(name) {
-    return this.groups[this.groupNameToIDList[name]];
+    return this.groups.find(data=>data.id == name);
   };
   
   /**
@@ -1355,10 +1354,11 @@ class PathContainer extends Sprite {
    * @return {BoneObj}
    */
   getBone(name) {
-    let id = this.groupNameToIDList[name];
-    if(this.bones.includes(id)) {
-      return this.groups[id];
+    let group = this.getGroup(name);
+    if(!!group && this.bones.includes(group.uid)) {
+      return this.groups[group.uid];
     }
+    return undefined;
   };
   
   /**
@@ -1601,7 +1601,6 @@ var BinaryLoader = {
     
     let getGroup=i=>{
       let name = getString();
-      pathContainer.groupNameToIDList[name] = i;
       
       let maskIdToUse = getUint16() - 1;
       if(maskIdToUse < 0) maskIdToUse = null;
@@ -1617,6 +1616,7 @@ var BinaryLoader = {
       
       if(name.startsWith(PathCtr.defaultBoneName)) {
         return new BoneObj(
+          i,
           name,
           paths,
           childGroups,
@@ -1624,6 +1624,7 @@ var BinaryLoader = {
         );
       } else {
         return new GroupObj(
+          i,
           name,
           paths,
           childGroups,
@@ -1653,11 +1654,13 @@ var BinaryLoader = {
       PathCtr.debugPrint("count : " + i);
       PathCtr.debugPrint(i);
       PathCtr.debugPrint(sumLength);
-      pathContainer.groups[i] = getGroup(i);
-      if(BoneObj.prototype.isPrototypeOf(pathContainer.groups[i])) {
-        pathContainer.bones.push(i);
+      
+      let group = getGroup(i);
+      pathContainer.groups[i] = group;
+      if(BoneObj.prototype.isPrototypeOf(group)) {
+        pathContainer.bones.push(group.uid);
       }
-      PathCtr.debugPrint(pathContainer.groups[i]);
+      PathCtr.debugPrint(group);
     }
     
     PathCtr.initTarget = null;
@@ -1727,12 +1730,12 @@ var BoneLoader = {
       }
       if(!!ret.flexi) {
         Object.keys(ret.flexi).forEach(name=>{
-          let id = pathContainer.groupNameToIDList[name];
-          if(!id) {
+          let group = pathContainer.getGroup(name);
+          if(!group) {
             console.error("group is not found : " + name);
             return;
           }
-          pathContainer.groups[id].setFlexiBones(pathContainer, ret.flexi[name]);
+          group.setFlexiBones(pathContainer, ret.flexi[name]);
         });
       }
       
@@ -1744,13 +1747,13 @@ var BoneLoader = {
             return;
           }
           let boneName = ret.smartAction[name];
-          let id = pathContainer.groupNameToIDList[boneName];
-          if(!id) {
+          let bone = pathContainer.getBone(boneName);
+          if(!bone) {
             console.error("smart bone is not found : " + boneName);
             return;
           }
-          action.smartBoneID = id;
-          PathCtr.loadState("smartAction: " + name + " - " + id + "(" + boneName + ")");
+          action.smartBoneID = bone.uid;
+          PathCtr.loadState("smartAction: " + name + " - " + boneName);
         });
       }
       

@@ -11,7 +11,6 @@ class PathContainer extends Sprite {
     this.context = null;          // CanvasRenderingContext2D ( canvas.getContext("2d") )
     this.rootGroups = [];         // root group IDs
     this.groups = [];             // list of groups
-    this.groupNameToIDList = {};  // list of group name and group ID
     this.masks = {};              // list of mask name and group ID
     this.bones = [];              // list of bone ID
     this.actionList = [];         // action info list
@@ -23,7 +22,7 @@ class PathContainer extends Sprite {
    * @return {GroupObj}
    */
   getGroup(name) {
-    return this.groups[this.groupNameToIDList[name]];
+    return this.groups.find(data=>data.id == name);
   };
   
   /**
@@ -31,10 +30,11 @@ class PathContainer extends Sprite {
    * @return {BoneObj}
    */
   getBone(name) {
-    let id = this.groupNameToIDList[name];
-    if(this.bones.includes(id)) {
-      return this.groups[id];
+    let group = this.getGroup(name);
+    if(!!group && this.bones.includes(group.uid)) {
+      return this.groups[group.uid];
     }
+    return undefined;
   };
   
   /**
