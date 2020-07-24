@@ -65,28 +65,28 @@ class ActionContainer {
     }
     
     let data = this.getData(actionID, frame);
-    pathContainer.actionList.forEach(action=> {
-      if(action.pastFrame == action.currentFrame) return;
-      
-      let targetActionID = action.id;
-      if(!this.hasActionID(targetActionID)) return;
-      
+    
+    this.data.forEach((actionDataList, targetActionID)=> {
+      let action = pathContainer.actionList[targetActionID];
       let pastFrame = action.pastFrame;
       let currentFrame = action.currentFrame;
+      
+      if(pastFrame == currentFrame) return;
+      
       if(pastFrame <= currentFrame) {
-        for(let targetFrame = currentFrame; targetFrame >= pastFrame; --targetFrame) {
-          let targetData = this.getData(targetActionID, targetFrame);
+        for(let targetFrame = Math.min(currentFrame, actionDataList.length-1); targetFrame >= pastFrame; --targetFrame) {
+          let targetData = actionDataList[targetFrame];
           if(targetData == undefined) continue;
           data = targetData;
           break;
         }
       } else {
-        for(let targetFrame = pastFrame; targetFrame >= currentFrame; --targetFrame) {
-          let targetData = this.getData(targetActionID, targetFrame);
+        for(let targetFrame = Math.min(pastFrame, actionDataList.length-1); targetFrame >= currentFrame; --targetFrame) {
+          let targetData = actionDataList[targetFrame];
           if(targetData == undefined) continue;
           
-          for(let targetFrame = currentFrame; targetFrame >= 0; --targetFrame) {
-            targetData = this.getData(targetActionID, targetFrame);
+          for(let targetFrame = Math.min(currentFrame, actionDataList.length-1); targetFrame >= 0; --targetFrame) {
+            let targetData = actionDataList[targetFrame];
             if(targetData == undefined) continue;
             data = targetData;
             break;
