@@ -140,8 +140,9 @@ var PathMain = {
    * @param {Boolean} isDebug - use debug mode when true
    */
   init: function(path, completeFunc = null, isDebug = false) {
+    console.log("init");
     this.initWorker(completeFunc, isDebug);
-    console.log(this.worker);
+    console.log(this.initWorker);
     this.worker.postMessage({cmd: "load-bin", path: path});
   },
 }
