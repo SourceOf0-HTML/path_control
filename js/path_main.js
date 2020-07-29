@@ -22,8 +22,13 @@ var PathMain = {
     let canvas = document.createElement("canvas");
     
     if(!canvas.transferControlToOffscreen) {
-      console.error("this browser is not supported");
-      return;
+      let text = "this browser is not supported";
+      console.error(text);
+      let p = document.createElement("p");
+      p.textContent = text;
+      p.setAttribute("style", "color:red");
+      container.appendChild(p);
+      return false;
     }
     
     canvas.className = "main-canvas";
@@ -109,6 +114,8 @@ var PathMain = {
         code: e.code,
       });
     });
+    
+    return true;
   },
   
   /**
@@ -146,8 +153,9 @@ var PathMain = {
    * @param {Function} completeFunc - call when completed load
    * @param {Boolean} isDebug - use debug mode when true
    */
-  init: function(path, completeFunc = null, isDebug = false) {
-    this.initWorker(completeFunc, isDebug);
-    this.worker.postMessage({cmd: "load-bin", path: path});
+  init: function(path, completeFunc, isDebug) {
+    if(this.initWorker(completeFunc, isDebug)) {
+      this.worker.postMessage({cmd: "load-bin", path: path});
+    }
   },
 }
