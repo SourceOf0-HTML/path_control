@@ -1,13 +1,4 @@
-function setPathContainer() {
-  BoneLoader.load("./resource/bones.json", PathCtr.pathContainer);
-  
-  if(typeof DebugPath !== "undefined") {
-    DebugPath.addEvents(PathCtr.pathContainer);
-  }
+function loadComplete() {
+  PathMain.loadBone("../resource/bones.json");
 }
-
-BinaryLoader.load("./resource/path_data.bin", setPathContainer);
-
-window.addEventListener("load", function() {
-  PathCtr.init();
-});
+PathMain.init("../resource/path_data.bin", loadComplete, true);

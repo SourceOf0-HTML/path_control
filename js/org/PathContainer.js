@@ -1,12 +1,12 @@
 
 class PathContainer extends Sprite {
-  constructor() {
+  constructor(width, height) {
     super();
     this.visible = true;          // display when true
-    this.originalWidth = 0;       // original svg width
-    this.originalHeight = 0;      // original svg height
-    this.displayWidth = 0;        // display width
-    this.displayHeight = 0;       // display height
+    this.originalWidth = width;   // original svg width
+    this.originalHeight = height; // original svg height
+    this.displayWidth = width;    // display width
+    this.displayHeight = height;  // display height
     this.pathRatio = 0;           // ratio of the path to draw
     this.context = null;          // CanvasRenderingContext2D ( canvas.getContext("2d") )
     this.rootGroups = [];         // root group IDs
@@ -34,6 +34,14 @@ class PathContainer extends Sprite {
       return this.groups[group.uid];
     }
     return undefined;
+  };
+  
+  /**
+   * @param {String} actionName
+   * @return {Action}
+   */
+  getAction(actionName) {
+    return this.actionList.find(data=>data.name == actionName);
   };
   
   /**
@@ -78,7 +86,7 @@ class PathContainer extends Sprite {
       return;
     }
     
-    let action = this.actionList.find(data=>data.name == actionName);
+    let action = this.getAction(actionName);
     if(!action) {
       console.error("target action is not found: " + actionName);
       return;

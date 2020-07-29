@@ -23,13 +23,12 @@ var PathCtr = {
   
   defaultCanvasContainerID: "path-container",  // default canvas container element name
   defaultActionName: "base",
-  defaultBoneName: "bone",
   initTarget: null,  // instance to be initialized
   binDataPosRange: 20000, // correction value of coordinates when saving to binary data
   
   pathContainer: null,
+  canvas: null,
   context: null,
-  subContext: null,
   viewWidth: 0,
   viewHeight: 0,
   
@@ -38,64 +37,54 @@ var PathCtr = {
   
   cancelRequestAnimation: function() {
     if(this.requestAnimationIDs.length > 1 || this.setTimeoutIDs.length > 1) {
-      PathCtr.debugPrint("requestAnimationIDs:" + this.requestAnimationIDs.length + ", " + setTimeoutIDs.length);
+      PathCtr.debugPrint("requestAnimationIDs:" + this.requestAnimationIDs.length + ", " + this.setTimeoutIDs.length);
     }
-    this.requestAnimationIDs.forEach(window.cancelAnimationFrame);
+    this.requestAnimationIDs.forEach(cancelAnimationFrame);
     this.requestAnimationIDs.length = 0;
-    this.setTimeoutIDs.forEach(window.clearTimeout);
+    this.setTimeoutIDs.forEach(clearTimeout);
     this.setTimeoutIDs.length = 0;
   },
   
-  loadComplete: function(pathContainer) {
-    this.pathContainer = pathContainer;
-    this.pathContainer.context = this.subContext;
-    this.pathContainer.setSize(this.viewWidth, this.viewHeight);
+  /**
+   * @param {Number} viewWidth
+   * @param {Number} viewHeight
+   */
+  setSize: function(viewWidth, viewHeight) {
+    this.canvas.width = this.viewWidth = viewWidth;
+    this.canvas.height = this.viewHeight = viewHeight;
+    if(!!this.pathContainer) this.pathContainer.setSize(viewWidth, viewHeight);
   },
   
-  init: function() {
-    let container = document.getElementById(this.defaultCanvasContainerID);
-    if(!container) {
-      console.error("CanvasContainer is not found.");
+  /**
+   * @param {PathContainer} pathContainer
+   */
+  loadComplete: function(pathContainer) {
+    this.pathContainer = this.initTarget;
+    this.pathContainer.context = this.context;
+    this.setSize(this.viewWidth, this.viewHeight);
+    this.initTarget = null;
+  },
+  
+  /**
+   * @param {offscreenCanvas} canvas
+   * @param {Number} viewWidth
+   * @param {Number} viewHeight
+   */
+  init: function(canvas, viewWidth, viewHeight) {
+    if(!canvas) {
+      console.error("canvas is not found.");
       return;
     }
     
-    let canvas = document.createElement("canvas");
-    canvas.className = "main-canvas";
-    container.appendChild(canvas);
-    
-    let subCanvas = document.createElement("canvas");
-    subCanvas.className = "sub-canvas";
-    subCanvas.style.cssText = "display:none;";
-    container.appendChild(subCanvas);
-    
+    this.canvas = canvas;
     this.context = canvas.getContext("2d");
-    this.subContext = subCanvas.getContext("2d");
-    if(!this.context || !this.subContext) {
+    if(!this.context) {
       console.error("context is not found.");
       return;
     }
     
-    let requestAnimationFrame = window.requestAnimationFrame ||
-                                window.mozRequestAnimationFrame ||
-                                window.webkitRequestAnimationFrame ||
-                                window.msRequestAnimationFrame;
-    let cancelAnimationFrame = window.cancelAnimationFrame ||
-                                window.mozCancelAnimationFrame;
-    
-    this.viewWidth = document.documentElement.clientWidth;
-    this.viewHeight = document.documentElement.clientHeight;
-    
-    canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + this.viewWidth + "px;height:" + this.viewHeight + "px;");
-    canvas.width = subCanvas.width = this.viewWidth;
-    canvas.height = subCanvas.height = this.viewHeight;
-    
-    window.addEventListener("resize", ()=> {
-      this.viewWidth = document.documentElement.clientWidth;
-      this.viewHeight = document.documentElement.clientHeight;
-      canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + this.viewWidth + "px;height:" + this.viewHeight + "px;");
-      if(!!this.pathContainer) this.pathContainer.setSize(this.viewWidth, this.viewHeight);
-    });
-    
+    canvas.width = this.viewWidth = viewWidth;
+    canvas.height = this.viewHeight = viewHeight;
     
     let frameTime = 1 / 24;
     let fixFrameTime = frameTime;
@@ -104,15 +93,16 @@ var PathCtr = {
     let prevTimestamp = 0;
     let average = 0;
     
+    let update = new Event("update");
+    addEventListener("update", e=> {
+      this.pathContainer.update(frameNumber, "walk");
+    });
+    
     let draw =(timestamp)=> {
       if(typeof DebugPath !== "undefined" && DebugPath.isStop) {
         if(!DebugPath.isStep) return;
         DebugPath.isStep = false;
         console.log("--STEP--");
-      }
-      if(!canvas.parentNode) {
-        this.cancelRequestAnimation();
-        return;
       }
       
       if(typeof timestamp === "undefined") return;
@@ -124,19 +114,9 @@ var PathCtr = {
       
       if(!this.pathContainer) return;
       
-      canvas.width = subCanvas.width = this.viewWidth;
-      canvas.height = subCanvas.height = this.viewHeight;
-      
-      this.pathContainer.update(frameNumber, "walk");
-      
-      this.subContext.clearRect(0, 0, this.viewWidth, this.viewHeight);
+      this.context.clearRect(0, 0, this.viewWidth, this.viewHeight);
       this.pathContainer.draw();
       frameNumber = frameNumber % totalFrames + 1;
-      
-      this.context.clearRect(0, 0, this.viewWidth, this.viewHeight);
-      let imagedata = this.subContext.getImageData(0, 0, this.viewWidth, this.viewHeight);
-      this.context.putImageData(imagedata, 0, 0);
-      imagedata = null;
       
       if(average > frameTime * 2) {
         fixFrameTime *= 0.99;
@@ -147,16 +127,17 @@ var PathCtr = {
       } else {
         fixFrameTime = (frameTime + fixFrameTime) / 2;
       }
+      dispatchEvent(update);
     };
     
     let timer =()=> {
       this.cancelRequestAnimation();
-      this.requestAnimationIDs.push(window.requestAnimationFrame(draw));
-      this.setTimeoutIDs.push(window.setTimeout(timer, fixFrameTime*1000));
+      this.requestAnimationIDs.push(requestAnimationFrame(draw));
+      this.setTimeoutIDs.push(setTimeout(timer, fixFrameTime*1000));
     };
     
     //this.debugPrint("base : ", frameTime, frameTime * 10, frameTime * 0.1);
-    this.setTimeoutIDs.push(window.setTimeout(timer, fixFrameTime*1000));
+    this.setTimeoutIDs.push(setTimeout(timer, fixFrameTime*1000));
   },
 };
 

@@ -2,7 +2,18 @@
 class ActionContainer {
   constructor(data, checkFunc) {
     this.data = data;
+    this.checkFunc = checkFunc;
     this.hasAction = Array.isArray(data) && data.some(val=>Array.isArray(val) && val.some(checkFunc));
+    this.result = this.hasAction? data[0][0] : data;
+  };
+  
+  setData(data, actionID = 0, frame = 0) {
+    if(this.hasAction) {
+      this.addAction(data, actionID, frame);
+      return;
+    }
+    this.data = data;
+    this.hasAction = Array.isArray(data) && data.some(val=>Array.isArray(val) && val.some(this.checkFunc));
     this.result = this.hasAction? data[0][0] : data;
   };
   

@@ -16,27 +16,35 @@ class BoneObj extends Sprite {
     this.isReady = false;              // can be used for calculation
     
     if(!!paths && paths.length > 0) {
-      let pathDataList = paths[0].getPathDataList();
-      let x0 = pathDataList[0].pos[0];
-      let y0 = pathDataList[0].pos[1];
-      let x1 = pathDataList[1].pos[0];
-      let y1 = pathDataList[1].pos[1];
-      let distX = x1 - x0;
-      let distY = y1 - y0;
-      let distance = Math.sqrt(distX*distX + distY*distY);
-      let angle = Math.atan2(distY, distX);
-      this.defState = {  // default bone state
-        x0, y0,
-        x1, y1,
-        distance,
-        angle,
-      };
-      this.currentState = {  // current bone state
-        pos: [x0, y0, x1, y1],
-        distance,
-        angle,
-      };
+      BoneObj.setPath(this, paths[0]);
     }
+  };
+  
+  /**
+   * @param {BoneObj} bone - target bone
+   * @param {Array} paths - path data array
+   */
+  static setPath(bone, path) {
+    let pathDataList = path.getPathDataList();
+    let x0 = pathDataList[0].pos[0];
+    let y0 = pathDataList[0].pos[1];
+    let x1 = pathDataList[1].pos[0];
+    let y1 = pathDataList[1].pos[1];
+    let distX = x1 - x0;
+    let distY = y1 - y0;
+    let distance = Math.sqrt(distX*distX + distY*distY);
+    let angle = Math.atan2(distY, distX);
+    bone.defState = {  // default bone state
+      x0, y0,
+      x1, y1,
+      distance,
+      angle,
+    };
+    bone.currentState = {  // current bone state
+      pos: [x0, y0, x1, y1],
+      distance,
+      angle,
+    };
   };
   
   /**

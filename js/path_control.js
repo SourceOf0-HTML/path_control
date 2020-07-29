@@ -23,13 +23,12 @@ var PathCtr = {
   
   defaultCanvasContainerID: "path-container",  // default canvas container element name
   defaultActionName: "base",
-  defaultBoneName: "bone",
   initTarget: null,  // instance to be initialized
   binDataPosRange: 20000, // correction value of coordinates when saving to binary data
   
   pathContainer: null,
+  canvas: null,
   context: null,
-  subContext: null,
   viewWidth: 0,
   viewHeight: 0,
   
@@ -38,64 +37,54 @@ var PathCtr = {
   
   cancelRequestAnimation: function() {
     if(this.requestAnimationIDs.length > 1 || this.setTimeoutIDs.length > 1) {
-      PathCtr.debugPrint("requestAnimationIDs:" + this.requestAnimationIDs.length + ", " + setTimeoutIDs.length);
+      PathCtr.debugPrint("requestAnimationIDs:" + this.requestAnimationIDs.length + ", " + this.setTimeoutIDs.length);
     }
-    this.requestAnimationIDs.forEach(window.cancelAnimationFrame);
+    this.requestAnimationIDs.forEach(cancelAnimationFrame);
     this.requestAnimationIDs.length = 0;
-    this.setTimeoutIDs.forEach(window.clearTimeout);
+    this.setTimeoutIDs.forEach(clearTimeout);
     this.setTimeoutIDs.length = 0;
   },
   
-  loadComplete: function(pathContainer) {
-    this.pathContainer = pathContainer;
-    this.pathContainer.context = this.subContext;
-    this.pathContainer.setSize(this.viewWidth, this.viewHeight);
+  /**
+   * @param {Number} viewWidth
+   * @param {Number} viewHeight
+   */
+  setSize: function(viewWidth, viewHeight) {
+    this.canvas.width = this.viewWidth = viewWidth;
+    this.canvas.height = this.viewHeight = viewHeight;
+    if(!!this.pathContainer) this.pathContainer.setSize(viewWidth, viewHeight);
   },
   
-  init: function() {
-    let container = document.getElementById(this.defaultCanvasContainerID);
-    if(!container) {
-      console.error("CanvasContainer is not found.");
+  /**
+   * @param {PathContainer} pathContainer
+   */
+  loadComplete: function(pathContainer) {
+    this.pathContainer = this.initTarget;
+    this.pathContainer.context = this.context;
+    this.setSize(this.viewWidth, this.viewHeight);
+    this.initTarget = null;
+  },
+  
+  /**
+   * @param {offscreenCanvas} canvas
+   * @param {Number} viewWidth
+   * @param {Number} viewHeight
+   */
+  init: function(canvas, viewWidth, viewHeight) {
+    if(!canvas) {
+      console.error("canvas is not found.");
       return;
     }
     
-    let canvas = document.createElement("canvas");
-    canvas.className = "main-canvas";
-    container.appendChild(canvas);
-    
-    let subCanvas = document.createElement("canvas");
-    subCanvas.className = "sub-canvas";
-    subCanvas.style.cssText = "display:none;";
-    container.appendChild(subCanvas);
-    
+    this.canvas = canvas;
     this.context = canvas.getContext("2d");
-    this.subContext = subCanvas.getContext("2d");
-    if(!this.context || !this.subContext) {
+    if(!this.context) {
       console.error("context is not found.");
       return;
     }
     
-    let requestAnimationFrame = window.requestAnimationFrame ||
-                                window.mozRequestAnimationFrame ||
-                                window.webkitRequestAnimationFrame ||
-                                window.msRequestAnimationFrame;
-    let cancelAnimationFrame = window.cancelAnimationFrame ||
-                                window.mozCancelAnimationFrame;
-    
-    this.viewWidth = document.documentElement.clientWidth;
-    this.viewHeight = document.documentElement.clientHeight;
-    
-    canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + this.viewWidth + "px;height:" + this.viewHeight + "px;");
-    canvas.width = subCanvas.width = this.viewWidth;
-    canvas.height = subCanvas.height = this.viewHeight;
-    
-    window.addEventListener("resize", ()=> {
-      this.viewWidth = document.documentElement.clientWidth;
-      this.viewHeight = document.documentElement.clientHeight;
-      canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + this.viewWidth + "px;height:" + this.viewHeight + "px;");
-      if(!!this.pathContainer) this.pathContainer.setSize(this.viewWidth, this.viewHeight);
-    });
-    
+    canvas.width = this.viewWidth = viewWidth;
+    canvas.height = this.viewHeight = viewHeight;
     
     let frameTime = 1 / 24;
     let fixFrameTime = frameTime;
@@ -104,15 +93,16 @@ var PathCtr = {
     let prevTimestamp = 0;
     let average = 0;
     
+    let update = new Event("update");
+    addEventListener("update", e=> {
+      this.pathContainer.update(frameNumber, "walk");
+    });
+    
     let draw =(timestamp)=> {
       if(typeof DebugPath !== "undefined" && DebugPath.isStop) {
         if(!DebugPath.isStep) return;
         DebugPath.isStep = false;
         console.log("--STEP--");
-      }
-      if(!canvas.parentNode) {
-        this.cancelRequestAnimation();
-        return;
       }
       
       if(typeof timestamp === "undefined") return;
@@ -124,19 +114,9 @@ var PathCtr = {
       
       if(!this.pathContainer) return;
       
-      canvas.width = subCanvas.width = this.viewWidth;
-      canvas.height = subCanvas.height = this.viewHeight;
-      
-      this.pathContainer.update(frameNumber, "walk");
-      
-      this.subContext.clearRect(0, 0, this.viewWidth, this.viewHeight);
+      this.context.clearRect(0, 0, this.viewWidth, this.viewHeight);
       this.pathContainer.draw();
       frameNumber = frameNumber % totalFrames + 1;
-      
-      this.context.clearRect(0, 0, this.viewWidth, this.viewHeight);
-      let imagedata = this.subContext.getImageData(0, 0, this.viewWidth, this.viewHeight);
-      this.context.putImageData(imagedata, 0, 0);
-      imagedata = null;
       
       if(average > frameTime * 2) {
         fixFrameTime *= 0.99;
@@ -147,16 +127,17 @@ var PathCtr = {
       } else {
         fixFrameTime = (frameTime + fixFrameTime) / 2;
       }
+      dispatchEvent(update);
     };
     
     let timer =()=> {
       this.cancelRequestAnimation();
-      this.requestAnimationIDs.push(window.requestAnimationFrame(draw));
-      this.setTimeoutIDs.push(window.setTimeout(timer, fixFrameTime*1000));
+      this.requestAnimationIDs.push(requestAnimationFrame(draw));
+      this.setTimeoutIDs.push(setTimeout(timer, fixFrameTime*1000));
     };
     
     //this.debugPrint("base : ", frameTime, frameTime * 10, frameTime * 0.1);
-    this.setTimeoutIDs.push(window.setTimeout(timer, fixFrameTime*1000));
+    this.setTimeoutIDs.push(setTimeout(timer, fixFrameTime*1000));
   },
 };
 
@@ -417,7 +398,18 @@ class Sprite {
 class ActionContainer {
   constructor(data, checkFunc) {
     this.data = data;
+    this.checkFunc = checkFunc;
     this.hasAction = Array.isArray(data) && data.some(val=>Array.isArray(val) && val.some(checkFunc));
+    this.result = this.hasAction? data[0][0] : data;
+  };
+  
+  setData(data, actionID = 0, frame = 0) {
+    if(this.hasAction) {
+      this.addAction(data, actionID, frame);
+      return;
+    }
+    this.data = data;
+    this.hasAction = Array.isArray(data) && data.some(val=>Array.isArray(val) && val.some(this.checkFunc));
     this.result = this.hasAction? data[0][0] : data;
   };
   
@@ -964,27 +956,35 @@ class BoneObj extends Sprite {
     this.isReady = false;              // can be used for calculation
     
     if(!!paths && paths.length > 0) {
-      let pathDataList = paths[0].getPathDataList();
-      let x0 = pathDataList[0].pos[0];
-      let y0 = pathDataList[0].pos[1];
-      let x1 = pathDataList[1].pos[0];
-      let y1 = pathDataList[1].pos[1];
-      let distX = x1 - x0;
-      let distY = y1 - y0;
-      let distance = Math.sqrt(distX*distX + distY*distY);
-      let angle = Math.atan2(distY, distX);
-      this.defState = {  // default bone state
-        x0, y0,
-        x1, y1,
-        distance,
-        angle,
-      };
-      this.currentState = {  // current bone state
-        pos: [x0, y0, x1, y1],
-        distance,
-        angle,
-      };
+      BoneObj.setPath(this, paths[0]);
     }
+  };
+  
+  /**
+   * @param {BoneObj} bone - target bone
+   * @param {Array} paths - path data array
+   */
+  static setPath(bone, path) {
+    let pathDataList = path.getPathDataList();
+    let x0 = pathDataList[0].pos[0];
+    let y0 = pathDataList[0].pos[1];
+    let x1 = pathDataList[1].pos[0];
+    let y1 = pathDataList[1].pos[1];
+    let distX = x1 - x0;
+    let distY = y1 - y0;
+    let distance = Math.sqrt(distX*distX + distY*distY);
+    let angle = Math.atan2(distY, distX);
+    bone.defState = {  // default bone state
+      x0, y0,
+      x1, y1,
+      distance,
+      angle,
+    };
+    bone.currentState = {  // current bone state
+      pos: [x0, y0, x1, y1],
+      distance,
+      angle,
+    };
   };
   
   /**
@@ -1242,13 +1242,13 @@ class BoneObj extends Sprite {
 
 
 class PathContainer extends Sprite {
-  constructor() {
+  constructor(width, height) {
     super();
     this.visible = true;          // display when true
-    this.originalWidth = 0;       // original svg width
-    this.originalHeight = 0;      // original svg height
-    this.displayWidth = 0;        // display width
-    this.displayHeight = 0;       // display height
+    this.originalWidth = width;   // original svg width
+    this.originalHeight = height; // original svg height
+    this.displayWidth = width;    // display width
+    this.displayHeight = height;  // display height
     this.pathRatio = 0;           // ratio of the path to draw
     this.context = null;          // CanvasRenderingContext2D ( canvas.getContext("2d") )
     this.rootGroups = [];         // root group IDs
@@ -1276,6 +1276,14 @@ class PathContainer extends Sprite {
       return this.groups[group.uid];
     }
     return undefined;
+  };
+  
+  /**
+   * @param {String} actionName
+   * @return {Action}
+   */
+  getAction(actionName) {
+    return this.actionList.find(data=>data.name == actionName);
   };
   
   /**
@@ -1320,7 +1328,7 @@ class PathContainer extends Sprite {
       return;
     }
     
-    let action = this.actionList.find(data=>data.name == actionName);
+    let action = this.getAction(actionName);
     if(!action) {
       console.error("target action is not found: " + actionName);
       return;
@@ -1386,7 +1394,6 @@ var BinaryLoader = {
       console.error("array buffer is not found");
       return null;
     }
-    let pathContainer = PathCtr.initTarget = new PathContainer();
     let dv = new DataView(buffer);
     let sumLength = 0;
     
@@ -1528,8 +1535,7 @@ var BinaryLoader = {
     
     // --acquisition processing--
     
-    pathContainer.originalWidth = pathContainer.displayWidth = getUint16();
-    pathContainer.originalHeight = pathContainer.displayHeight = getUint16();
+    let pathContainer = PathCtr.initTarget = new PathContainer(getUint16(), getUint16());
     
     let actionListNum = getUint8();
     if(actionListNum > 0) {
@@ -1553,8 +1559,6 @@ var BinaryLoader = {
       }
       PathCtr.debugPrint(group);
     }
-    
-    PathCtr.initTarget = null;
     
     return pathContainer;
   },
@@ -1655,3 +1659,176 @@ var BoneLoader = {
     request.send();
   },
 }
+
+/**
+ * PathWorker
+ * Worker events
+ */
+addEventListener("message", function(e) {
+  let data = e.data;
+  switch (data.cmd) {
+    case "init":
+      PathCtr.defaultBoneName = data.defaultBoneName;
+      PathCtr.init(data.canvas, data.viewWidth, data.viewHeight);
+      break;
+      
+    case "load-bin":
+      BinaryLoader.load(data.path, ()=>{
+        postMessage({"cmd": "init-complete"});
+      });
+      break;
+      
+    case "load-bone":
+      BoneLoader.load(data.path, PathCtr.pathContainer);
+      break;
+      
+    case "resize-canvas":
+      PathCtr.setSize(data.viewWidth, data.viewHeight);
+      break;
+      
+    case "move-mouse":
+      if(typeof DebugPath !== "undefined") {
+        DebugPath.moveMouse(PathCtr.pathContainer, data.x, data.y);
+      }
+      break;
+      
+    case "keyup":
+      if(typeof DebugPath !== "undefined") {
+        DebugPath.keyUp(PathCtr.pathContainer, data.code);
+      }
+      break;
+      
+    case "output-path-container":
+      DebugPath.outputJSON(PathCtr.pathContainer);
+      break;
+      
+    case "output-bin":
+      DebugPath.outputBin(PathCtr.pathContainer);
+      break;
+      
+    case "create-path-container":
+      PathCtr.loadState("init path container");
+      PathCtr.initTarget = new PathContainer(data.width, data.height);
+      break;
+      
+    case "add-action":
+      PathCtr.loadState("load action: " + data.actionName + " - " + data.totalFrames);
+      PathCtr.initTarget.addAction(data.actionName, data.frame, data.totalFrames);
+      break;
+      
+    case "add-root-group":
+      PathCtr.initTarget.rootGroups.push(data.id);
+      break;
+      
+    case "new-group":
+      PathCtr.initTarget.groups[data.uid] = new GroupObj(
+        data.uid,
+        data.name,
+        [],
+        [],
+        data.maskID
+      );
+      break;
+      
+    case "new-bone":
+      PathCtr.initTarget.groups[data.uid] = new BoneObj(
+        data.uid,
+        data.name,
+        [],
+        []
+      );
+      PathCtr.initTarget.bones.push(data.uid);
+      break;
+      
+    case "add-group-action":
+      if(!PathCtr.initTarget.bones.includes(data.uid)) {
+        PathCtr.initTarget.groups[data.uid].addAction(
+          data.childGroups,
+          data.frame,
+          PathCtr.initTarget.getAction(data.actionName).id
+        );
+      }
+      break;
+      
+    case "set-child-group-id":
+      if(PathCtr.initTarget.bones.includes(data.uid)) {
+        PathCtr.initTarget.groups[data.uid].childGroups = data.childGroups;
+      } else {
+        PathCtr.initTarget.groups[data.uid].childGroups.setData(data.childGroups);
+      }
+      break;
+      
+    case "new-path":
+      PathCtr.initTarget.groups[data.uid].paths.push(new PathObj(
+        data.maskID,
+        data.pathDataList,
+        data.pathDiffList,
+        data.fillRule,
+        data.fillStyle,
+        data.lineWidth,
+        data.strokeStyle
+      ));
+      break;
+      
+    case "new-bone-path":
+      PathCtr.initTarget.groups[data.uid].paths.push(new PathObj(
+        null,
+        data.pathDataList,
+        data.pathDiffList,
+        "nonzero",
+        "transparent",
+        2,
+        "rgb(0, 255, 0)"
+      ));
+      if(PathCtr.initTarget.groups[data.uid].paths.length == 1) {
+        let bone = PathCtr.initTarget.groups[data.uid];
+        BoneObj.setPath(bone, bone.paths[0]);
+      }
+      break;
+      
+    case "add-path-action":
+      PathCtr.initTarget.groups[data.uid].paths[data.pathID].addAction(
+        data.pathDataList,
+        data.fillStyle,
+        data.lineWidth,
+        data.strokeStyle,
+        data.frame,
+        PathCtr.initTarget.getAction(data.actionName).id
+      );
+      break;
+      
+    case "add-bone-path-action":
+      PathCtr.initTarget.groups[data.uid].paths[data.pathID].addAction(
+        data.pathDataList,
+        "transparent",
+        2,
+        "rgb(0, 255, 0)",
+        data.frame,
+        PathCtr.initTarget.getAction(data.actionName).id
+      );
+      break;
+      
+    case "set-unvisible-path-action":
+      PathCtr.initTarget.groups[data.uid].paths.forEach(path=>{
+        path.addAction(
+          null,
+          "transparent",
+          0,
+          "transparent",
+          data.frame,
+          PathCtr.initTarget.getAction(data.actionName).id
+        );
+      });
+      break;
+      
+    case "load-complete":
+      PathCtr.loadComplete();
+      postMessage({"cmd": "init-complete"});
+      break;
+      
+      
+    default:
+      console.error("unknown command: " + data.cmd);
+      break;
+  };
+}, false);

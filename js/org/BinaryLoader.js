@@ -13,7 +13,6 @@ var BinaryLoader = {
       console.error("array buffer is not found");
       return null;
     }
-    let pathContainer = PathCtr.initTarget = new PathContainer();
     let dv = new DataView(buffer);
     let sumLength = 0;
     
@@ -155,8 +154,7 @@ var BinaryLoader = {
     
     // --acquisition processing--
     
-    pathContainer.originalWidth = pathContainer.displayWidth = getUint16();
-    pathContainer.originalHeight = pathContainer.displayHeight = getUint16();
+    let pathContainer = PathCtr.initTarget = new PathContainer(getUint16(), getUint16());
     
     let actionListNum = getUint8();
     if(actionListNum > 0) {
@@ -180,8 +178,6 @@ var BinaryLoader = {
       }
       PathCtr.debugPrint(group);
     }
-    
-    PathCtr.initTarget = null;
     
     return pathContainer;
   },
