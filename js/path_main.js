@@ -34,7 +34,9 @@ var PathMain = {
     if(isDebug) {
       fileType = "_debug" + fileType;
     }
+    console.log("new worker");
     this.worker = new Worker("js/path_control" + fileType);
+    console.log(this.worker);
     
     this.worker.addEventListener("message", function(e) {
       let data = e.data;
@@ -140,9 +142,7 @@ var PathMain = {
    * @param {Boolean} isDebug - use debug mode when true
    */
   init: function(path, completeFunc = null, isDebug = false) {
-    console.log("init");
     this.initWorker(completeFunc, isDebug);
-    console.log(this.initWorker);
     this.worker.postMessage({cmd: "load-bin", path: path});
   },
 }
