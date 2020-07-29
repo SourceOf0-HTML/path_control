@@ -20,6 +20,12 @@ var PathMain = {
     }
     
     let canvas = document.createElement("canvas");
+    
+    if(!canvas.transferControlToOffscreen) {
+      console.error("this browser is not supported");
+      return;
+    }
+    
     canvas.className = "main-canvas";
     container.appendChild(canvas);
     
@@ -60,7 +66,7 @@ var PathMain = {
     }, false);
     
     let offscreenCanvas = canvas.transferControlToOffscreen();
-    console.log(offscreenCanvas);
+    
     this.worker.postMessage({
       cmd: "init",
       viewWidth: viewWidth,
