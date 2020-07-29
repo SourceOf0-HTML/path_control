@@ -36,7 +36,7 @@ var PathMain = {
     }
     this.worker = new Worker("js/path_control" + fileType);
     
-    this.worker.addEventListener("message", e=> {
+    this.worker.addEventListener("message", function(e) {
       let data = e.data;
       switch(data.cmd) {
         case "init-complete":
@@ -45,12 +45,12 @@ var PathMain = {
           
         case "confirm":
           if(confirm(data.message)) {
-            this.worker.postMessage({"cmd": data.callback});
+            PathMain.worker.postMessage({cmd: data.callback});
           }
           break;
           
         case "download":
-          this.downloadData(data.type, data.fileName, data.data);
+          PathMain.downloadData(data.type, data.fileName, data.data);
           break;
           
         default:
@@ -62,42 +62,42 @@ var PathMain = {
     let offscreenCanvas = canvas.transferControlToOffscreen();
     this.worker.postMessage({
       cmd: "init",
-      viewWidth,
-      viewHeight,
+      viewWidth: viewWidth,
+      viewHeight: viewHeight,
       canvas: offscreenCanvas,
       defaultBoneName: this.defaultBoneName,
     }, [ offscreenCanvas ]);
     
     
-    window.addEventListener("resize", ()=> {
+    window.addEventListener("resize", function() {
       let viewWidth = document.documentElement.clientWidth;
       let viewHeight = document.documentElement.clientHeight;
-      canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + this.viewWidth + "px;height:" + this.viewHeight + "px;");
-      this.worker.postMessage({
+      canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + PathMain.viewWidth + "px;height:" + PathMain.viewHeight + "px;");
+      PathMain.worker.postMessage({
         cmd: "resize-canvas", 
-        viewWidth,
-        viewHeight,
+        viewWidth: viewWidth,
+        viewHeight: viewHeight,
       });
     });
     
-    window.addEventListener("mousemove", e=>{
-      this.worker.postMessage({
+    window.addEventListener("mousemove", function(e) {
+      PathMain.worker.postMessage({
         cmd: "move-mouse", 
         x: e.clientX,
         y: e.clientY,
       });
     });
     
-    window.addEventListener("touchmove", e=>{
-      this.worker.postMessage({
+    window.addEventListener("touchmove", function(e) {
+      PathMain.worker.postMessage({
         cmd: "move-mouse", 
         x: e.touches[0].pageX,
         y: e.touches[0].pageY,
       });
     });
     
-    window.addEventListener("keyup", e=>{
-      this.worker.postMessage({
+    window.addEventListener("keyup", function(e) {
+      PathMain.worker.postMessage({
         cmd: "keyup", 
         code: e.code,
       });
@@ -115,7 +115,7 @@ var PathMain = {
     a.style = "display: none";
     console.log(a);
     
-    let blob = new Blob([data], {type});
+    let blob = new Blob([data], {type: type});
     
     a.href = window.URL.createObjectURL(blob);
     a.download = fileName;
@@ -131,7 +131,7 @@ var PathMain = {
    * @param {String} path - file path info
    */
   loadBone: function(path) {
-    this.worker.postMessage({cmd: "load-bone", path});
+    this.worker.postMessage({cmd: "load-bone", path: path});
   },
   
   /**
@@ -141,6 +141,6 @@ var PathMain = {
    */
   init: function(path, completeFunc = null, isDebug = false) {
     this.initWorker(completeFunc, isDebug);
-    this.worker.postMessage({cmd: "load-bin", path});
+    this.worker.postMessage({cmd: "load-bin", path: path});
   },
 }

@@ -94,8 +94,8 @@ var PathCtr = {
     let average = 0;
     
     let update = new Event("update");
-    addEventListener("update", e=> {
-      this.pathContainer.update(frameNumber, "walk");
+    addEventListener("update", function(e) {
+      PathCtr.pathContainer.update(frameNumber, "walk");
     });
     
     let draw =(timestamp)=> {

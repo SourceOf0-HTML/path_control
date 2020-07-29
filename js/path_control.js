@@ -94,8 +94,8 @@ var PathCtr = {
     let average = 0;
     
     let update = new Event("update");
-    addEventListener("update", e=> {
-      this.pathContainer.update(frameNumber, "walk");
+    addEventListener("update", function(e) {
+      PathCtr.pathContainer.update(frameNumber, "walk");
     });
     
     let draw =(timestamp)=> {
@@ -1674,7 +1674,7 @@ addEventListener("message", function(e) {
       
     case "load-bin":
       BinaryLoader.load(data.path, ()=>{
-        postMessage({"cmd": "init-complete"});
+        postMessage({cmd: "init-complete"});
       });
       break;
       
@@ -1823,7 +1823,7 @@ addEventListener("message", function(e) {
       
     case "load-complete":
       PathCtr.loadComplete();
-      postMessage({"cmd": "init-complete"});
+      postMessage({cmd: "init-complete"});
       break;
       
       

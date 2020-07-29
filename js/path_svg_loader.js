@@ -100,14 +100,14 @@ var SVGLoader = {
     
     PathMain.worker.postMessage({
       cmd: "new-path",
-      uid,
+      uid: uid,
       maskID: this.getMaskId(pathDOM.getAttribute("mask")),
-      pathDataList,
-      pathDiffList,
+      pathDataList: pathDataList,
+      pathDiffList: pathDiffList,
       fillRule: style.fillRule,
-      fillStyle,
-      lineWidth,
-      strokeStyle,
+      fillStyle: fillStyle,
+      lineWidth: lineWidth,
+      strokeStyle: strokeStyle,
     });
   },
   
@@ -140,14 +140,14 @@ var SVGLoader = {
     
     PathMain.worker.postMessage({
       cmd: "add-path-action",
-      uid,
-      pathID,
-      pathDataList,
-      fillStyle,
-      lineWidth,
-      strokeStyle,
-      frame,
-      actionName,
+      uid: uid,
+      pathID: pathID,
+      pathDataList: pathDataList,
+      fillStyle: fillStyle,
+      lineWidth: lineWidth,
+      strokeStyle: strokeStyle,
+      frame: frame,
+      actionName: actionName,
     });
   },
   
@@ -225,9 +225,9 @@ var SVGLoader = {
     
     PathMain.worker.postMessage({
       cmd: "new-bone-path",
-      uid,
-      pathDataList,
-      pathDiffList,
+      uid: uid,
+      pathDataList: pathDataList,
+      pathDiffList: pathDiffList,
     });
   },
   
@@ -246,11 +246,11 @@ var SVGLoader = {
     
     PathMain.worker.postMessage({
       cmd: "add-bone-path-action",
-      uid,
-      pathID,
-      pathDataList,
-      frame,
-      actionName,
+      uid: uid,
+      pathID: pathID,
+      pathDataList: pathDataList,
+      frame: frame,
+      actionName: actionName,
     });
   },
   
@@ -267,14 +267,14 @@ var SVGLoader = {
     if(isBone) {
       PathMain.worker.postMessage({
         cmd: "new-bone",
-        uid,
-        name,
+        uid: uid,
+        name: name,
       });
     } else {
       PathMain.worker.postMessage({
         cmd: "new-group",
-        uid,
-        name,
+        uid: uid,
+        name: name,
         maskID: this.getMaskId(groupDOM.getAttribute("mask")),
       });
     }
@@ -312,8 +312,8 @@ var SVGLoader = {
     if(childGroups.length > 0) {
       PathMain.worker.postMessage({
         cmd: "set-child-group-id",
-        uid,
-        childGroups,
+        uid: uid,
+        childGroups: childGroups,
       });
     }
     
@@ -359,18 +359,18 @@ var SVGLoader = {
     } else {
       PathMain.worker.postMessage({
         cmd: "set-unvisible-path-action",
-        uid,
-        frame,
-        actionName,
+        uid: uid,
+        frame: frame,
+        actionName: actionName,
       });
     }
     
     PathMain.worker.postMessage({
       cmd: "add-group-action",
-      uid,
-      childGroups,
-      frame,
-      actionName,
+      uid: uid,
+      childGroups: childGroups,
+      frame: frame,
+      actionName: actionName,
     });
   },
   
@@ -496,9 +496,9 @@ var SVGLoader = {
     
     PathMain.worker.postMessage({
       cmd: "add-action",
-      actionName,
+      actionName: actionName,
       frame: -1,
-      totalFrames,
+      totalFrames: totalFrames,
     });
     
     this.addActionFromList(this.domList, actionName);
@@ -539,24 +539,24 @@ var SVGLoader = {
     this.masksList = {};
     
     let loadWorker = new Worker("js/path_load_svg_worker.js");
-    loadWorker.addEventListener("message", e=> {
+    loadWorker.addEventListener("message", function(e) {
       let data = e.data;
       switch(data.cmd) {
         case "load-complete":
-          this.loadFromDOM(data.kind, data.actionName, data.totalFrames);
-          this.groupNameToIDList = null;
-          this.masksList = null;
+          SVGLoader.loadFromDOM(data.kind, data.actionName, data.totalFrames);
+          SVGLoader.groupNameToIDList = null;
+          SVGLoader.masksList = null;
           PathMain.worker.postMessage({cmd: "load-complete"});
           break;
           
         case "load-add":
           //console.log(data.actionName + " - " + data.totalFrames);
-          this.loadFromDOM(data.kind, data.actionName, data.totalFrames);
+          SVGLoader.loadFromDOM(data.kind, data.actionName, data.totalFrames);
           break;
           
         case "new-svg":
           //if(data.frame % 10 == 0) console.log("load file: " + data.actionName + " - " + data.frame);
-          this.addSvgDOM(data.svg);
+          SVGLoader.addSvgDOM(data.svg);
           break;
           
         default:
@@ -565,6 +565,6 @@ var SVGLoader = {
       }
     });
     PathMain.initWorker(completeFunc, isDebug);
-    loadWorker.postMessage({cmd: "load", fileInfoList});
+    loadWorker.postMessage({cmd: "load", fileInfoList: fileInfoList});
   },
 };

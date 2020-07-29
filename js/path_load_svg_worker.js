@@ -19,10 +19,10 @@ addEventListener("message", function(e) {
         if(target.status != 200 && target.status != 0) return;
         
         postMessage({
-          "cmd": "new-svg",
-          "actionName": actionName,
-          "frame": loadFrame,
-          "svg": target.responseText,
+          cmd: "new-svg",
+          actionName: actionName,
+          frame: loadFrame,
+          svg: target.responseText,
         });
         
         delete request;
@@ -37,17 +37,17 @@ addEventListener("message", function(e) {
         if(++fileIndex < fileInfoList.length) {
           loadFile(fileInfoList[fileIndex]);
           postMessage({
-            "cmd": "load-add",
-            "kind": kind,
-            "actionName": actionName,
-            "totalFrames": totalFrames,
+            cmd: "load-add",
+            kind: kind,
+            actionName: actionName,
+            totalFrames: totalFrames,
           });
         } else {
           postMessage({
-            "cmd": "load-complete",
-            "kind": kind,
-            "actionName": actionName,
-            "totalFrames": totalFrames,
+            cmd: "load-complete",
+            kind: kind,
+            actionName: actionName,
+            totalFrames: totalFrames,
           });
           close();
         }

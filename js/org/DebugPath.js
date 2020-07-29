@@ -69,7 +69,7 @@ var DebugPath = {
         this.isShowPoints = !this.isShowPoints;
         break;
       case "KeyO":
-        postMessage({"cmd": "confirm", "callback": "output-path-container", "message": "現在の状態をJSONに出力します"});
+        postMessage({cmd: "confirm", callback: "output-path-container", message: "現在の状態をJSONに出力します"});
         break;
     }
   },
@@ -262,7 +262,7 @@ var DebugPath = {
       cmd: "download",
       type: "octet/stream",
       fileName: "path_data.bin",
-      data,
+      data: data,
     }, [data]);
   },
 }

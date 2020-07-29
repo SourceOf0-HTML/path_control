@@ -13,7 +13,7 @@ addEventListener("message", function(e) {
       
     case "load-bin":
       BinaryLoader.load(data.path, ()=>{
-        postMessage({"cmd": "init-complete"});
+        postMessage({cmd: "init-complete"});
       });
       break;
       
@@ -162,7 +162,7 @@ addEventListener("message", function(e) {
       
     case "load-complete":
       PathCtr.loadComplete();
-      postMessage({"cmd": "init-complete"});
+      postMessage({cmd: "init-complete"});
       break;
       
       
