@@ -34,9 +34,7 @@ var PathMain = {
     if(isDebug) {
       fileType = "_debug" + fileType;
     }
-    console.log("new worker");
     this.worker = new Worker("js/path_control" + fileType);
-    console.log(this.worker);
     
     this.worker.addEventListener("message", function(e) {
       let data = e.data;
@@ -62,6 +60,7 @@ var PathMain = {
     }, false);
     
     let offscreenCanvas = canvas.transferControlToOffscreen();
+    console.log(offscreenCanvas);
     this.worker.postMessage({
       cmd: "init",
       viewWidth: viewWidth,
