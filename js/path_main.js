@@ -141,6 +141,7 @@ var PathMain = {
    */
   init: function(path, completeFunc = null, isDebug = false) {
     this.initWorker(completeFunc, isDebug);
+    console.log(this.worker);
     this.worker.postMessage({cmd: "load-bin", path: path});
   },
 }
