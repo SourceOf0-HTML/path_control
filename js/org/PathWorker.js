@@ -37,6 +37,7 @@ addEventListener("message", function(e) {
       }
       break;
       
+      
     case "output-path-container":
       DebugPath.outputJSON(PathCtr.pathContainer);
       break;
@@ -44,6 +45,7 @@ addEventListener("message", function(e) {
     case "output-bin":
       DebugPath.outputBin(PathCtr.pathContainer);
       break;
+      
       
     case "create-path-container":
       PathCtr.loadState("init path container");

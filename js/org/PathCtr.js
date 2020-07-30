@@ -6,8 +6,8 @@
 class PathCtr {
   static isOutputDebugPrint = false;
   static debugPrint() {
-    if(!this.isOutputDebugPrint) return;
-    //console.log("Func : " + this.debugPrint.caller.name);
+    if(!PathCtr.isOutputDebugPrint) return;
+    //console.log("Func : " + PathCtr.debugPrint.caller.name);
     for(let i = 0; i < arguments.length; ++i) {
       console.log(arguments[i]);
     }
@@ -15,7 +15,7 @@ class PathCtr {
   
   static isOutputLoadState = true;
   static loadState() {
-    if(!this.isOutputLoadState) return;
+    if(!PathCtr.isOutputLoadState) return;
     for(let i = 0; i < arguments.length; ++i) {
       console.log(arguments[i]);
     }
@@ -32,17 +32,23 @@ class PathCtr {
   static viewWidth = 0;
   static viewHeight = 0;
   
+  static fixFrameTime = 1 / 24;
+  static frameNumber = 0;
+  static prevTimestamp = 0;
+  static average = 0;
+  static updateEvent = new Event("update");
+  
   static requestAnimationIDs = [];
   static setTimeoutIDs = [];
   
   static cancelRequestAnimation() {
-    if(this.requestAnimationIDs.length > 1 || this.setTimeoutIDs.length > 1) {
-      PathCtr.debugPrint("requestAnimationIDs:" + this.requestAnimationIDs.length + ", " + this.setTimeoutIDs.length);
+    if(PathCtr.requestAnimationIDs.length > 1 || PathCtr.setTimeoutIDs.length > 1) {
+      PathCtr.debugPrint("requestAnimationIDs:" + PathCtr.requestAnimationIDs.length + ", " + PathCtr.setTimeoutIDs.length);
     }
-    this.requestAnimationIDs.forEach(cancelAnimationFrame);
-    this.requestAnimationIDs.length = 0;
-    this.setTimeoutIDs.forEach(clearTimeout);
-    this.setTimeoutIDs.length = 0;
+    PathCtr.requestAnimationIDs.forEach(cancelAnimationFrame);
+    PathCtr.requestAnimationIDs.length = 0;
+    PathCtr.setTimeoutIDs.forEach(clearTimeout);
+    PathCtr.setTimeoutIDs.length = 0;
   };
   
   /**
@@ -50,19 +56,65 @@ class PathCtr {
    * @param {Number} viewHeight
    */
   static setSize(viewWidth, viewHeight) {
-    this.canvas.width = this.viewWidth = viewWidth;
-    this.canvas.height = this.viewHeight = viewHeight;
-    if(!!this.pathContainer) this.pathContainer.setSize(viewWidth, viewHeight);
+    PathCtr.canvas.width = PathCtr.viewWidth = viewWidth;
+    PathCtr.canvas.height = PathCtr.viewHeight = viewHeight;
+    if(!!PathCtr.pathContainer) PathCtr.pathContainer.setSize(viewWidth, viewHeight);
+    PathCtr.update();
   };
   
   /**
    * @param {PathContainer} pathContainer
    */
   static loadComplete(pathContainer) {
-    this.pathContainer = this.initTarget;
-    this.pathContainer.context = this.context;
-    this.setSize(this.viewWidth, this.viewHeight);
-    this.initTarget = null;
+    PathCtr.pathContainer = PathCtr.initTarget;
+    PathCtr.pathContainer.context = PathCtr.context;
+    PathCtr.setSize(PathCtr.viewWidth, PathCtr.viewHeight);
+    PathCtr.initTarget = null;
+  };
+  
+  static draw(timestamp) {
+    if(typeof DebugPath !== "undefined" && DebugPath.isStop) {
+      if(!DebugPath.isStep) return;
+      DebugPath.isStep = false;
+      console.log("--STEP--");
+    }
+    
+    if(typeof timestamp === "undefined") return;
+    
+    let elapsed = (timestamp - PathCtr.prevTimestamp) / 1000;
+    PathCtr.average = (PathCtr.average + elapsed) / 2;
+    PathCtr.debugPrint((PathCtr.average * 100000)^0);
+    
+    if(!PathCtr.pathContainer) return;
+    
+    PathCtr.context.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
+    PathCtr.pathContainer.draw();
+    
+    let frameTime = 1 / 24;
+    let totalFrames = 260;
+    
+    if(timestamp - PathCtr.prevTimestamp < frameTime*500) return;
+    
+    PathCtr.frameNumber = PathCtr.frameNumber % totalFrames + 1;
+    
+    PathCtr.prevTimestamp = timestamp;
+    if(PathCtr.average > frameTime * 2) {
+      PathCtr.fixFrameTime *= 0.99;
+      PathCtr.debugPrint("up");
+    } else if(PathCtr.average < frameTime * 0.5) {
+      PathCtr.fixFrameTime *= 1.01;
+      PathCtr.debugPrint("down");
+    } else {
+      PathCtr.fixFrameTime = (frameTime + PathCtr.fixFrameTime) / 2;
+    }
+    
+    dispatchEvent(PathCtr.updateEvent);
+  };
+  
+  static update() {
+    PathCtr.cancelRequestAnimation();
+    PathCtr.requestAnimationIDs.push(requestAnimationFrame(PathCtr.draw));
+    PathCtr.setTimeoutIDs.push(setTimeout(PathCtr.update, PathCtr.fixFrameTime*1000));
   };
   
   /**
@@ -76,68 +128,21 @@ class PathCtr {
       return;
     }
     
-    this.canvas = canvas;
-    this.context = canvas.getContext("2d");
-    if(!this.context) {
+    PathCtr.canvas = canvas;
+    PathCtr.context = canvas.getContext("2d");
+    if(!PathCtr.context) {
       console.error("context is not found.");
       return;
     }
     
-    canvas.width = this.viewWidth = viewWidth;
-    canvas.height = this.viewHeight = viewHeight;
+    canvas.width = PathCtr.viewWidth = viewWidth;
+    canvas.height = PathCtr.viewHeight = viewHeight;
     
-    let frameTime = 1 / 24;
-    let fixFrameTime = frameTime;
-    let totalFrames = 260;
-    let frameNumber = 0;
-    let prevTimestamp = 0;
-    let average = 0;
-    
-    let update = new Event("update");
     addEventListener("update", function(e) {
-      PathCtr.pathContainer.update(frameNumber, "walk");
+      PathCtr.pathContainer.update(PathCtr.frameNumber, "walk");
     });
     
-    let draw =(timestamp)=> {
-      if(typeof DebugPath !== "undefined" && DebugPath.isStop) {
-        if(!DebugPath.isStep) return;
-        DebugPath.isStep = false;
-        console.log("--STEP--");
-      }
-      
-      if(typeof timestamp === "undefined") return;
-      
-      let elapsed = (timestamp - prevTimestamp) / 1000;
-      average = (average + elapsed) / 2;
-      prevTimestamp = timestamp;
-      this.debugPrint((average * 100000)^0);
-      
-      if(!this.pathContainer) return;
-      
-      this.context.clearRect(0, 0, this.viewWidth, this.viewHeight);
-      this.pathContainer.draw();
-      frameNumber = frameNumber % totalFrames + 1;
-      
-      if(average > frameTime * 2) {
-        fixFrameTime *= 0.99;
-        this.debugPrint("up");
-      } else if(average < frameTime * 0.5) {
-        fixFrameTime *= 1.01;
-        this.debugPrint("down");
-      } else {
-        fixFrameTime = (frameTime + fixFrameTime) / 2;
-      }
-      dispatchEvent(update);
-    };
-    
-    let timer =()=> {
-      this.cancelRequestAnimation();
-      this.requestAnimationIDs.push(requestAnimationFrame(draw));
-      this.setTimeoutIDs.push(setTimeout(timer, fixFrameTime*1000));
-    };
-    
-    //this.debugPrint("base : ", frameTime, frameTime * 10, frameTime * 0.1);
-    this.setTimeoutIDs.push(setTimeout(timer, fixFrameTime*1000));
+    PathCtr.setTimeoutIDs.push(setTimeout(PathCtr.update, PathCtr.fixFrameTime*1000));
   };
 };
 
