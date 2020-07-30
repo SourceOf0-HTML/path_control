@@ -7,6 +7,7 @@ addEventListener("message", function(e) {
   let data = e.data;
   switch (data.cmd) {
     case "init":
+      PathCtr.loadState("init");
       PathCtr.defaultBoneName = data.defaultBoneName;
       PathCtr.init(data.canvas, data.viewWidth, data.viewHeight);
       break;

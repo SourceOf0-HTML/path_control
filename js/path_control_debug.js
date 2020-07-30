@@ -36,7 +36,6 @@ class PathCtr {
   static frameNumber = 0;
   static prevTimestamp = 0;
   static average = 0;
-  static updateEvent = new Event("update");
   
   static requestAnimationIDs = [];
   static setTimeoutIDs = [];
@@ -91,8 +90,9 @@ class PathCtr {
     PathCtr.context.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
     PathCtr.pathContainer.draw();
     
+    let actionName = "walk";
     let frameTime = 1 / 24;
-    let totalFrames = 260;
+    let totalFrames = PathCtr.pathContainer.getAction(actionName).totalFrames;
     
     if(timestamp - PathCtr.prevTimestamp < frameTime*500) return;
     
@@ -109,7 +109,7 @@ class PathCtr {
       PathCtr.fixFrameTime = (frameTime + PathCtr.fixFrameTime) / 2;
     }
     
-    dispatchEvent(PathCtr.updateEvent);
+    PathCtr.pathContainer.update(PathCtr.frameNumber, actionName);
   };
   
   static update() {
@@ -138,10 +138,6 @@ class PathCtr {
     
     canvas.width = PathCtr.viewWidth = viewWidth;
     canvas.height = PathCtr.viewHeight = viewHeight;
-    
-    addEventListener("update", function(e) {
-      PathCtr.pathContainer.update(PathCtr.frameNumber, "walk");
-    });
   };
 };
 
@@ -1663,6 +1659,7 @@ addEventListener("message", function(e) {
   let data = e.data;
   switch (data.cmd) {
     case "init":
+      PathCtr.loadState("init");
       PathCtr.defaultBoneName = data.defaultBoneName;
       PathCtr.init(data.canvas, data.viewWidth, data.viewHeight);
       break;

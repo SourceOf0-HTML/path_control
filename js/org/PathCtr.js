@@ -90,8 +90,9 @@ class PathCtr {
     PathCtr.context.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
     PathCtr.pathContainer.draw();
     
+    let actionName = "walk";
     let frameTime = 1 / 24;
-    let totalFrames = 260;
+    let totalFrames = PathCtr.pathContainer.getAction(actionName).totalFrames;
     
     if(timestamp - PathCtr.prevTimestamp < frameTime*500) return;
     
@@ -108,7 +109,7 @@ class PathCtr {
       PathCtr.fixFrameTime = (frameTime + PathCtr.fixFrameTime) / 2;
     }
     
-    PathCtr.pathContainer.update(PathCtr.frameNumber, "walk");
+    PathCtr.pathContainer.update(PathCtr.frameNumber, actionName);
   };
   
   static update() {

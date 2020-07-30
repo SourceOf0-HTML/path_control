@@ -14,6 +14,8 @@ class SVGLoader {
   static masksList = null;
   static domList = [];
   
+  static loadWorker;
+  
   /**
    * @param {String} maskStr - mask attribute of element
    * @return {GroupObj} - mask group
@@ -149,6 +151,8 @@ class SVGLoader {
       frame: frame,
       actionName: actionName,
     });
+    
+    pathDataList = null;
   };
   
   /**
@@ -229,6 +233,8 @@ class SVGLoader {
       pathDataList: pathDataList,
       pathDiffList: pathDiffList,
     });
+    pathDataList = null;
+    pathDiffList = null;
   };
   
   /**
@@ -252,6 +258,7 @@ class SVGLoader {
       frame: frame,
       actionName: actionName,
     });
+    pathDataList = null;
   };
   
   /**
@@ -317,21 +324,26 @@ class SVGLoader {
       });
     }
     
+    childGroups = null;
+    
     return uid;
   };
   
   /**
+   * @param {Integer} index
    * @param {HTMLElement} groupDOM - group element
    * @param {String} name - group name
    * @param {Integer} frame
    * @param {String} actionName
    */
-  static addActionGroup(groupDOM, name, frame, actionName) {
-    let uid = this.groupNameToIDList[name];
+  static addActionGroup(index, groupDOM, name, frame, actionName) {
+    if(frame % 10 == 0 && index == 0) console.log("add action DOM: " + actionName + " - " + frame);
+    
+    let uid = SVGLoader.groupNameToIDList[name];
     let childGroups = [];
     let dataIndex = 0;
     let isBone = name.startsWith(PathMain.defaultBoneName);
-    let isPathSkip = (!isBone && this.initKind === this.FILE_KIND_BONE);
+    let isPathSkip = (!isBone && SVGLoader.initKind === SVGLoader.FILE_KIND_BONE);
     
     if(!!groupDOM) {
       Array.prototype.slice.call(groupDOM.children).forEach(child=>{
@@ -339,16 +351,16 @@ class SVGLoader {
           case "path":
             if(isPathSkip) break;
             if(isBone) {
-              this.addBoneActionPath(uid, dataIndex++, child, frame, actionName);
+              SVGLoader.addBoneActionPath(uid, dataIndex++, child, frame, actionName);
             } else {
-              this.addActionPath(uid, dataIndex++, child, window.getComputedStyle(child), frame, actionName);
+              SVGLoader.addActionPath(uid, dataIndex++, child, window.getComputedStyle(child), frame, actionName);
             }
             break;
           case "mask":
           case "clipPath":
             break;
           case "g":
-            childGroups.push(this.groupNameToIDList[child.getAttribute("id")]);
+            childGroups.push(SVGLoader.groupNameToIDList[child.getAttribute("id")]);
             break;
           default:
             console.error("unknown element");
@@ -372,20 +384,21 @@ class SVGLoader {
       frame: frame,
       actionName: actionName,
     });
+    
+    childGroups = null;
   };
   
   /**
-   * @param {Array} groupsDOMList - group elements array
    * @param {String} actionName
    */
-  static addActionFromList(groupsDOMList, actionName) {
-    if(!groupsDOMList) {
+  static addActionFromList(actionName) {
+    if(!this.domList) {
       console.error("groups dom list is not found");
       return;
     }
     
-    //console.log("check id");
-    let groupsDOMArr = Array.prototype.slice.call(groupsDOMList);
+    console.log("check id");
+    let groupsDOMArr = Array.prototype.slice.call(this.domList);
     let baseDom = groupsDOMArr[0];
     groupsDOMArr.forEach(targetDom=>{
       let targetGroups = targetDom.getElementsByTagName("g");
@@ -395,8 +408,7 @@ class SVGLoader {
         this.groupNameToIDList[id] = Object.keys(this.groupNameToIDList).length;
         this.makeGroup(targetDom.getElementById(id));
       });
-      let masks = Array.prototype.slice.call(targetDom.getElementsByTagName("mask"));
-      masks.forEach(mask=>{
+      Array.prototype.slice.call(targetDom.getElementsByTagName("mask")).forEach(mask=>{
         let maskID = mask.getAttribute("id");
         if(this.masksList[maskID]) return;
         let maskChildren = Array.prototype.slice.call(mask.children);
@@ -408,10 +420,13 @@ class SVGLoader {
             console.log(child);
           }
         });
+        maskChildren = null;
       });
+      targetGroups = null;
+      targetIds = null;
     });
     
-    //console.log("check diff");
+    console.log("check diff");
     let actionGroup = [];
     Object.keys(this.groupNameToIDList).forEach(name=> {
       let base = baseDom.getElementById(name);
@@ -422,16 +437,21 @@ class SVGLoader {
           return true;
         }
       });
+      base = null;
     });
     
     groupsDOMArr.forEach((targetDom, frame)=>{
       if(frame == 0) return;
-      //if(frame % 10 == 0) console.log("add action : " + actionName + " - " + frame);
-      actionGroup.forEach(name=>{
-        this.addActionGroup(targetDom.getElementById(name), name, frame, actionName);
+      if(frame % 10 == 0) console.log("add action : " + actionName + " - " + frame);
+      actionGroup.forEach((name, i)=>{
+        setTimeout(this.addActionGroup, 0, i, targetDom.getElementById(name), name, frame, actionName);
       });
     });
+    setTimeout(this.loadDOMEnd);
     
+    groupsDOMArr = null;
+    baseDom = null;
+    actionGroup = null;
   };
   
   /**
@@ -472,13 +492,11 @@ class SVGLoader {
       });
     });
     
-    let children = Array.prototype.slice.call(groupsDOM.children);
-    children.forEach(child=>{
+    Array.prototype.slice.call(groupsDOM.children).forEach(child=>{
       if(child.tagName != "g") return;
-      let groupID = this.makeGroup(child);
       PathMain.worker.postMessage({
         cmd: "add-root-group",
-        id: groupID,
+        id: this.makeGroup(child),
       });
     });
   };
@@ -487,6 +505,7 @@ class SVGLoader {
    * @param {String} kind
    * @param {String} actionName
    * @param {Integer} totalFrames
+   * @param {Boolean} isEnd
    */
   static loadFromDOM(kind, actionName, totalFrames) {
     this.initKind = kind;
@@ -501,11 +520,7 @@ class SVGLoader {
       totalFrames: totalFrames,
     });
     
-    this.addActionFromList(this.domList, actionName);
-    
-    this.domList.forEach(dom=>dom.parentNode.remove());
-    this.domList.length = 0;
-    this.initKind = "";
+    this.addActionFromList(actionName);
   };
   
   /**
@@ -518,6 +533,23 @@ class SVGLoader {
     let svgDOM = div.firstElementChild;
     document.body.append(div);
     this.domList[parseInt(svg.match(/id="Frame_(\d+)"/)[1]) - 1] = svgDOM;
+    div = null;
+    svgDOM = null;
+  };
+  
+  static loadDOMEnd() {
+    console.log("DOM END");
+    SVGLoader.domList.forEach(dom=>dom.parentNode.remove());
+    SVGLoader.domList.length = 0;
+    SVGLoader.initKind = "";
+    SVGLoader.loadWorker.postMessage({cmd: "load-next"});
+  };
+  
+  static loadEnd() {
+    console.log("LOAD END")
+    SVGLoader.groupNameToIDList = null;
+    SVGLoader.masksList = null;
+    PathMain.worker.postMessage({cmd: "load-complete"});
   };
   
   /**
@@ -538,15 +570,13 @@ class SVGLoader {
     this.groupNameToIDList = {};
     this.masksList = {};
     
-    let loadWorker = new Worker("js/path_load_svg_worker.js");
-    loadWorker.addEventListener("message", function(e) {
+    this.loadWorker = new Worker("js/path_load_svg_worker.js");
+    this.loadWorker.addEventListener("message", function(e) {
       let data = e.data;
       switch(data.cmd) {
         case "load-complete":
           SVGLoader.loadFromDOM(data.kind, data.actionName, data.totalFrames);
-          SVGLoader.groupNameToIDList = null;
-          SVGLoader.masksList = null;
-          PathMain.worker.postMessage({cmd: "load-complete"});
+          setTimeout(SVGLoader.loadEnd);
           break;
           
         case "load-add":
@@ -555,7 +585,7 @@ class SVGLoader {
           break;
           
         case "new-svg":
-          //if(data.frame % 10 == 0) console.log("load file: " + data.actionName + " - " + data.frame);
+          if(data.frame % 10 == 0) console.log("load file: " + data.actionName + " - " + data.frame);
           SVGLoader.addSvgDOM(data.svg);
           break;
           
@@ -565,6 +595,6 @@ class SVGLoader {
       }
     });
     PathMain.initWorker(completeFunc, isDebug);
-    loadWorker.postMessage({cmd: "load", fileInfoList: fileInfoList});
+    this.loadWorker.postMessage({cmd: "load", fileInfoList: fileInfoList});
   };
 };
