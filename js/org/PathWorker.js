@@ -11,6 +11,11 @@ addEventListener("message", function(e) {
       PathCtr.init(data.canvas, data.viewWidth, data.viewHeight);
       break;
       
+    case "load-complete":
+      PathCtr.loadComplete();
+      postMessage({cmd: "init-complete"});
+      break;
+      
     case "load-bin":
       BinaryLoader.load(data.path, ()=>{
         postMessage({cmd: "init-complete"});
@@ -160,11 +165,6 @@ addEventListener("message", function(e) {
           PathCtr.initTarget.getAction(data.actionName).id
         );
       });
-      break;
-      
-    case "load-complete":
-      PathCtr.loadComplete();
-      postMessage({cmd: "init-complete"});
       break;
       
       

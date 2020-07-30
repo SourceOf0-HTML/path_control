@@ -70,6 +70,7 @@ class PathCtr {
     PathCtr.pathContainer.context = PathCtr.context;
     PathCtr.setSize(PathCtr.viewWidth, PathCtr.viewHeight);
     PathCtr.initTarget = null;
+    PathCtr.update();
   };
   
   static draw(timestamp) {
@@ -141,8 +142,6 @@ class PathCtr {
     addEventListener("update", function(e) {
       PathCtr.pathContainer.update(PathCtr.frameNumber, "walk");
     });
-    
-    PathCtr.setTimeoutIDs.push(setTimeout(PathCtr.update, PathCtr.fixFrameTime*1000));
   };
 };
 
@@ -1668,6 +1667,11 @@ addEventListener("message", function(e) {
       PathCtr.init(data.canvas, data.viewWidth, data.viewHeight);
       break;
       
+    case "load-complete":
+      PathCtr.loadComplete();
+      postMessage({cmd: "init-complete"});
+      break;
+      
     case "load-bin":
       BinaryLoader.load(data.path, ()=>{
         postMessage({cmd: "init-complete"});
@@ -1817,11 +1821,6 @@ addEventListener("message", function(e) {
           PathCtr.initTarget.getAction(data.actionName).id
         );
       });
-      break;
-      
-    case "load-complete":
-      PathCtr.loadComplete();
-      postMessage({cmd: "init-complete"});
       break;
       
       

@@ -70,6 +70,7 @@ class PathCtr {
     PathCtr.pathContainer.context = PathCtr.context;
     PathCtr.setSize(PathCtr.viewWidth, PathCtr.viewHeight);
     PathCtr.initTarget = null;
+    PathCtr.update();
   };
   
   static draw(timestamp) {
@@ -141,8 +142,6 @@ class PathCtr {
     addEventListener("update", function(e) {
       PathCtr.pathContainer.update(PathCtr.frameNumber, "walk");
     });
-    
-    PathCtr.setTimeoutIDs.push(setTimeout(PathCtr.update, PathCtr.fixFrameTime*1000));
   };
 };
 
