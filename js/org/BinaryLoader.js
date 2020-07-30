@@ -1,14 +1,14 @@
 
 /**
  * BinaryLoader
- * Singleton
+ * Static Class
  */
-var BinaryLoader = {
+class BinaryLoader {
   /**
    * @param {ArrayBuffer} buffer
    * @return {PathContainer}
    */
-  init: function(buffer) {
+  static init(buffer) {
     if(!buffer) {
       console.error("array buffer is not found");
       return null;
@@ -180,13 +180,13 @@ var BinaryLoader = {
     }
     
     return pathContainer;
-  },
+  };
   
   /**
    * @param {String} filePath - binary file path
    * @param {Function} completeFunc - callback when loading complete
    */
-  load: function(filePath, completeFunc = null) {
+  static load(filePath, completeFunc = null) {
     if(!filePath) {
       console.error("filePath not found");
       return;
@@ -211,6 +211,6 @@ var BinaryLoader = {
     request.open("GET", filePath, true);
     request.responseType = "arraybuffer";
     request.send();
-  },
+  };
 };
 

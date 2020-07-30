@@ -1,13 +1,13 @@
 
 /**
  * BoneLoader
- * Singleton
+ * Static Class
  */
-var BoneLoader = {
+class BoneLoader {
   /**
    * @param {String} filePath - binary file path
    */
-  load: function(filePath, pathContainer) {
+  static load(filePath, pathContainer) {
     let request = new XMLHttpRequest();
     
     request.onload = function(e) {
@@ -60,5 +60,5 @@ var BoneLoader = {
     }
     request.open("GET", filePath, true);
     request.send();
-  },
-}
+  };
+};

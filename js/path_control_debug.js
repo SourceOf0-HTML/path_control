@@ -1,41 +1,41 @@
 
 /**
  * PathCtr
- * Singleton
+ * Static Class
  */
-var PathCtr = {
-  isOutputDebugPrint: false,
-  debugPrint: function() {
+class PathCtr {
+  static isOutputDebugPrint = false;
+  static debugPrint() {
     if(!this.isOutputDebugPrint) return;
     //console.log("Func : " + this.debugPrint.caller.name);
     for(let i = 0; i < arguments.length; ++i) {
       console.log(arguments[i]);
     }
-  },
+  };
   
-  isOutputLoadState: true,
-  loadState: function() {
+  static isOutputLoadState = true;
+  static loadState() {
     if(!this.isOutputLoadState) return;
     for(let i = 0; i < arguments.length; ++i) {
       console.log(arguments[i]);
     }
-  },
+  };
   
-  defaultCanvasContainerID: "path-container",  // default canvas container element name
-  defaultActionName: "base",
-  initTarget: null,  // instance to be initialized
-  binDataPosRange: 20000, // correction value of coordinates when saving to binary data
+  static defaultCanvasContainerID = "path-container";  // default canvas container element name
+  static defaultActionName = "base";
+  static initTarget = null;  // instance to be initialized
+  static binDataPosRange = 20000; // correction value of coordinates when saving to binary data
   
-  pathContainer: null,
-  canvas: null,
-  context: null,
-  viewWidth: 0,
-  viewHeight: 0,
+  static pathContainer = null;
+  static canvas = null;
+  static context = null;
+  static viewWidth = 0;
+  static viewHeight = 0;
   
-  requestAnimationIDs: [],
-  setTimeoutIDs: [],
+  static requestAnimationIDs = [];
+  static setTimeoutIDs = [];
   
-  cancelRequestAnimation: function() {
+  static cancelRequestAnimation() {
     if(this.requestAnimationIDs.length > 1 || this.setTimeoutIDs.length > 1) {
       PathCtr.debugPrint("requestAnimationIDs:" + this.requestAnimationIDs.length + ", " + this.setTimeoutIDs.length);
     }
@@ -43,34 +43,34 @@ var PathCtr = {
     this.requestAnimationIDs.length = 0;
     this.setTimeoutIDs.forEach(clearTimeout);
     this.setTimeoutIDs.length = 0;
-  },
+  };
   
   /**
    * @param {Number} viewWidth
    * @param {Number} viewHeight
    */
-  setSize: function(viewWidth, viewHeight) {
+  static setSize(viewWidth, viewHeight) {
     this.canvas.width = this.viewWidth = viewWidth;
     this.canvas.height = this.viewHeight = viewHeight;
     if(!!this.pathContainer) this.pathContainer.setSize(viewWidth, viewHeight);
-  },
+  };
   
   /**
    * @param {PathContainer} pathContainer
    */
-  loadComplete: function(pathContainer) {
+  static loadComplete(pathContainer) {
     this.pathContainer = this.initTarget;
     this.pathContainer.context = this.context;
     this.setSize(this.viewWidth, this.viewHeight);
     this.initTarget = null;
-  },
+  };
   
   /**
    * @param {offscreenCanvas} canvas
    * @param {Number} viewWidth
    * @param {Number} viewHeight
    */
-  init: function(canvas, viewWidth, viewHeight) {
+  static init(canvas, viewWidth, viewHeight) {
     if(!canvas) {
       console.error("canvas is not found.");
       return;
@@ -138,7 +138,7 @@ var PathCtr = {
     
     //this.debugPrint("base : ", frameTime, frameTime * 10, frameTime * 0.1);
     this.setTimeoutIDs.push(setTimeout(timer, fixFrameTime*1000));
-  },
+  };
 };
 
 
@@ -1382,14 +1382,14 @@ class PathContainer extends Sprite {
 
 /**
  * BinaryLoader
- * Singleton
+ * Static Class
  */
-var BinaryLoader = {
+class BinaryLoader {
   /**
    * @param {ArrayBuffer} buffer
    * @return {PathContainer}
    */
-  init: function(buffer) {
+  static init(buffer) {
     if(!buffer) {
       console.error("array buffer is not found");
       return null;
@@ -1561,13 +1561,13 @@ var BinaryLoader = {
     }
     
     return pathContainer;
-  },
+  };
   
   /**
    * @param {String} filePath - binary file path
    * @param {Function} completeFunc - callback when loading complete
    */
-  load: function(filePath, completeFunc = null) {
+  static load(filePath, completeFunc = null) {
     if(!filePath) {
       console.error("filePath not found");
       return;
@@ -1592,19 +1592,19 @@ var BinaryLoader = {
     request.open("GET", filePath, true);
     request.responseType = "arraybuffer";
     request.send();
-  },
+  };
 };
 
 
 /**
  * BoneLoader
- * Singleton
+ * Static Class
  */
-var BoneLoader = {
+class BoneLoader {
   /**
    * @param {String} filePath - binary file path
    */
-  load: function(filePath, pathContainer) {
+  static load(filePath, pathContainer) {
     let request = new XMLHttpRequest();
     
     request.onload = function(e) {
@@ -1657,8 +1657,8 @@ var BoneLoader = {
     }
     request.open("GET", filePath, true);
     request.send();
-  },
-}
+  };
+};
 
 /**
  * PathWorker
@@ -1834,26 +1834,26 @@ addEventListener("message", function(e) {
 }, false);
 /**
  * DebugPath
- * Singleton
+ * Static Class
  */
-var DebugPath = {
-  isStop: false,
-  isStep: false,
-  isShowBones: false,
+class DebugPath {
+  static isStop = false;
+  static isStep = false;
+  static isShowBones = false;
   
-  bonePointSize: 2,
-  boneLineSize: 2,
-  boneColor: "rgb(0, 255, 0)",
-  strengthPointColor: "rgba(0, 255, 0, 0.005)",
-  strengthLineColor: "rgba(0, 255, 0, 0.2)",
+  static bonePointSize = 2;
+  static boneLineSize = 2;
+  static boneColor = "rgb(0, 255, 0)";
+  static strengthPointColor = "rgba(0, 255, 0, 0.005)";
+  static strengthLineColor = "rgba(0, 255, 0, 0.2)";
   
-  isShowPoints: false,
-  pointSize: 2,
-  pointColor: "rgb(255, 0, 0)",
+  static isShowPoints = false;
+  static pointSize = 2;
+  static pointColor = "rgb(255, 0, 0)";
   
-  isShowControls: false,
-  controlSize: 1,
-  controlColor: "rgb(255, 255, 0)",
+  static isShowControls = false;
+  static controlSize = 1;
+  static controlColor = "rgb(255, 255, 0)";
   
   
   /**
@@ -1861,7 +1861,7 @@ var DebugPath = {
    * @param {Number} mouseX
    * @param {Number} mouseY
    */
-  moveMouse: function(pathContainer, x, y) {
+  static moveMouse(pathContainer, x, y) {
     if(!pathContainer) return;
     x /= pathContainer.pathRatio;
     y /= pathContainer.pathRatio;
@@ -1872,13 +1872,13 @@ var DebugPath = {
       //this.x = x;
       //this.y = y;
     };
-  },
+  };
   
   /**
    * @param {PathContainer} pathContainer
    * @param {String} code - code when fired keyup event
    */
-  keyUp: function(pathContainer, code) {
+  static keyUp(pathContainer, code) {
     switch(code) {
       case "Space":
         this.isStop = !this.isStop;
@@ -1906,13 +1906,13 @@ var DebugPath = {
         postMessage({cmd: "confirm", callback: "output-path-container", message: "現在の状態をJSONに出力します"});
         break;
     }
-  },
+  };
   
-  isDebugDraw: function() {
+  static isDebugDraw() {
     return this.isShowBones || this.isShowPoints || this.isShowControls;
-  },
+  };
   
-  outputJSON: function(pathContainer) {
+  static outputJSON(pathContainer) {
     postMessage({
       cmd: "download",
       type: "application/json",
@@ -1925,13 +1925,13 @@ var DebugPath = {
         return val;
       }, 2),
     });
-  },
+  };
   
   /**
    * @param {PathContainer} pathContainer
    * @return {ArrayBuffer}
    */
-  toBin: function(pathContainer) {
+  static toBin(pathContainer) {
     if(!pathContainer) {
       console.error("path container is not found");
       return null;
@@ -2082,14 +2082,14 @@ var DebugPath = {
       setGroup(group);
     });
     
-    delete dv;
+    dv = null;
     return buffer.slice(0, sumLength);
-  },
+  };
   
   /**
    * @param {PathContainer} pathContainer
    */
-  outputBin: function(pathContainer) {
+  static outputBin(pathContainer) {
     if(!pathContainer) return;
     let data = this.toBin(PathCtr.pathContainer);
     postMessage({
@@ -2098,5 +2098,5 @@ var DebugPath = {
       fileName: "path_data.bin",
       data: data,
     }, [data]);
-  },
-}
+  };
+};

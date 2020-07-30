@@ -1,41 +1,41 @@
 
 /**
  * PathCtr
- * Singleton
+ * Static Class
  */
-var PathCtr = {
-  isOutputDebugPrint: false,
-  debugPrint: function() {
+class PathCtr {
+  static isOutputDebugPrint = false;
+  static debugPrint() {
     if(!this.isOutputDebugPrint) return;
     //console.log("Func : " + this.debugPrint.caller.name);
     for(let i = 0; i < arguments.length; ++i) {
       console.log(arguments[i]);
     }
-  },
+  };
   
-  isOutputLoadState: true,
-  loadState: function() {
+  static isOutputLoadState = true;
+  static loadState() {
     if(!this.isOutputLoadState) return;
     for(let i = 0; i < arguments.length; ++i) {
       console.log(arguments[i]);
     }
-  },
+  };
   
-  defaultCanvasContainerID: "path-container",  // default canvas container element name
-  defaultActionName: "base",
-  initTarget: null,  // instance to be initialized
-  binDataPosRange: 20000, // correction value of coordinates when saving to binary data
+  static defaultCanvasContainerID = "path-container";  // default canvas container element name
+  static defaultActionName = "base";
+  static initTarget = null;  // instance to be initialized
+  static binDataPosRange = 20000; // correction value of coordinates when saving to binary data
   
-  pathContainer: null,
-  canvas: null,
-  context: null,
-  viewWidth: 0,
-  viewHeight: 0,
+  static pathContainer = null;
+  static canvas = null;
+  static context = null;
+  static viewWidth = 0;
+  static viewHeight = 0;
   
-  requestAnimationIDs: [],
-  setTimeoutIDs: [],
+  static requestAnimationIDs = [];
+  static setTimeoutIDs = [];
   
-  cancelRequestAnimation: function() {
+  static cancelRequestAnimation() {
     if(this.requestAnimationIDs.length > 1 || this.setTimeoutIDs.length > 1) {
       PathCtr.debugPrint("requestAnimationIDs:" + this.requestAnimationIDs.length + ", " + this.setTimeoutIDs.length);
     }
@@ -43,34 +43,34 @@ var PathCtr = {
     this.requestAnimationIDs.length = 0;
     this.setTimeoutIDs.forEach(clearTimeout);
     this.setTimeoutIDs.length = 0;
-  },
+  };
   
   /**
    * @param {Number} viewWidth
    * @param {Number} viewHeight
    */
-  setSize: function(viewWidth, viewHeight) {
+  static setSize(viewWidth, viewHeight) {
     this.canvas.width = this.viewWidth = viewWidth;
     this.canvas.height = this.viewHeight = viewHeight;
     if(!!this.pathContainer) this.pathContainer.setSize(viewWidth, viewHeight);
-  },
+  };
   
   /**
    * @param {PathContainer} pathContainer
    */
-  loadComplete: function(pathContainer) {
+  static loadComplete(pathContainer) {
     this.pathContainer = this.initTarget;
     this.pathContainer.context = this.context;
     this.setSize(this.viewWidth, this.viewHeight);
     this.initTarget = null;
-  },
+  };
   
   /**
    * @param {offscreenCanvas} canvas
    * @param {Number} viewWidth
    * @param {Number} viewHeight
    */
-  init: function(canvas, viewWidth, viewHeight) {
+  static init(canvas, viewWidth, viewHeight) {
     if(!canvas) {
       console.error("canvas is not found.");
       return;
@@ -138,6 +138,6 @@ var PathCtr = {
     
     //this.debugPrint("base : ", frameTime, frameTime * 10, frameTime * 0.1);
     this.setTimeoutIDs.push(setTimeout(timer, fixFrameTime*1000));
-  },
+  };
 };
 

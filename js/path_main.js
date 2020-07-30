@@ -1,18 +1,18 @@
 
 /**
  * PathMain
- * Singleton
+ * Static Class
  */
-var PathMain = {
-  defaultBoneName: "bone",
-  worker: null,
-  isUseMin: true,
+class PathMain {
+  static defaultBoneName = "bone";
+  static worker = null;
+  static isUseMin = false;
   
   /**
    * @param {Function} completeFunc - call when completed load
    * @param {Boolean} isDebug - use debug mode when true
    */
-  initWorker: function(completeFunc, isDebug) {
+  static initWorker(completeFunc, isDebug) {
     let container = document.getElementById("path-container");
     if(!container) {
       console.error("CanvasContainer is not found.");
@@ -116,14 +116,14 @@ var PathMain = {
     });
     
     return true;
-  },
+  };
   
   /**
    * @param {String} type
    * @param {String} fileName
    * @param {String} data
    */
-  downloadData: function(type, fileName, data) {
+  static downloadData(type, fileName, data) {
     let a = document.createElement("a");
     document.body.appendChild(a);
     a.style = "display: none";
@@ -135,27 +135,27 @@ var PathMain = {
     a.download = fileName;
     a.click();
     a.remove();
-  },
+  };
   
-  outputBin: function() {
+  static outputBin() {
     this.worker.postMessage({cmd: "output-bin"});
-  },
+  };
   
   /**
    * @param {String} path - file path info
    */
-  loadBone: function(path) {
+  static loadBone(path) {
     this.worker.postMessage({cmd: "load-bone", path: path});
-  },
+  };
   
   /**
    * @param {String} path - file path info
    * @param {Function} completeFunc - call when completed load
    * @param {Boolean} isDebug - use debug mode when true
    */
-  init: function(path, completeFunc, isDebug) {
+  static init(path, completeFunc, isDebug) {
     if(this.initWorker(completeFunc, isDebug)) {
       this.worker.postMessage({cmd: "load-bin", path: path});
     }
-  },
-}
+  };
+};
