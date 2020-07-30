@@ -36,7 +36,6 @@ class PathCtr {
   static frameNumber = 0;
   static prevTimestamp = 0;
   static average = 0;
-  static updateEvent = new Event("update");
   
   static requestAnimationIDs = [];
   static setTimeoutIDs = [];
@@ -109,7 +108,7 @@ class PathCtr {
       PathCtr.fixFrameTime = (frameTime + PathCtr.fixFrameTime) / 2;
     }
     
-    dispatchEvent(PathCtr.updateEvent);
+    PathCtr.pathContainer.update(PathCtr.frameNumber, "walk");
   };
   
   static update() {
@@ -138,10 +137,6 @@ class PathCtr {
     
     canvas.width = PathCtr.viewWidth = viewWidth;
     canvas.height = PathCtr.viewHeight = viewHeight;
-    
-    addEventListener("update", function(e) {
-      PathCtr.pathContainer.update(PathCtr.frameNumber, "walk");
-    });
   };
 };
 
