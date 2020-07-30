@@ -559,24 +559,27 @@ class PathObj {
   };
   
   /**
+   * @param {Array} pathDiffList
+   * @return {Array} - pathDataList
+   */
+  makeData(pathDiffList) {
+    let ret = [];
+    this.defPathList.forEach((d, i)=>{
+      ret.push({
+        type: d.type,
+        pos: (!d.pos)? undefined : d.pos.map((val, j)=>val+pathDiffList[i][j]),
+      });
+    });
+    return ret;
+  };
+  
+  /**
    * @param {Integer} frame - frame number
    * @param {Integer} actionID - action ID
    * @return {Array} - pathDataList
    */
   getPathDataList(frame = 0, actionID = 0) {
-    let ret = [];
-    
-    let makeData =(pathDiffList)=> {
-      this.defPathList.forEach((d, i)=>{
-        ret.push({
-          type: d.type,
-          pos: (!d.pos)? undefined : d.pos.map((val, j)=>val+pathDiffList[i][j]),
-        });
-      });
-      return ret;
-    }
-    
-    return makeData(this.pathDiffList.getAvailableData(actionID, frame));
+    return this.makeData(this.pathDiffList.getAvailableData(actionID, frame));
   };
   
   /**
@@ -586,20 +589,8 @@ class PathObj {
    * @return {Array} - pathDataList
    */
   getMergePathDataList(pathContainer, frame = 0, actionID = 0) {
-    let ret = [];
-    
-    let makeData =(pathDiffList)=> {
-      this.defPathList.forEach((d, i)=>{
-        ret.push({
-          type: d.type,
-          pos: (!d.pos)? undefined : d.pos.map((val, j)=>val+pathDiffList[i][j]),
-        });
-      });
-      return ret;
-    }
-    
     if(!this.pathDiffList.hasAction) {
-      return makeData(this.pathDiffList.getData());
+      return this.makeData(this.pathDiffList.getData());
     }
     
     if(!this.pathDiffList.hasActionID(actionID)) {
@@ -607,7 +598,7 @@ class PathObj {
       frame = 0;
     }
     
-    let pathDataList = makeData(this.pathDiffList.getAvailableData(actionID, frame));
+    let pathDataList = this.makeData(this.pathDiffList.getAvailableData(actionID, frame));
     if(pathContainer.actionList.length == 1) {
       return pathDataList;
     }
@@ -633,12 +624,12 @@ class PathObj {
    * @param {Matrix} matrix - used to transform the path
    */
   update(frame, actionID, pathContainer, matrix) {
-    let updatePath =d=>{
-      if(!!d.pos) matrix.applyToArray(d.pos);
-    };
-    
     let pathDataList = this.getMergePathDataList(pathContainer, frame, actionID);
-    pathDataList.forEach(updatePath);
+    
+    pathDataList.forEach(d=>{
+      if(!!d.pos) matrix.applyToArray(d.pos);
+    });
+    
     this.resultPathList = pathDataList;
     
     this.fillStyle.update(pathContainer, actionID, frame);
