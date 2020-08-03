@@ -176,8 +176,7 @@ class PathMain {
     container.appendChild(subCanvas);
     
     PathMain.useWorker = !!Worker || !!canvas.transferControlToOffscreen;
-    console.log(Worker);
-    console.log(canvas.transferControlToOffscreen);
+    
     if(PathMain.useWorker) {
       PathMain.worker = new Worker(filePath);
       PathMain.initWorker();
