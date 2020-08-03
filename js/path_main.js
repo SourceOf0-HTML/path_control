@@ -176,7 +176,7 @@ var PathMain = {
     subCanvas.style.cssText = "display:none;";
     container.appendChild(subCanvas);
     
-    PathMain.useWorker = !!Worker || !!canvas.transferControlToOffscreen;
+    PathMain.useWorker = !!Worker && !!canvas.transferControlToOffscreen;
     
     if(PathMain.useWorker) {
       console.log("use worker");
