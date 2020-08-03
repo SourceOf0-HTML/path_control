@@ -175,7 +175,7 @@ class PathMain {
     subCanvas.style.cssText = "display:none;";
     container.appendChild(subCanvas);
     
-    PathMain.useWorker = !!canvas.transferControlToOffscreen;
+    PathMain.useWorker = !!Worker || !!canvas.transferControlToOffscreen;
     
     if(PathMain.useWorker) {
       PathMain.worker = new Worker(filePath);
