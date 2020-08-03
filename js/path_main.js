@@ -179,6 +179,7 @@ var PathMain = {
     PathMain.useWorker = !!Worker || !!canvas.transferControlToOffscreen;
     
     if(PathMain.useWorker) {
+      console.log("use worker");
       PathMain.worker = new Worker(filePath);
       PathMain.initWorker();
     } else {
