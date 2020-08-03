@@ -1,24 +1,24 @@
 
 /**
  * PathWorker
- * Worker events
+ * Singleton
  */
-class PathWorker {
-  static instance = null;
-  static isWorker = false;
+var PathWorker = {
+  instance: null,
+  isWorker: false,
   
   /**
    * @param {Object} obj
    */
-  static postMessage(obj) {
+  postMessage: function(obj) {
     if(PathWorker.isWorker) {
       PathWorker.instance.postMessage(obj);
     } else {
       window.dispatchEvent(new CustomEvent("message", {bubbles: true, detail: obj}));
     }
-  };
+  },
   
-  static init() {
+  init: function() {
     PathWorker.instance.addEventListener("message", function(e) {
       let data = !e.data? e.detail : e.data;
       switch (data.cmd) {
@@ -190,7 +190,7 @@ class PathWorker {
           return true;
       };
     }, false);
-  };
+  },
 };
 
 PathWorker.isWorker = typeof DedicatedWorkerGlobalScope !== "undefined";

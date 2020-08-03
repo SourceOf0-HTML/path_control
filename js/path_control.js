@@ -1,48 +1,48 @@
 
 /**
  * PathCtr
- * Static Class
+ * Singleton
  */
-class PathCtr {
-  static isOutputDebugPrint = false;
-  static debugPrint() {
+var PathCtr = {
+  isOutputDebugPrint: false,
+  debugPrint: function() {
     if(!PathCtr.isOutputDebugPrint) return;
     //console.log("Func : " + PathCtr.debugPrint.caller.name);
     for(let i = 0; i < arguments.length; ++i) {
       console.log(arguments[i]);
     }
-  };
+  },
   
-  static isOutputLoadState = true;
-  static loadState() {
+  isOutputLoadState: true,
+  loadState: function() {
     if(!PathCtr.isOutputLoadState) return;
     for(let i = 0; i < arguments.length; ++i) {
       console.log(arguments[i]);
     }
-  };
+  },
   
-  static defaultCanvasContainerID = "path-container";  // default canvas container element name
-  static defaultActionName = "base";
-  static initTarget = null;  // instance to be initialized
-  static binDataPosRange = 20000; // correction value of coordinates when saving to binary data
+  defaultCanvasContainerID: "path-container",  // default canvas container element name
+  defaultActionName: "base",
+  initTarget: null,  // instance to be initialized
+  binDataPosRange: 20000, // correction value of coordinates when saving to binary data
   
-  static pathContainer = null;
-  static canvas = null;
-  static subCanvas = null;
-  static context = null;
-  static subContext = null;
-  static viewWidth = 0;
-  static viewHeight = 0;
+  pathContainer: null,
+  canvas: null,
+  subCanvas: null,
+  context: null,
+  subContext: null,
+  viewWidth: 0,
+  viewHeight: 0,
   
-  static fixFrameTime = 1 / 24;
-  static frameNumber = 0;
-  static prevTimestamp = 0;
-  static average = 0;
+  fixFrameTime: 1 / 24,
+  frameNumber: 0,
+  prevTimestamp: 0,
+  average: 0,
   
-  static requestAnimationIDs = [];
-  static setTimeoutIDs = [];
+  requestAnimationIDs: [],
+  setTimeoutIDs: [],
   
-  static cancelRequestAnimation() {
+  cancelRequestAnimation: function() {
     if(PathCtr.requestAnimationIDs.length > 1 || PathCtr.setTimeoutIDs.length > 1) {
       PathCtr.debugPrint("requestAnimationIDs:" + PathCtr.requestAnimationIDs.length + ", " + PathCtr.setTimeoutIDs.length);
     }
@@ -50,31 +50,31 @@ class PathCtr {
     PathCtr.requestAnimationIDs.length = 0;
     PathCtr.setTimeoutIDs.forEach(clearTimeout);
     PathCtr.setTimeoutIDs.length = 0;
-  };
+  },
   
   /**
    * @param {Number} viewWidth
    * @param {Number} viewHeight
    */
-  static setSize(viewWidth, viewHeight) {
+  setSize: function(viewWidth, viewHeight) {
     PathCtr.canvas.width = PathCtr.subCanvas.width = PathCtr.viewWidth = viewWidth;
     PathCtr.canvas.height = PathCtr.subCanvas.height = PathCtr.viewHeight = viewHeight;
     if(!!PathCtr.pathContainer) PathCtr.pathContainer.setSize(viewWidth, viewHeight);
     PathCtr.update();
-  };
+  },
   
   /**
    * @param {PathContainer} pathContainer
    */
-  static loadComplete(pathContainer) {
+  loadComplete: function(pathContainer) {
     PathCtr.pathContainer = PathCtr.initTarget;
     PathCtr.pathContainer.context = PathCtr.subContext;
     PathCtr.setSize(PathCtr.viewWidth, PathCtr.viewHeight);
     PathCtr.initTarget = null;
     PathCtr.update();
-  };
+  },
   
-  static draw(timestamp) {
+  draw: function(timestamp) {
     if(typeof DebugPath !== "undefined" && DebugPath.isStop) {
       if(!DebugPath.isStep) return;
       DebugPath.isStep = false;
@@ -115,13 +115,13 @@ class PathCtr {
     }
     
     PathCtr.pathContainer.update(PathCtr.frameNumber, actionName);
-  };
+  },
   
-  static update() {
+  update: function() {
     PathCtr.cancelRequestAnimation();
     PathCtr.requestAnimationIDs.push(requestAnimationFrame(PathCtr.draw));
     PathCtr.setTimeoutIDs.push(setTimeout(PathCtr.update, PathCtr.fixFrameTime*1000));
-  };
+  },
   
   /**
    * @param {OffscreenCanvas or Canvas} canvas
@@ -129,7 +129,7 @@ class PathCtr {
    * @param {Number} viewWidth
    * @param {Number} viewHeight
    */
-  static init(canvas, subCanvas, viewWidth, viewHeight) {
+  init: function(canvas, subCanvas, viewWidth, viewHeight) {
     if(!canvas || !subCanvas) {
       console.error("canvas is not found.");
       return;
@@ -148,7 +148,7 @@ class PathCtr {
     
     canvas.width = subCanvas.width = PathCtr.viewWidth = viewWidth;
     canvas.height = subCanvas.height = PathCtr.viewHeight = viewHeight;
-  };
+  },
 };
 
 
@@ -1383,14 +1383,14 @@ class PathContainer extends Sprite {
 
 /**
  * BinaryLoader
- * Static Class
+ * Singleton
  */
-class BinaryLoader {
+var BinaryLoader = {
   /**
    * @param {ArrayBuffer} buffer
    * @return {PathContainer}
    */
-  static init(buffer) {
+  init: function(buffer) {
     if(!buffer) {
       console.error("array buffer is not found");
       return null;
@@ -1562,13 +1562,13 @@ class BinaryLoader {
     }
     
     return pathContainer;
-  };
+  },
   
   /**
    * @param {String} filePath - binary file path
    * @param {Function} completeFunc - callback when loading complete
    */
-  static load(filePath, completeFunc = null) {
+  load: function(filePath, completeFunc = null) {
     if(!filePath) {
       console.error("filePath not found");
       return;
@@ -1593,19 +1593,19 @@ class BinaryLoader {
     request.open("GET", filePath, true);
     request.responseType = "arraybuffer";
     request.send();
-  };
+  },
 };
 
 
 /**
  * BoneLoader
- * Static Class
+ * Singleton
  */
-class BoneLoader {
+var BoneLoader = {
   /**
    * @param {String} filePath - binary file path
    */
-  static load(filePath, pathContainer) {
+  load: function(filePath, pathContainer) {
     let request = new XMLHttpRequest();
     
     request.onload = function(e) {
@@ -1658,29 +1658,29 @@ class BoneLoader {
     }
     request.open("GET", filePath, true);
     request.send();
-  };
+  },
 };
 
 /**
  * PathWorker
- * Worker events
+ * Singleton
  */
-class PathWorker {
-  static instance = null;
-  static isWorker = false;
+var PathWorker = {
+  instance: null,
+  isWorker: false,
   
   /**
    * @param {Object} obj
    */
-  static postMessage(obj) {
+  postMessage: function(obj) {
     if(PathWorker.isWorker) {
       PathWorker.instance.postMessage(obj);
     } else {
       window.dispatchEvent(new CustomEvent("message", {bubbles: true, detail: obj}));
     }
-  };
+  },
   
-  static init() {
+  init: function() {
     PathWorker.instance.addEventListener("message", function(e) {
       let data = !e.data? e.detail : e.data;
       switch (data.cmd) {
@@ -1852,7 +1852,7 @@ class PathWorker {
           return true;
       };
     }, false);
-  };
+  },
 };
 
 PathWorker.isWorker = typeof DedicatedWorkerGlobalScope !== "undefined";

@@ -1,33 +1,33 @@
 
 /**
  * PathMain
- * Static Class
+ * Singleton
  */
-class PathMain {
-  static defaultBoneName = "bone";
-  static isUseMin = false;
+var PathMain = {
+  defaultBoneName: "bone",
+  isUseMin: false,
   
-  static worker = null;
-  static useWorker = false;
+  worker: null,
+  useWorker: false,
   
-  static path = null;
-  static canvas = null;
-  static subCanvas = null;
-  static completeFunc = null;
+  path: null,
+  canvas: null,
+  subCanvas: null,
+  completeFunc: null,
   
   /**
    * @param {Object} obj
    * @param {Array} opt - postMessage option
    */
-  static postMessage(obj, opt) {
+  postMessage: function(obj, opt) {
     if(PathMain.useWorker) {
       PathMain.worker.postMessage(obj, opt);
     } else {
       window.dispatchEvent(new CustomEvent("message", {bubbles: true, detail: obj}));
     }
-  };
+  },
   
-  static initWorker() {
+  initWorker: function() {
     let canvas = PathMain.canvas;
     let subCanvas = PathMain.subCanvas;
     let viewWidth = document.documentElement.clientWidth;
@@ -114,14 +114,14 @@ class PathMain {
     if(!!PathMain.path) {
       PathMain.postMessage({cmd: "load-bin", path: PathMain.path});
     }
-  };
+  },
   
   /**
    * @param {String} type
    * @param {String} fileName
    * @param {String} data
    */
-  static downloadData(type, fileName, data) {
+  downloadData: function(type, fileName, data) {
     let a = document.createElement("a");
     document.body.appendChild(a);
     a.style = "display: none";
@@ -133,25 +133,25 @@ class PathMain {
     a.download = fileName;
     a.click();
     a.remove();
-  };
+  },
   
-  static outputBin() {
+  outputBin: function() {
     PathMain.postMessage({cmd: "output-bin"});
-  };
+  },
   
   /**
    * @param {String} path - file path info
    */
-  static loadBone(path) {
+  loadBone: function(path) {
     PathMain.postMessage({cmd: "load-bone", path: path});
-  };
+  },
   
   /**
    * @param {String} path - file path info
    * @param {Function} completeFunc - call when completed load
    * @param {Boolean} isDebug - use debug mode when true
    */
-  static init(path, completeFunc, isDebug) {
+  init: function(path, completeFunc, isDebug) {
     let container = document.getElementById("path-container");
     if(!container) {
       console.error("CanvasContainer is not found.");
@@ -188,6 +188,5 @@ class PathMain {
       script.src = filePath;
       document.body.appendChild(script);
     }
-  };
+  },
 };
-console.log("script load");

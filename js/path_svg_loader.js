@@ -1,26 +1,26 @@
 /**
  * SVGLoader
- * Static Class
+ * Singleton
  */
-class SVGLoader {
-  static FILE_KIND_BASE = "BASE";
-  static FILE_KIND_BONE = "BONE";
-  static FILE_KIND_SMRT = "SMRT";
-  static initKind = "";
+var SVGLoader = {
+  FILE_KIND_BASE: "BASE",
+  FILE_KIND_BONE: "BONE",
+  FILE_KIND_SMRT: "SMRT",
+  initKind: "",
   
-  static width = 0;
-  static height = 0;
-  static groupNameToIDList = null;
-  static masksList = null;
-  static domList = [];
+  width: 0,
+  height: 0,
+  groupNameToIDList: null,
+  masksList: null,
+  domList: [],
   
-  static loadWorker;
+  loadWorker: null,
   
   /**
    * @param {String} maskStr - mask attribute of element
    * @return {GroupObj} - mask group
    */
-  static getMaskId(maskStr) {
+  getMaskId: function(maskStr) {
     if(!maskStr) return null;
     let maskID = maskStr.replace(/^url\(#/, "").replace(/\)$/, "");
     if(!!this.masksList[maskID]) {
@@ -28,13 +28,13 @@ class SVGLoader {
     }
     console.error("unknown mask name: " + maskStr);
     return null;
-  };
+  },
   
   /**
    * @param {String} dataAttribute - d attribute of path element
    * @return {Array} - list of path data
    */
-  static makePathDataList(dataAttribute) {
+  makePathDataList: function(dataAttribute) {
     let ret = [];
     
     let data;
@@ -75,14 +75,14 @@ class SVGLoader {
       }
     }
     return ret;
-  };
+  },
   
   /**
    * @param {Integer} uid - group id
    * @param {HTMLElement} pathDOM - path element
    * @param {CSSStyleDeclaration} style - window.getComputedStyle(pathDOM)
    */
-  static makePath(uid, pathDOM, style) {
+  makePath: function(uid, pathDOM, style) {
     let fillStyle = style.fill;
     if(fillStyle == "none") {
       fillStyle = "transparent";
@@ -111,7 +111,7 @@ class SVGLoader {
       lineWidth: lineWidth,
       strokeStyle: strokeStyle,
     });
-  };
+  },
   
   /**
    * @param {Integer} uid - group id
@@ -121,7 +121,7 @@ class SVGLoader {
    * @param {Integer} frame
    * @param {String} actionName
    */
-  static addActionPath(uid, pathID, pathDOM, style, frame, actionName) {
+  addActionPath: funtion(uid, pathID, pathDOM, style, frame, actionName) {
     let fillStyle = (!pathDOM)? "none" : style.fill;
     if(fillStyle == "none") {
       fillStyle = "transparent";
@@ -153,13 +153,13 @@ class SVGLoader {
     });
     
     pathDataList = null;
-  };
+  },
   
   /**
    * @param {String} dataAttribute - d attribute of path element
    * @return {Array} - list of path data
    */
-  static makeBonePathDataList(dataAttribute) {
+  makeBonePathDataList: function(dataAttribute) {
     let ret = [];
     
     let data;
@@ -216,13 +216,13 @@ class SVGLoader {
     }
     
     return ret;
-  };
+  },
   
   /**
    * @param {Integer} uid - group id
    * @param {HTMLElement} pathDOM - path element
    */
-  static makeBonePath(uid, pathDOM) {
+  makeBonePath: function(uid, pathDOM) {
     let pathDataList = this.makeBonePathDataList(pathDOM.getAttribute("d"));
     let pathDiffList = [];
     pathDataList.forEach(d=>pathDiffList.push((!d.pos)? undefined : d.pos.slice().fill(0)));
@@ -235,7 +235,7 @@ class SVGLoader {
     });
     pathDataList = null;
     pathDiffList = null;
-  };
+  },
   
   /**
    * @param {Integer} uid - group id
@@ -244,7 +244,7 @@ class SVGLoader {
    * @param {Integer} frame - frame number
    * @param {String} actionName
    */
-  static addBoneActionPath(uid, pathID, pathDOM, frame, actionName) {
+  addBoneActionPath: function(uid, pathID, pathDOM, frame, actionName) {
     let pathDataList = null;
     if(!!pathDOM) {
       pathDataList = this.makeBonePathDataList(pathDOM.getAttribute("d"));
@@ -259,13 +259,13 @@ class SVGLoader {
       actionName: actionName,
     });
     pathDataList = null;
-  };
+  },
   
   /**
    * @param {HTMLElement} groupDOM - group element
    * @return {GroupObj}
    */
-  static makeGroup(groupDOM) {
+  makeGroup: function(groupDOM) {
     let name = groupDOM.getAttribute("id");
     let uid = this.groupNameToIDList[name];
     let isBone = name.startsWith(PathMain.defaultBoneName);
@@ -327,7 +327,7 @@ class SVGLoader {
     childGroups = null;
     
     return uid;
-  };
+  },
   
   /**
    * @param {Integer} index
@@ -336,7 +336,7 @@ class SVGLoader {
    * @param {Integer} frame
    * @param {String} actionName
    */
-  static addActionGroup(index, groupDOM, name, frame, actionName) {
+  addActionGroup: function(index, groupDOM, name, frame, actionName) {
     if(frame % 10 == 0 && index == 0) console.log("add action DOM: " + actionName + " - " + frame);
     
     let uid = SVGLoader.groupNameToIDList[name];
@@ -386,12 +386,12 @@ class SVGLoader {
     });
     
     childGroups = null;
-  };
+  },
   
   /**
    * @param {String} actionName
    */
-  static addActionFromList(actionName) {
+  addActionFromList: function(actionName) {
     if(!this.domList) {
       console.error("groups dom list is not found");
       return;
@@ -452,12 +452,12 @@ class SVGLoader {
     groupsDOMArr = null;
     baseDom = null;
     actionGroup = null;
-  };
+  },
   
   /**
    * @param {HTMLElement} groupDOM - group element
    */
-  static initPathContainer(groupsDOM) {
+  initPathContainer: function(groupsDOM) {
     if(!groupsDOM) {
       console.error("groups dom is not found");
       return null;
@@ -499,7 +499,7 @@ class SVGLoader {
         id: this.makeGroup(child),
       });
     });
-  };
+  },
   
   /**
    * @param {String} kind
@@ -507,7 +507,7 @@ class SVGLoader {
    * @param {Integer} totalFrames
    * @param {Boolean} isEnd
    */
-  static loadFromDOM(kind, actionName, totalFrames) {
+  loadFromDOM: function(kind, actionName, totalFrames) {
     this.initKind = kind;
     if(kind == this.FILE_KIND_BASE) {
       this.initPathContainer(this.domList[0]);
@@ -521,12 +521,12 @@ class SVGLoader {
     });
     
     this.addActionFromList(actionName);
-  };
+  },
   
   /**
    * @param {String} svg
    */
-  static addSvgDOM(svg) {
+  addSvgDOM: function(svg) {
     let div = document.createElement("div");
     div.setAttribute("style", "display:none;");
     div.innerHTML = svg;
@@ -535,28 +535,28 @@ class SVGLoader {
     this.domList[parseInt(svg.match(/id="Frame_(\d+)"/)[1]) - 1] = svgDOM;
     div = null;
     svgDOM = null;
-  };
+  },
   
-  static loadDOMEnd() {
+  loadDOMEnd: function() {
     console.log("DOM END");
     SVGLoader.domList.forEach(dom=>dom.parentNode.remove());
     SVGLoader.domList.length = 0;
     SVGLoader.initKind = "";
     SVGLoader.loadWorker.postMessage({cmd: "load-next"});
-  };
+  },
   
-  static loadEnd() {
+  loadEnd: function() {
     console.log("LOAD END")
     SVGLoader.groupNameToIDList = null;
     SVGLoader.masksList = null;
     PathMain.postMessage({cmd: "load-complete"});
-  };
+  },
   
   /**
    * @param {Array} fileInfoList - [ [ kind, totalFrames, actionName, filePath ], ... ]
    * @param {Function} completeFunc - callback when loading complete
    */
-  static init(fileInfoList, completeFunc = null, isDebug = false) {
+  init: function(fileInfoList, completeFunc = null, isDebug = false) {
     if(!fileInfoList || !Array.isArray(fileInfoList) || !Array.isArray(fileInfoList[0])) {
       console.error("fileInfoList format is woring");
       console.log(fileInfoList);
@@ -596,5 +596,5 @@ class SVGLoader {
     });
     PathMain.init(null, completeFunc, isDebug);
     this.loadWorker.postMessage({cmd: "load", fileInfoList: fileInfoList});
-  };
+  },
 };

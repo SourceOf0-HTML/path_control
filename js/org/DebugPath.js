@@ -1,25 +1,25 @@
 /**
  * DebugPath
- * Static Class
+ * Singleton
  */
-class DebugPath {
-  static isStop = false;
-  static isStep = false;
-  static isShowBones = false;
+var DebugPath = {
+  isStop: false,
+  isStep: false,
+  isShowBones: false,
   
-  static bonePointSize = 2;
-  static boneLineSize = 2;
-  static boneColor = "rgb(0, 255, 0)";
-  static strengthPointColor = "rgba(0, 255, 0, 0.005)";
-  static strengthLineColor = "rgba(0, 255, 0, 0.2)";
+  bonePointSize: 2,
+  boneLineSize: 2,
+  boneColor: "rgb(0, 255, 0)",
+  strengthPointColor: "rgba(0, 255, 0, 0.005)",
+  strengthLineColor: "rgba(0, 255, 0, 0.2)",
   
-  static isShowPoints = false;
-  static pointSize = 2;
-  static pointColor = "rgb(255, 0, 0)";
+  isShowPoints: false,
+  pointSize: 2,
+  pointColor: "rgb(255, 0, 0)",
   
-  static isShowControls = false;
-  static controlSize = 1;
-  static controlColor = "rgb(255, 255, 0)";
+  isShowControls: false,
+  controlSize: 1,
+  controlColor: "rgb(255, 255, 0)",
   
   
   /**
@@ -27,7 +27,7 @@ class DebugPath {
    * @param {Number} mouseX
    * @param {Number} mouseY
    */
-  static moveMouse(pathContainer, x, y) {
+  moveMouse: function(pathContainer, x, y) {
     if(!pathContainer) return;
     x /= pathContainer.pathRatio;
     y /= pathContainer.pathRatio;
@@ -38,13 +38,13 @@ class DebugPath {
       //this.x = x;
       //this.y = y;
     };
-  };
+  },
   
   /**
    * @param {PathContainer} pathContainer
    * @param {String} code - code when fired keyup event
    */
-  static keyUp(pathContainer, code) {
+  keyUp: function(pathContainer, code) {
     switch(code) {
       case "Space":
         this.isStop = !this.isStop;
@@ -72,13 +72,13 @@ class DebugPath {
         postMessage({cmd: "main-confirm", callback: "output-path-container", message: "現在の状態をJSONに出力します"});
         break;
     }
-  };
+  },
   
-  static isDebugDraw() {
+  isDebugDraw: function() {
     return this.isShowBones || this.isShowPoints || this.isShowControls;
-  };
+  },
   
-  static outputJSON(pathContainer) {
+  outputJSON: function(pathContainer) {
     postMessage({
       cmd: "main-download",
       type: "application/json",
@@ -91,13 +91,13 @@ class DebugPath {
         return val;
       }, 2),
     });
-  };
+  },
   
   /**
    * @param {PathContainer} pathContainer
    * @return {ArrayBuffer}
    */
-  static toBin(pathContainer) {
+  toBin: function(pathContainer) {
     if(!pathContainer) {
       console.error("path container is not found");
       return null;
@@ -250,12 +250,12 @@ class DebugPath {
     
     dv = null;
     return buffer.slice(0, sumLength);
-  };
+  },
   
   /**
    * @param {PathContainer} pathContainer
    */
-  static outputBin(pathContainer) {
+  outputBin: function(pathContainer) {
     if(!pathContainer) return;
     let data = this.toBin(PathCtr.pathContainer);
     postMessage({
@@ -264,5 +264,5 @@ class DebugPath {
       fileName: "path_data.bin",
       data: data,
     }, [data]);
-  };
+  },
 };
