@@ -157,6 +157,8 @@ class PathMain {
       console.error("CanvasContainer is not found.");
       return;
     }
+    console.log("start");
+    
     PathMain.path = path;
     PathMain.completeFunc = completeFunc;
     
