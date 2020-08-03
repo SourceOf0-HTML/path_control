@@ -100,7 +100,7 @@ class SVGLoader {
     let pathDiffList = [];
     pathDataList.forEach(d=>pathDiffList.push((!d.pos)? undefined : d.pos.slice().fill(0)));
     
-    PathMain.worker.postMessage({
+    PathMain.postMessage({
       cmd: "new-path",
       uid: uid,
       maskID: this.getMaskId(pathDOM.getAttribute("mask")),
@@ -140,7 +140,7 @@ class SVGLoader {
       pathDataList = this.makePathDataList(pathDOM.getAttribute("d"));
     }
     
-    PathMain.worker.postMessage({
+    PathMain.postMessage({
       cmd: "add-path-action",
       uid: uid,
       pathID: pathID,
@@ -227,7 +227,7 @@ class SVGLoader {
     let pathDiffList = [];
     pathDataList.forEach(d=>pathDiffList.push((!d.pos)? undefined : d.pos.slice().fill(0)));
     
-    PathMain.worker.postMessage({
+    PathMain.postMessage({
       cmd: "new-bone-path",
       uid: uid,
       pathDataList: pathDataList,
@@ -250,7 +250,7 @@ class SVGLoader {
       pathDataList = this.makeBonePathDataList(pathDOM.getAttribute("d"));
     }
     
-    PathMain.worker.postMessage({
+    PathMain.postMessage({
       cmd: "add-bone-path-action",
       uid: uid,
       pathID: pathID,
@@ -272,13 +272,13 @@ class SVGLoader {
     let isPathSkip = (!isBone && this.initKind === this.FILE_KIND_BONE);
     
     if(isBone) {
-      PathMain.worker.postMessage({
+      PathMain.postMessage({
         cmd: "new-bone",
         uid: uid,
         name: name,
       });
     } else {
-      PathMain.worker.postMessage({
+      PathMain.postMessage({
         cmd: "new-group",
         uid: uid,
         name: name,
@@ -317,7 +317,7 @@ class SVGLoader {
     });
     
     if(childGroups.length > 0) {
-      PathMain.worker.postMessage({
+      PathMain.postMessage({
         cmd: "set-child-group-id",
         uid: uid,
         childGroups: childGroups,
@@ -369,7 +369,7 @@ class SVGLoader {
         }
       });
     } else {
-      PathMain.worker.postMessage({
+      PathMain.postMessage({
         cmd: "set-unvisible-path-action",
         uid: uid,
         frame: frame,
@@ -377,7 +377,7 @@ class SVGLoader {
       });
     }
     
-    PathMain.worker.postMessage({
+    PathMain.postMessage({
       cmd: "add-group-action",
       uid: uid,
       childGroups: childGroups,
@@ -466,7 +466,7 @@ class SVGLoader {
     this.width = parseInt(groupsDOM.getAttribute("width").replace("px", ""));
     this.height = parseInt(groupsDOM.getAttribute("height").replace("px", ""));
     
-    PathMain.worker.postMessage({
+    PathMain.postMessage({
       cmd: "create-path-container",
       width: this.width,
       height: this.height,
@@ -494,7 +494,7 @@ class SVGLoader {
     
     Array.prototype.slice.call(groupsDOM.children).forEach(child=>{
       if(child.tagName != "g") return;
-      PathMain.worker.postMessage({
+      PathMain.postMessage({
         cmd: "add-root-group",
         id: this.makeGroup(child),
       });
@@ -513,7 +513,7 @@ class SVGLoader {
       this.initPathContainer(this.domList[0]);
     }
     
-    PathMain.worker.postMessage({
+    PathMain.postMessage({
       cmd: "add-action",
       actionName: actionName,
       frame: -1,
@@ -549,7 +549,7 @@ class SVGLoader {
     console.log("LOAD END")
     SVGLoader.groupNameToIDList = null;
     SVGLoader.masksList = null;
-    PathMain.worker.postMessage({cmd: "load-complete"});
+    PathMain.postMessage({cmd: "load-complete"});
   };
   
   /**
@@ -594,7 +594,7 @@ class SVGLoader {
           break;
       }
     });
-    PathMain.initWorker(completeFunc, isDebug);
+    PathMain.init(null, completeFunc, isDebug);
     this.loadWorker.postMessage({cmd: "load", fileInfoList: fileInfoList});
   };
 };

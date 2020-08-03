@@ -5,87 +5,67 @@
  */
 class PathMain {
   static defaultBoneName = "bone";
-  static worker = null;
   static isUseMin = false;
   
+  static worker = null;
+  static useWorker = false;
+  
+  static path = null;
+  static canvas = null;
+  static subCanvas = null;
+  static completeFunc = null;
+  
   /**
-   * @param {Function} completeFunc - call when completed load
-   * @param {Boolean} isDebug - use debug mode when true
+   * @param {Object} obj
+   * @param {Array} opt - postMessage option
    */
-  static initWorker(completeFunc, isDebug) {
-    let container = document.getElementById("path-container");
-    if(!container) {
-      console.error("CanvasContainer is not found.");
-      return;
+  static postMessage(obj, opt) {
+    if(PathMain.useWorker) {
+      PathMain.worker.postMessage(obj, opt);
+    } else {
+      window.dispatchEvent(new CustomEvent("message", {bubbles: true, detail: obj}));
     }
-    
-    let canvas = document.createElement("canvas");
-    
-    if(!canvas.transferControlToOffscreen) {
-      let text = "this browser is not supported";
-      console.error(text);
-      let p = document.createElement("p");
-      p.textContent = text;
-      p.setAttribute("style", "color:red");
-      container.appendChild(p);
-      return false;
-    }
-    
-    canvas.className = "main-canvas";
-    container.appendChild(canvas);
-    
+  };
+  
+  static initWorker() {
+    let canvas = PathMain.canvas;
+    let subCanvas = PathMain.subCanvas;
     let viewWidth = document.documentElement.clientWidth;
     let viewHeight = document.documentElement.clientHeight;
+    canvas.width = subCanvas.width = viewWidth;
+    canvas.height = subCanvas.height = viewHeight;
     
-    canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + this.viewWidth + "px;height:" + this.viewHeight + "px;");
-    canvas.width = viewWidth;
-    canvas.height = viewHeight;
+    canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + viewWidth + "px;height:" + viewHeight + "px;");
     
-    let fileType = this.isUseMin? ".min.js": ".js";
-    if(isDebug) {
-      fileType = "_debug" + fileType;
-    }
-    this.worker = new Worker("js/path_control" + fileType);
-    
-    this.worker.addEventListener("message", function(e) {
-      let data = e.data;
+    PathMain.worker.addEventListener("message", function(e) {
+      let data = !e.data? e.detail : e.data;
       switch(data.cmd) {
-        case "init-complete":
-          completeFunc();
-          break;
+        case "main-init-complete":
+          PathMain.completeFunc();
+          PathMain.completeFunc = null;
+          return false;
           
-        case "confirm":
+        case "main-confirm":
           if(confirm(data.message)) {
-            PathMain.worker.postMessage({cmd: data.callback});
+            PathMain.postMessage({cmd: data.callback});
           }
-          break;
+          return false;
           
-        case "download":
+        case "main-download":
           PathMain.downloadData(data.type, data.fileName, data.data);
-          break;
+          return false;
           
         default:
-          console.error("unknown command: " + data.cmd);
-          break;
+          if(!e.bubbles) console.error("unknown command: " + data.cmd);
+          return true;
       }
     }, false);
-    
-    let offscreenCanvas = canvas.transferControlToOffscreen();
-    
-    this.worker.postMessage({
-      cmd: "init",
-      viewWidth: viewWidth,
-      viewHeight: viewHeight,
-      canvas: offscreenCanvas,
-      defaultBoneName: this.defaultBoneName,
-    }, [ offscreenCanvas ]);
-    
     
     window.addEventListener("resize", function() {
       let viewWidth = document.documentElement.clientWidth;
       let viewHeight = document.documentElement.clientHeight;
-      canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + PathMain.viewWidth + "px;height:" + PathMain.viewHeight + "px;");
-      PathMain.worker.postMessage({
+      PathMain.canvas.setAttribute("style", "position:fixed;z-index:-1;left:0;top:0;width:" + PathMain.viewWidth + "px;height:" + PathMain.viewHeight + "px;");
+      PathMain.postMessage({
         cmd: "resize-canvas", 
         viewWidth: viewWidth,
         viewHeight: viewHeight,
@@ -93,7 +73,7 @@ class PathMain {
     });
     
     window.addEventListener("mousemove", function(e) {
-      PathMain.worker.postMessage({
+      PathMain.postMessage({
         cmd: "move-mouse", 
         x: e.clientX,
         y: e.clientY,
@@ -101,7 +81,7 @@ class PathMain {
     });
     
     window.addEventListener("touchmove", function(e) {
-      PathMain.worker.postMessage({
+      PathMain.postMessage({
         cmd: "move-mouse", 
         x: e.touches[0].pageX,
         y: e.touches[0].pageY,
@@ -109,13 +89,31 @@ class PathMain {
     });
     
     window.addEventListener("keyup", function(e) {
-      PathMain.worker.postMessage({
+      PathMain.postMessage({
         cmd: "keyup", 
         code: e.code,
       });
     });
     
-    return true;
+    let targetCanvas = PathMain.canvas;
+    let targetSubCanvas = PathMain.subCanvas;
+    if(PathMain.useWorker) {
+      targetCanvas = targetCanvas.transferControlToOffscreen();
+      targetSubCanvas = targetSubCanvas.transferControlToOffscreen();
+    }
+    
+    PathMain.postMessage({
+      cmd: "init",
+      viewWidth: viewWidth,
+      viewHeight: viewHeight,
+      canvas: targetCanvas,
+      subCanvas: targetSubCanvas,
+      defaultBoneName: PathMain.defaultBoneName,
+    }, [ targetCanvas, targetSubCanvas ]);
+    
+    if(!!PathMain.path) {
+      PathMain.postMessage({cmd: "load-bin", path: PathMain.path});
+    }
   };
   
   /**
@@ -138,14 +136,14 @@ class PathMain {
   };
   
   static outputBin() {
-    this.worker.postMessage({cmd: "output-bin"});
+    PathMain.postMessage({cmd: "output-bin"});
   };
   
   /**
    * @param {String} path - file path info
    */
   static loadBone(path) {
-    this.worker.postMessage({cmd: "load-bone", path: path});
+    PathMain.postMessage({cmd: "load-bone", path: path});
   };
   
   /**
@@ -154,8 +152,40 @@ class PathMain {
    * @param {Boolean} isDebug - use debug mode when true
    */
   static init(path, completeFunc, isDebug) {
-    if(this.initWorker(completeFunc, isDebug)) {
-      this.worker.postMessage({cmd: "load-bin", path: path});
+    let container = document.getElementById("path-container");
+    if(!container) {
+      console.error("CanvasContainer is not found.");
+      return;
+    }
+    PathMain.path = path;
+    PathMain.completeFunc = completeFunc;
+    
+    let fileType = PathMain.isUseMin? ".min.js": ".js";
+    if(isDebug) {
+      fileType = "_debug" + fileType;
+    }
+    let filePath = "js/path_control" + fileType;
+    
+    let canvas = PathMain.canvas = document.createElement("canvas");
+    canvas.className = "main-canvas";
+    container.appendChild(canvas);
+    
+    let subCanvas = PathMain.subCanvas = document.createElement("canvas");
+    subCanvas.className = "sub-canvas";
+    subCanvas.style.cssText = "display:none;";
+    container.appendChild(subCanvas);
+    
+    PathMain.useWorker = !!canvas.transferControlToOffscreen;
+    
+    if(PathMain.useWorker) {
+      PathMain.worker = new Worker(filePath);
+      PathMain.initWorker();
+    } else {
+      console.log("this browser is not supported");
+      PathMain.worker = window;
+      let script = document.createElement("script");
+      script.src = filePath;
+      document.body.appendChild(script);
     }
   };
 };

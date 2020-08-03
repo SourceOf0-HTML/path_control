@@ -28,7 +28,9 @@ class PathCtr {
   
   static pathContainer = null;
   static canvas = null;
+  static subCanvas = null;
   static context = null;
+  static subContext = null;
   static viewWidth = 0;
   static viewHeight = 0;
   
@@ -55,8 +57,8 @@ class PathCtr {
    * @param {Number} viewHeight
    */
   static setSize(viewWidth, viewHeight) {
-    PathCtr.canvas.width = PathCtr.viewWidth = viewWidth;
-    PathCtr.canvas.height = PathCtr.viewHeight = viewHeight;
+    PathCtr.canvas.width = PathCtr.subCanvas.width = PathCtr.viewWidth = viewWidth;
+    PathCtr.canvas.height = PathCtr.subCanvas.height = PathCtr.viewHeight = viewHeight;
     if(!!PathCtr.pathContainer) PathCtr.pathContainer.setSize(viewWidth, viewHeight);
     PathCtr.update();
   };
@@ -66,7 +68,7 @@ class PathCtr {
    */
   static loadComplete(pathContainer) {
     PathCtr.pathContainer = PathCtr.initTarget;
-    PathCtr.pathContainer.context = PathCtr.context;
+    PathCtr.pathContainer.context = PathCtr.subContext;
     PathCtr.setSize(PathCtr.viewWidth, PathCtr.viewHeight);
     PathCtr.initTarget = null;
     PathCtr.update();
@@ -87,14 +89,17 @@ class PathCtr {
     
     if(!PathCtr.pathContainer) return;
     
-    PathCtr.context.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
-    PathCtr.pathContainer.draw();
-    
     let actionName = "walk";
     let frameTime = 1 / 24;
     let totalFrames = PathCtr.pathContainer.getAction(actionName).totalFrames;
     
-    if(timestamp - PathCtr.prevTimestamp < frameTime*500) return;
+    PathCtr.subContext.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
+    PathCtr.pathContainer.draw();
+    
+    PathCtr.context.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
+    PathCtr.context.putImageData(PathCtr.subContext.getImageData(0, 0, PathCtr.viewWidth, PathCtr.viewHeight), 0, 0);
+    
+    if(PathWorker.isWorker && timestamp - PathCtr.prevTimestamp < frameTime*500) return;
     
     PathCtr.frameNumber = PathCtr.frameNumber % totalFrames + 1;
     
@@ -119,25 +124,30 @@ class PathCtr {
   };
   
   /**
-   * @param {offscreenCanvas} canvas
+   * @param {OffscreenCanvas or Canvas} canvas
+   * @param {OffscreenCanvas or Canvas} subCanvas
    * @param {Number} viewWidth
    * @param {Number} viewHeight
    */
-  static init(canvas, viewWidth, viewHeight) {
-    if(!canvas) {
+  static init(canvas, subCanvas, viewWidth, viewHeight) {
+    if(!canvas || !subCanvas) {
       console.error("canvas is not found.");
       return;
     }
     
     PathCtr.canvas = canvas;
     PathCtr.context = canvas.getContext("2d");
-    if(!PathCtr.context) {
+    
+    PathCtr.subCanvas = subCanvas;
+    PathCtr.subContext = subCanvas.getContext("2d");
+    
+    if(!PathCtr.context || !PathCtr.subContext) {
       console.error("context is not found.");
       return;
     }
     
-    canvas.width = PathCtr.viewWidth = viewWidth;
-    canvas.height = PathCtr.viewHeight = viewHeight;
+    canvas.width = subCanvas.width = PathCtr.viewWidth = viewWidth;
+    canvas.height = subCanvas.height = PathCtr.viewHeight = viewHeight;
   };
 };
 

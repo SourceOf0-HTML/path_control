@@ -69,7 +69,7 @@ class DebugPath {
         this.isShowPoints = !this.isShowPoints;
         break;
       case "KeyO":
-        postMessage({cmd: "confirm", callback: "output-path-container", message: "現在の状態をJSONに出力します"});
+        postMessage({cmd: "main-confirm", callback: "output-path-container", message: "現在の状態をJSONに出力します"});
         break;
     }
   };
@@ -80,7 +80,7 @@ class DebugPath {
   
   static outputJSON(pathContainer) {
     postMessage({
-      cmd: "download",
+      cmd: "main-download",
       type: "application/json",
       fileName: "pathContainer.json",
       data: JSON.stringify(pathContainer, (key, val)=>{
@@ -259,7 +259,7 @@ class DebugPath {
     if(!pathContainer) return;
     let data = this.toBin(PathCtr.pathContainer);
     postMessage({
-      cmd: "download",
+      cmd: "main-download",
       type: "octet/stream",
       fileName: "path_data.bin",
       data: data,
