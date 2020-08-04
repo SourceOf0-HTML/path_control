@@ -121,7 +121,7 @@ var SVGLoader = {
    * @param {Integer} frame
    * @param {String} actionName
    */
-  addActionPath: funtion(uid, pathID, pathDOM, style, frame, actionName) {
+  addActionPath: function(uid, pathID, pathDOM, style, frame, actionName) {
     let fillStyle = (!pathDOM)? "none" : style.fill;
     if(fillStyle == "none") {
       fillStyle = "transparent";
@@ -430,9 +430,8 @@ var SVGLoader = {
     let actionGroup = [];
     Object.keys(this.groupNameToIDList).forEach(name=> {
       let base = baseDom.getElementById(name);
-      if(!base) return;
       groupsDOMArr.some(targetDom=> {
-        if( !targetDom || !base.isEqualNode(targetDom.getElementById(name)) ) {
+        if( !targetDom || !base || !base.isEqualNode(targetDom.getElementById(name)) ) {
           actionGroup.push(name);
           return true;
         }
@@ -440,10 +439,10 @@ var SVGLoader = {
       base = null;
     });
     
-    groupsDOMArr.forEach((targetDom, frame)=>{
+    groupsDOMArr.forEach((targetDom, frame)=> {
       if(frame == 0) return;
       if(frame % 10 == 0) console.log("add action : " + actionName + " - " + frame);
-      actionGroup.forEach((name, i)=>{
+      actionGroup.forEach((name, i)=> {
         setTimeout(this.addActionGroup, 0, i, targetDom.getElementById(name), name, frame, actionName);
       });
     });

@@ -71,6 +71,7 @@ var PathCtr = {
     PathCtr.pathContainer.context = PathCtr.subContext;
     PathCtr.setSize(PathCtr.viewWidth, PathCtr.viewHeight);
     PathCtr.initTarget = null;
+    PathCtr.loadState(PathCtr.pathContainer);
     PathCtr.update();
   },
   
