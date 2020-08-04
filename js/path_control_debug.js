@@ -92,7 +92,15 @@ var PathCtr = {
     
     let actionName = "walk";
     let frameTime = 1 / 24;
-    let totalFrames = PathCtr.pathContainer.getAction(actionName).totalFrames;
+    let totalFrames = 1;
+    let action = PathCtr.pathContainer.getAction(actionName);
+    if(!!action) {
+      totalFrames = action.totalFrames;
+    } else {
+      actionName = "base";
+      action = PathCtr.pathContainer.getAction(actionName);
+      if(!!action) totalFrames = action.totalFrames;
+    }
     
     PathCtr.subContext.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
     PathCtr.pathContainer.draw();
@@ -1901,6 +1909,7 @@ var DebugPath = {
     y /= pathContainer.pathRatio;
     
     let bone = pathContainer.getGroup("bone1_clothes");
+    if(!bone) return;
     bone.control = function(pathContainer) {
       this.rotation = Math.atan2(x - this.currentState.pos[0] - pathContainer.x, - y + this.currentState.pos[1]);
       //this.x = x;

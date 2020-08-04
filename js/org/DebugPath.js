@@ -33,6 +33,7 @@ var DebugPath = {
     y /= pathContainer.pathRatio;
     
     let bone = pathContainer.getGroup("bone1_clothes");
+    if(!bone) return;
     bone.control = function(pathContainer) {
       this.rotation = Math.atan2(x - this.currentState.pos[0] - pathContainer.x, - y + this.currentState.pos[1]);
       //this.x = x;

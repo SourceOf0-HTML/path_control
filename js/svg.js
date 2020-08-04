@@ -2,8 +2,8 @@ function loadComplete() {
   //PathMain.loadBone("../resource/bones.json");
 }
 SVGLoader.init([
-// [SVGLoader.FILE_KIND_BASE, 1120, "base", "../resource/base_single/original_single_"],
-  [SVGLoader.FILE_KIND_BASE, 800, "base", "../resource/base_single/original_single_"],
+ [SVGLoader.FILE_KIND_BASE, 1120, "base", "../resource/base_single/original_single_"],
+//  [SVGLoader.FILE_KIND_BASE, 800, "base", "../resource/base_single/original_single_"],
 
 //  [SVGLoader.FILE_KIND_BASE,   1, "base", "../resource/base/base_"],
 
