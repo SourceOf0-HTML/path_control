@@ -68,7 +68,7 @@ var PathCtr = {
    */
   loadComplete: function(pathContainer) {
     PathCtr.pathContainer = PathCtr.initTarget;
-    PathCtr.pathContainer.context = PathCtr.subContext;
+    PathCtr.pathContainer.context = PathWorker.isWorker? PathCtr.context:PathCtr.subContext;
     PathCtr.setSize(PathCtr.viewWidth, PathCtr.viewHeight);
     PathCtr.initTarget = null;
     PathCtr.loadState(PathCtr.pathContainer);
@@ -102,13 +102,16 @@ var PathCtr = {
       if(!!action) totalFrames = action.totalFrames;
     }
     
-    PathCtr.subContext.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
-    PathCtr.pathContainer.draw();
-    
-    PathCtr.context.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
-    PathCtr.context.putImageData(PathCtr.subContext.getImageData(0, 0, PathCtr.viewWidth, PathCtr.viewHeight), 0, 0);
-    
-    if(PathWorker.isWorker && timestamp - PathCtr.prevTimestamp < frameTime*500) return;
+    if(PathWorker.isWorker) {
+      PathCtr.context.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
+      PathCtr.pathContainer.draw();
+      if(timestamp - PathCtr.prevTimestamp < frameTime*500) return;
+    } else {
+      PathCtr.subContext.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
+      PathCtr.pathContainer.draw();
+      PathCtr.context.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
+      PathCtr.context.putImageData(PathCtr.subContext.getImageData(0, 0, PathCtr.viewWidth, PathCtr.viewHeight), 0, 0);
+    }
     
     PathCtr.frameNumber = PathCtr.frameNumber % totalFrames + 1;
     
