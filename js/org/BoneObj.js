@@ -48,52 +48,6 @@ class BoneObj extends Sprite {
   };
   
   /**
-   * @param {PathContainer} pathContainer
-   * @param {Object} data - data to set
-   */
-  setJSONData(pathContainer, data) {
-    if(!pathContainer || !data) return;
-    PathCtr.loadState("BONE:" + this.id);
-    
-    let bone = pathContainer.getBone(data.parent);
-    if("parent" in data && !!bone) {
-      this.parentID = bone.uid;
-      PathCtr.loadState("  parentID:" + this.parentID + "(" + data.parent + ")");
-    }
-    
-    if("isParentPin" in data && (typeof data.isParentPin === "boolean")) {
-      this.isParentPin = data.isParentPin;
-      PathCtr.loadState("  isParentPin:" + this.isParentPin);
-    }
-    
-    if("feedback" in data && (typeof data.feedback === "boolean")) {
-      this.feedback = data.feedback;
-      PathCtr.loadState("  feedback:" + this.feedback);
-    }
-    
-    if("strength" in data && Number.isFinite(data.strength)) {
-      this.strength = data.strength;
-      PathCtr.loadState("  strength:" + this.strength);
-    }
-    
-    if("isSmartBone" in data && (typeof data.isSmartBone === "boolean")) {
-      this.isSmartBone = data.isSmartBone;
-      PathCtr.loadState("  isSmartBone:" + this.isSmartBone);
-    }
-    
-    if("smartBase" in data && Number.isFinite(data.smartBase)) {
-      this.smartBase = data.smartBase/180 * Math.PI;
-      PathCtr.loadState("  smartBase:" + this.smartBase);
-    }
-    
-    if("smartMax" in data && Number.isFinite(data.smartMax)) {
-      this.smartMax = data.smartMax/180 * Math.PI;
-      PathCtr.loadState("  smartMax:" + this.smartMax);
-    }
-    
-  };
-  
-  /**
    * @param {Integer} totalFrames - action total frames
    */
   getSmartFrame(totalFrames) {

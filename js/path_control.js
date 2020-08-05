@@ -761,26 +761,6 @@ class GroupObj extends Sprite {
   
   /**
    * @param {PathContainer} pathContainer
-   * @param {Array} nameList - bone name list
-   */
-  setFlexiBones(pathContainer, nameList) {
-    if(!nameList || !Array.isArray(nameList) || nameList.length == 0) return;
-    PathCtr.loadState("GROUP:" + this.id);
-    
-    this.flexi.length = 0;
-    
-    nameList.forEach(name=> {
-      let bone = pathContainer.getBone(name);
-      if(!!bone) {
-        PathCtr.loadState("  flexi:");
-        this.flexi.push(bone.uid);
-        PathCtr.loadState("    " + name);
-      }
-    });
-  };
-  
-  /**
-   * @param {PathContainer} pathContainer
    */
   preprocessing(pathContainer) {
     this.reset();
@@ -998,52 +978,6 @@ class BoneObj extends Sprite {
       distance,
       angle,
     };
-  };
-  
-  /**
-   * @param {PathContainer} pathContainer
-   * @param {Object} data - data to set
-   */
-  setJSONData(pathContainer, data) {
-    if(!pathContainer || !data) return;
-    PathCtr.loadState("BONE:" + this.id);
-    
-    let bone = pathContainer.getBone(data.parent);
-    if("parent" in data && !!bone) {
-      this.parentID = bone.uid;
-      PathCtr.loadState("  parentID:" + this.parentID + "(" + data.parent + ")");
-    }
-    
-    if("isParentPin" in data && (typeof data.isParentPin === "boolean")) {
-      this.isParentPin = data.isParentPin;
-      PathCtr.loadState("  isParentPin:" + this.isParentPin);
-    }
-    
-    if("feedback" in data && (typeof data.feedback === "boolean")) {
-      this.feedback = data.feedback;
-      PathCtr.loadState("  feedback:" + this.feedback);
-    }
-    
-    if("strength" in data && Number.isFinite(data.strength)) {
-      this.strength = data.strength;
-      PathCtr.loadState("  strength:" + this.strength);
-    }
-    
-    if("isSmartBone" in data && (typeof data.isSmartBone === "boolean")) {
-      this.isSmartBone = data.isSmartBone;
-      PathCtr.loadState("  isSmartBone:" + this.isSmartBone);
-    }
-    
-    if("smartBase" in data && Number.isFinite(data.smartBase)) {
-      this.smartBase = data.smartBase/180 * Math.PI;
-      PathCtr.loadState("  smartBase:" + this.smartBase);
-    }
-    
-    if("smartMax" in data && Number.isFinite(data.smartMax)) {
-      this.smartMax = data.smartMax/180 * Math.PI;
-      PathCtr.loadState("  smartMax:" + this.smartMax);
-    }
-    
   };
   
   /**
@@ -1614,11 +1548,68 @@ var BinaryLoader = {
  * Singleton
  */
 var BoneLoader = {
+  
   /**
    * @param {String} filePath - binary file path
    */
   load: function(filePath, pathContainer) {
     let request = new XMLHttpRequest();
+    let setJSONData =(bone, data)=> {
+      if(!bone || !data) return;
+      PathCtr.loadState("BONE:" + bone.id);
+      
+      let parentBone = pathContainer.getBone(data.parent);
+      if("parent" in data && !!parentBone) {
+        bone.parentID = parentBone.uid;
+        PathCtr.loadState("  parentID:" + bone.parentID + "(" + data.parent + ")");
+      }
+      
+      if("isParentPin" in data && (typeof data.isParentPin === "boolean")) {
+        bone.isParentPin = data.isParentPin;
+        PathCtr.loadState("  isParentPin:" + bone.isParentPin);
+      }
+      
+      if("feedback" in data && (typeof data.feedback === "boolean")) {
+        bone.feedback = data.feedback;
+        PathCtr.loadState("  feedback:" + bone.feedback);
+      }
+      
+      if("strength" in data && Number.isFinite(data.strength)) {
+        bone.strength = data.strength;
+        PathCtr.loadState("  strength:" + bone.strength);
+      }
+      
+      if("isSmartBone" in data && (typeof data.isSmartBone === "boolean")) {
+        bone.isSmartBone = data.isSmartBone;
+        PathCtr.loadState("  isSmartBone:" + bone.isSmartBone);
+      }
+      
+      if("smartBase" in data && Number.isFinite(data.smartBase)) {
+        bone.smartBase = data.smartBase/180 * Math.PI;
+        PathCtr.loadState("  smartBase:" + bone.smartBase);
+      }
+      
+      if("smartMax" in data && Number.isFinite(data.smartMax)) {
+        bone.smartMax = data.smartMax/180 * Math.PI;
+        PathCtr.loadState("  smartMax:" + bone.smartMax);
+      }
+    };
+    
+    let setFlexiBones =(group, nameList)=> {
+      if(!nameList || !Array.isArray(nameList) || nameList.length == 0) return;
+      PathCtr.loadState("GROUP:" + group.id);
+      
+      group.flexi.length = 0;
+      
+      nameList.forEach(name=> {
+        let bone = pathContainer.getBone(name);
+        if(!!bone) {
+          PathCtr.loadState("  flexi:");
+          group.flexi.push(bone.uid);
+          PathCtr.loadState("    " + name);
+        }
+      });
+    };
     
     request.onload = function(e) {
       let target = e.target;
@@ -1633,7 +1624,7 @@ var BoneLoader = {
             console.error("bone is not found : " + id);
             return;
           }
-          bone.setJSONData(pathContainer, ret.bones[id]);
+          setJSONData(bone, ret.bones[id]);
         });
       }
       if(!!ret.flexi) {
@@ -1643,7 +1634,7 @@ var BoneLoader = {
             console.error("group is not found : " + name);
             return;
           }
-          group.setFlexiBones(pathContainer, ret.flexi[name]);
+          setFlexiBones(group, ret.flexi[name]);
         });
       }
       

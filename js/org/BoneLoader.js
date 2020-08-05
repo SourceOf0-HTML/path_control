@@ -4,11 +4,68 @@
  * Singleton
  */
 var BoneLoader = {
+  
   /**
    * @param {String} filePath - binary file path
    */
   load: function(filePath, pathContainer) {
     let request = new XMLHttpRequest();
+    let setJSONData =(bone, data)=> {
+      if(!bone || !data) return;
+      PathCtr.loadState("BONE:" + bone.id);
+      
+      let parentBone = pathContainer.getBone(data.parent);
+      if("parent" in data && !!parentBone) {
+        bone.parentID = parentBone.uid;
+        PathCtr.loadState("  parentID:" + bone.parentID + "(" + data.parent + ")");
+      }
+      
+      if("isParentPin" in data && (typeof data.isParentPin === "boolean")) {
+        bone.isParentPin = data.isParentPin;
+        PathCtr.loadState("  isParentPin:" + bone.isParentPin);
+      }
+      
+      if("feedback" in data && (typeof data.feedback === "boolean")) {
+        bone.feedback = data.feedback;
+        PathCtr.loadState("  feedback:" + bone.feedback);
+      }
+      
+      if("strength" in data && Number.isFinite(data.strength)) {
+        bone.strength = data.strength;
+        PathCtr.loadState("  strength:" + bone.strength);
+      }
+      
+      if("isSmartBone" in data && (typeof data.isSmartBone === "boolean")) {
+        bone.isSmartBone = data.isSmartBone;
+        PathCtr.loadState("  isSmartBone:" + bone.isSmartBone);
+      }
+      
+      if("smartBase" in data && Number.isFinite(data.smartBase)) {
+        bone.smartBase = data.smartBase/180 * Math.PI;
+        PathCtr.loadState("  smartBase:" + bone.smartBase);
+      }
+      
+      if("smartMax" in data && Number.isFinite(data.smartMax)) {
+        bone.smartMax = data.smartMax/180 * Math.PI;
+        PathCtr.loadState("  smartMax:" + bone.smartMax);
+      }
+    };
+    
+    let setFlexiBones =(group, nameList)=> {
+      if(!nameList || !Array.isArray(nameList) || nameList.length == 0) return;
+      PathCtr.loadState("GROUP:" + group.id);
+      
+      group.flexi.length = 0;
+      
+      nameList.forEach(name=> {
+        let bone = pathContainer.getBone(name);
+        if(!!bone) {
+          PathCtr.loadState("  flexi:");
+          group.flexi.push(bone.uid);
+          PathCtr.loadState("    " + name);
+        }
+      });
+    };
     
     request.onload = function(e) {
       let target = e.target;
@@ -23,7 +80,7 @@ var BoneLoader = {
             console.error("bone is not found : " + id);
             return;
           }
-          bone.setJSONData(pathContainer, ret.bones[id]);
+          setJSONData(bone, ret.bones[id]);
         });
       }
       if(!!ret.flexi) {
@@ -33,7 +90,7 @@ var BoneLoader = {
             console.error("group is not found : " + name);
             return;
           }
-          group.setFlexiBones(pathContainer, ret.flexi[name]);
+          setFlexiBones(group, ret.flexi[name]);
         });
       }
       

@@ -17,26 +17,6 @@ class GroupObj extends Sprite {
   
   /**
    * @param {PathContainer} pathContainer
-   * @param {Array} nameList - bone name list
-   */
-  setFlexiBones(pathContainer, nameList) {
-    if(!nameList || !Array.isArray(nameList) || nameList.length == 0) return;
-    PathCtr.loadState("GROUP:" + this.id);
-    
-    this.flexi.length = 0;
-    
-    nameList.forEach(name=> {
-      let bone = pathContainer.getBone(name);
-      if(!!bone) {
-        PathCtr.loadState("  flexi:");
-        this.flexi.push(bone.uid);
-        PathCtr.loadState("    " + name);
-      }
-    });
-  };
-  
-  /**
-   * @param {PathContainer} pathContainer
    */
   preprocessing(pathContainer) {
     this.reset();
