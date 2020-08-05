@@ -4,6 +4,16 @@
  * Singleton
  */
 var BinaryLoader = {
+  bonePropList: {
+    parentID: 1,
+    isParentPin: 2,
+    feedback: 3,
+    strength: 4,
+    isSmartBone: 5,
+    smartBase: 6,
+    smartMax: 7,
+  },
+  
   /**
    * @param {ArrayBuffer} buffer
    * @return {PathContainer}
@@ -134,20 +144,52 @@ var BinaryLoader = {
       let paths = getArray(getUint16, getPath);
       
       if(name.startsWith(PathCtr.defaultBoneName)) {
-        return new BoneObj(
+        let bone = new BoneObj(
           i,
           name,
           paths,
           getArray(getUint8, getUint16)
         );
+        let kind = getUint8();
+        while(kind > 0) {
+          switch(kind) {
+            case BinaryLoader.bonePropList["parentID"]:
+              bone.parentID = getUint16();
+              break;
+            case BinaryLoader.bonePropList["isParentPin"]:
+              bone.isParentPin = true;
+              break;
+            case BinaryLoader.bonePropList["feedback"]:
+              bone.feedback = true;
+              break;
+            case BinaryLoader.bonePropList["strength"]:
+              bone.strength = getFloat32();
+              break;
+            case BinaryLoader.bonePropList["isSmartBone"]:
+              bone.isSmartBone = true;
+              break;
+            case BinaryLoader.bonePropList["smartBase"]:
+              bone.smartBase = getFloat32() / 180 * Math.PI;
+              break;
+            case BinaryLoader.bonePropList["smartMax"]:
+              let rad = getFloat32();
+              bone.smartMax = rad / 180 * Math.PI;
+              break;
+          };
+          kind = getUint8();
+        }
+        
+        return bone;
       } else {
-        return new GroupObj(
+        let group = new GroupObj(
           i,
           name,
           paths,
           getAction(()=>getArray(getUint8, getUint16)),
           maskIdToUse
         );
+        group.flexi = getArray(getUint8, getUint16);
+        return group;
       }
     };
     
@@ -159,7 +201,10 @@ var BinaryLoader = {
     let actionListNum = getUint8();
     if(actionListNum > 0) {
       for(let i = 0; i < actionListNum; ++i) {
-        pathContainer.addAction(getString(), getUint8(), getUint16());
+        let action = pathContainer.addAction(getString(), getUint8(), getUint16());
+        if(getUint8()) {
+          action.smartBoneID = getUint16();
+        }
       }
     }
     

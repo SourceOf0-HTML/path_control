@@ -1,82 +1,98 @@
 
 PathContainer
- originalWidth  : Uint16
- originalHeight : Uint16
+ originalWidth : Uint16
+ originalHeight: Uint16
  actionList
-   length : Uint8
+   length: Uint8
    key
-     length : Uint8
-     String : Uint16Array
+     length: Uint8
+     String: Uint16Array
    values
-     id : Uint8
-     totalFrames : Uint16
+     id: Uint8
+     totalFrames: Uint16
+     Uint8 ( == 1: add @ data)
+       smartBoneID: Uint16 @
  rootGroups
-   length : Uint8
-   groupID : Uint16
+   length: Uint8
+   groupID: Uint16
  groups
-   length : Uint16
+   length: Uint16
    GroupObj
 
 
 GroupObj
  id
-   length : Uint8
-   String : Uint16Array
+   length: Uint8
+   String: Uint16Array
  maskIdToUse
-   groupID : Uint16
+   groupID: Uint16
  paths
-   length : Uint16
-   Array : PathObj
+   length: Uint16
+   Array: PathObj
  childGroups
    ActionContainer
      <Data>
-       length : Uint8
-       groupID : Uint16
+       length: Uint8
+       groupID: Uint16
+ flexi
+   length: Uint8
+   groupID: Uint16
+ 
+ (bone data)
+ kind: 
+  0: none
+  1: parentID: getUint16
+  2: isParentPin: true
+  3: feedback: true
+  4: strength: Float32
+  5: isSmartBone: true
+  6: smartBase: Float32(Degree measure)
+  7: smartMax: Float32(Degree measure)
 
 
 PathObj
  maskIdToUse
-   groupID : Uint16
+   groupID: Uint16
  fillRule
-   nonzero = 0, evenodd = 1 : Uint8
+   nonzero = 0, evenodd = 1: Uint8
  lineWidth
    ActionContainer
      <Data>
-     val : Float32
+     val: Float32
  fillStyle
    ActionContainer
      <Data>
-     A : Uint8
-     R : Uint8
-     G : Uint8
-     B : Uint8
+     A: Uint8
+     R: Uint8
+     G: Uint8
+     B: Uint8
  strokeStyle
    ActionContainer
      <Data>
-     A : Uint8
-     R : Uint8
-     G : Uint8
-     B : Uint8
+     A: Uint8
+     R: Uint8
+     G: Uint8
+     B: Uint8
  pathDataList
-   length : Uint16
-   Array : PathData
+   length: Uint16
+   Array: PathData
  pathDiffList
    ActionContainer
      <Data>
-     length : Uint16
-     Array : PathData.pos
+     length: Uint16
+     Array: PathData.pos
 
 PathData
  type
-   M = 0, L = 1, C = 2, Z = 3 : Uint8
+   M = 0, L = 1, C = 2, Z = 3: Uint8
  pos
-   Array : Int16Array ( length: M = 2, C = 6, Z = 0 )
+   Array: Int16Array ( length: M = 2, C = 6, Z = 0 )
 
 
 ActionContainer
  hasAction
-   false = 0, true = 1 : Uint8 ( == true : add @ data )
+   false = 0, true = 1: Uint8 ( == true: add @ data )
  data
-   actionID(length) : Uint8 @
-     frame(length) : Uint16 @
+   actionID(length): Uint8 @
+     frame(length): Uint16 @
        <Data>

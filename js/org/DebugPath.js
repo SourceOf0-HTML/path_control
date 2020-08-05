@@ -220,10 +220,25 @@ var DebugPath = {
       
       if(BoneObj.prototype.isPrototypeOf(group)) {
         setArray(group.childGroups, setUint8, setUint16);
+        Object.keys(BinaryLoader.bonePropList).map(propName=> {
+          if(typeof group[propName] === "undefined") return;
+          setUint8(BinaryLoader.bonePropList[propName]);
+          switch(propName) {
+            case "parentID": setUint16(group.parentID); break;
+            case "isParentPin": break;
+            case "feedback": break;
+            case "strength": setFloat32(group.strength); break;
+            case "isSmartBone": break;
+            case "smartBase": setFloat32(group.smartBase / Math.PI * 180); break;
+            case "smartMax": setFloat32(group.smartMax / Math.PI * 180); break;
+          };
+        });
+        setUint8(0);
       } else {
         setAction(group.childGroups, childGroups=>{
           setArray(childGroups, setUint8, setUint16);
         });
+        setArray(group.flexi, setUint8, setUint16);
       }
     };
     
@@ -238,6 +253,12 @@ var DebugPath = {
       setString(action.name);
       setUint8(action.id);
       setUint16(action.totalFrames);
+      if(typeof action.smartBoneID === "undefined") {
+        setUint8(0);
+      } else {
+        setUint8(1);
+        setUint16(action.smartBoneID);
+      }
     });
     
     setArray(pathContainer.rootGroups, setUint8, setUint16);

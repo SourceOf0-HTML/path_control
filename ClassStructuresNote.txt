@@ -23,7 +23,7 @@ PathContainer
   ];
 
 
-GroupObj (no action data)
+GroupObj
   visible = visible;          // display when true
   uid = uid;                  // group list ID
   id = id;                    // g tag ID

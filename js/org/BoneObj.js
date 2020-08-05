@@ -8,10 +8,6 @@ class BoneObj extends Sprite {
     this.paths = paths;               // list of PathObj
     this.childGroups = childGroups;   // list of group id
     
-    this.parentID = -1;                // parent bone id
-    this.isParentPin = false;          // parent bone is pin bone
-    this.feedback = false;             // receive feedback from other bones
-    this.strength = 0;                 // scope of influence of bone
     this.effectSprite = new Sprite();  // actual effect sprite
     this.isReady = false;              // can be used for calculation
     
@@ -110,7 +106,7 @@ class BoneObj extends Sprite {
     
     let currentPos = this.currentState.pos;
     let parentID = this.parentID;
-    while(parentID >= 0) {
+    while(typeof parentID !== "undefined") {
       let bone = pathContainer.groups[parentID];
       bone.diff(pathContainer);
       if(this.isParentPin) {
@@ -147,7 +143,7 @@ class BoneObj extends Sprite {
    */
   calc(x0, y0) {
     let strength = this.strength;
-    if(strength == 0) return 0;
+    if(!strength) return 0;
     
     let currentPos = this.currentState.pos;
     let x1 = this.defState.x0;
