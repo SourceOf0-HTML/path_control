@@ -62,7 +62,7 @@ class ActionContainer {
     
     for(let targetFrame = frame; targetFrame >= 0; --targetFrame) {
       let targetData = this.getData(actionID, targetFrame);
-      if(targetData != undefined) return targetData;
+      if(typeof targetData !== "undefined") return targetData;
     }
     return undefined;
   };
@@ -87,18 +87,18 @@ class ActionContainer {
       if(pastFrame <= currentFrame) {
         for(let targetFrame = Math.min(currentFrame, actionDataList.length-1); targetFrame >= pastFrame; --targetFrame) {
           let targetData = actionDataList[targetFrame];
-          if(targetData == undefined) continue;
+          if(typeof targetData === "undefined") continue;
           data = targetData;
           break;
         }
       } else {
         for(let targetFrame = Math.min(pastFrame, actionDataList.length-1); targetFrame >= currentFrame; --targetFrame) {
           let targetData = actionDataList[targetFrame];
-          if(targetData == undefined) continue;
+          if(typeof targetData === "undefined") continue;
           
           for(let targetFrame = Math.min(currentFrame, actionDataList.length-1); targetFrame >= 0; --targetFrame) {
             let targetData = actionDataList[targetFrame];
-            if(targetData == undefined) continue;
+            if(typeof targetData === "undefined") continue;
             data = targetData;
             break;
           }

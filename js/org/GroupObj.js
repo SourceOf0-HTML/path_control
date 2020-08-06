@@ -43,43 +43,43 @@ class GroupObj extends Sprite {
       pathContainer.groups[childGroup].update(pathContainer, groupSprite, flexi);
     });
     
-    if(flexi.length > 0) {
-      this.paths.forEach(path=>{
-        path.resultPathList.forEach(d=>{
-          if(!d.pos || d.pos.length == 0) return;
-          let points = d.pos;
-          let pointsNum = points.length;
-          for(let i = 0; i < pointsNum; i += 2) {
-            if(flexi.length == 1) {
-              let id = flexi[0];
-              if(pathContainer.groups[id].strength == 0) continue;
-              pathContainer.groups[id].effectSprite.getMatrix().applyToPoint(points, i);
-              continue;
-            }
-            
-            let x = points[i];
-            let y = points[i+1];
-            
-            let ratioList = [];
-            let sum = 0;
-            flexi.forEach(id=>{
-              let val = pathContainer.groups[id].calc(x, y);
-              sum += val;
-              ratioList.push(val);
-            });
-            
-            if(sum == 0) continue;
-            
-            points[i] = 0;
-            points[i+1] = 0;
-            
-            flexi.forEach((id, j)=>{
-              pathContainer.groups[id].effectSprite.getMatrix().multAndAddPoint(1 - ratioList[j]/sum, x, y, points, i);
-            });
+    if(flexi.length <= 0) return;
+    
+    this.paths.forEach(path=> {
+      path.resultPathList.forEach(d=>{
+        if(!d.pos || d.pos.length == 0) return;
+        let points = d.pos;
+        let pointsNum = points.length;
+        for(let i = 0; i < pointsNum; i += 2) {
+          if(flexi.length == 1) {
+            let id = flexi[0];
+            if(pathContainer.groups[id].strength == 0) continue;
+            pathContainer.groups[id].effectSprite.getMatrix().applyToPoint(points, i);
+            continue;
           }
-        });
+          
+          let x = points[i];
+          let y = points[i+1];
+          
+          let ratioList = [];
+          let sum = 0;
+          flexi.forEach(id=>{
+            let val = pathContainer.groups[id].calc(x, y);
+            sum += val;
+            ratioList.push(val);
+          });
+          
+          if(sum == 0) continue;
+          
+          points[i] = 0;
+          points[i+1] = 0;
+          
+          flexi.forEach((id, j)=>{
+            pathContainer.groups[id].effectSprite.getMatrix().multAndAddPoint(1 - ratioList[j]/sum, x, y, points, i);
+          });
+        }
       });
-    }
+    });
   };
   
   /**
