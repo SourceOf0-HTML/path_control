@@ -43,8 +43,18 @@ var PathWorker = {
           BoneLoader.load(PathWorker.isWorker? data.path : data.path.slice(1), PathCtr.pathContainer);
           return false;
           
+          
+          /* ---- input ---- */
+          
         case "resize-canvas":
           PathCtr.setSize(data.viewWidth, data.viewHeight);
+          return false;
+          
+        case "change-action":
+          PathCtr.actionName = data.name;
+          if(typeof data.frame !== "undefined" && data.frame >= 0) {
+            PathCtr.frameNumber = data.frame;
+          }
           return false;
           
         case "move-mouse":
@@ -60,6 +70,8 @@ var PathWorker = {
           return false;
           
           
+          /* ---- output ---- */
+          
         case "output-path-container":
           DebugPath.outputJSON(PathCtr.pathContainer);
           return false;
@@ -68,6 +80,8 @@ var PathWorker = {
           DebugPath.outputBin(PathCtr.pathContainer);
           return false;
           
+          
+          /* ---- create data ---- */
           
         case "create-path-container":
           PathCtr.loadState("init path container");

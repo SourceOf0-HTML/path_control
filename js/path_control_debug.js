@@ -21,6 +21,7 @@ var PathCtr = {
     }
   },
   
+  
   defaultCanvasContainerID: "path-container",  // default canvas container element name
   defaultActionName: "base",
   initTarget: null,  // instance to be initialized
@@ -34,8 +35,9 @@ var PathCtr = {
   viewWidth: 0,
   viewHeight: 0,
   
-  fixFrameTime: 1 / 24,
+  actionName: "base",
   frameNumber: 0,
+  fixFrameTime: 1 / 24,
   prevTimestamp: 0,
   average: 0,
   
@@ -90,15 +92,14 @@ var PathCtr = {
     
     if(!PathCtr.pathContainer) return;
     
-    let actionName = "walk";
     let frameTime = 1 / 24;
     let totalFrames = 1;
-    let action = PathCtr.pathContainer.getAction(actionName);
+    let action = PathCtr.pathContainer.getAction(PathCtr.actionName);
     if(!!action) {
       totalFrames = action.totalFrames;
     } else {
-      actionName = "base";
-      action = PathCtr.pathContainer.getAction(actionName);
+      PathCtr.actionName = "base";
+      action = PathCtr.pathContainer.getAction(PathCtr.actionName);
       if(!!action) totalFrames = action.totalFrames;
     }
     
@@ -126,7 +127,7 @@ var PathCtr = {
       PathCtr.fixFrameTime = (frameTime + PathCtr.fixFrameTime) / 2;
     }
     
-    PathCtr.pathContainer.update(PathCtr.frameNumber, actionName);
+    PathCtr.pathContainer.update(PathCtr.frameNumber, PathCtr.actionName);
   },
   
   update: function() {
@@ -1570,7 +1571,6 @@ var BinaryLoader = {
       let buffer = request.response;
       let pathContainer = BinaryLoader.init(buffer);
       PathCtr.loadState("loading completed");
-      PathCtr.loadState(pathContainer);
       
       PathCtr.loadComplete(pathContainer);
       if(!!completeFunc) {
@@ -1749,8 +1749,18 @@ var PathWorker = {
           BoneLoader.load(PathWorker.isWorker? data.path : data.path.slice(1), PathCtr.pathContainer);
           return false;
           
+          
+          /* ---- input ---- */
+          
         case "resize-canvas":
           PathCtr.setSize(data.viewWidth, data.viewHeight);
+          return false;
+          
+        case "change-action":
+          PathCtr.actionName = data.name;
+          if(typeof data.frame !== "undefined" && data.frame >= 0) {
+            PathCtr.frameNumber = data.frame;
+          }
           return false;
           
         case "move-mouse":
@@ -1766,6 +1776,8 @@ var PathWorker = {
           return false;
           
           
+          /* ---- output ---- */
+          
         case "output-path-container":
           DebugPath.outputJSON(PathCtr.pathContainer);
           return false;
@@ -1774,6 +1786,8 @@ var PathWorker = {
           DebugPath.outputBin(PathCtr.pathContainer);
           return false;
           
+          
+          /* ---- create data ---- */
           
         case "create-path-container":
           PathCtr.loadState("init path container");

@@ -21,6 +21,7 @@ var PathCtr = {
     }
   },
   
+  
   defaultCanvasContainerID: "path-container",  // default canvas container element name
   defaultActionName: "base",
   initTarget: null,  // instance to be initialized
@@ -34,8 +35,9 @@ var PathCtr = {
   viewWidth: 0,
   viewHeight: 0,
   
-  fixFrameTime: 1 / 24,
+  actionName: "base",
   frameNumber: 0,
+  fixFrameTime: 1 / 24,
   prevTimestamp: 0,
   average: 0,
   
@@ -90,15 +92,14 @@ var PathCtr = {
     
     if(!PathCtr.pathContainer) return;
     
-    let actionName = "walk";
     let frameTime = 1 / 24;
     let totalFrames = 1;
-    let action = PathCtr.pathContainer.getAction(actionName);
+    let action = PathCtr.pathContainer.getAction(PathCtr.actionName);
     if(!!action) {
       totalFrames = action.totalFrames;
     } else {
-      actionName = "base";
-      action = PathCtr.pathContainer.getAction(actionName);
+      PathCtr.actionName = "base";
+      action = PathCtr.pathContainer.getAction(PathCtr.actionName);
       if(!!action) totalFrames = action.totalFrames;
     }
     
@@ -126,7 +127,7 @@ var PathCtr = {
       PathCtr.fixFrameTime = (frameTime + PathCtr.fixFrameTime) / 2;
     }
     
-    PathCtr.pathContainer.update(PathCtr.frameNumber, actionName);
+    PathCtr.pathContainer.update(PathCtr.frameNumber, PathCtr.actionName);
   },
   
   update: function() {
