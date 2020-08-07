@@ -494,7 +494,7 @@ class ActionContainer {
       frame = 0;
     }
     
-    let data = this.getData(actionID, frame);
+    let data = null;
     
     this.data.forEach((actionDataList, targetActionID)=> {
       let action = pathContainer.actionList[targetActionID];
