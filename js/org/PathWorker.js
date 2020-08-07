@@ -69,6 +69,19 @@ var PathWorker = {
           }
           return false;
           
+        case "set-group-control":
+          ((group)=> {
+            if(typeof group === "undefined") {
+              console.error(data.name + " is not found.");
+              return;
+            }
+            if(typeof data.prop !== "undefined") {
+              Object.assign(group, data.prop);
+            }
+            group.control = new Function("pathContainer", data.func);
+          })(PathCtr.pathContainer.getGroup(data.name));
+          return false;
+          
           
           /* ---- output ---- */
           

@@ -106,6 +106,8 @@ class BoneObj extends Sprite {
     
     let currentPos = this.currentState.pos;
     let parentID = this.parentID;
+    
+    this.getMatrix().applyToArray(currentPos);
     while(typeof parentID !== "undefined") {
       let bone = pathContainer.groups[parentID];
       bone.diff(pathContainer);
@@ -121,7 +123,6 @@ class BoneObj extends Sprite {
       }
       parentID = bone.parentID;
     }
-    this.getMatrix().applyToArray(currentPos);
     
     let x0 = this.effectSprite.x = currentPos[0];
     let y0 = this.effectSprite.y = currentPos[1];

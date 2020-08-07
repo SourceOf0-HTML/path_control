@@ -1040,6 +1040,8 @@ class BoneObj extends Sprite {
     
     let currentPos = this.currentState.pos;
     let parentID = this.parentID;
+    
+    this.getMatrix().applyToArray(currentPos);
     while(typeof parentID !== "undefined") {
       let bone = pathContainer.groups[parentID];
       bone.diff(pathContainer);
@@ -1055,7 +1057,6 @@ class BoneObj extends Sprite {
       }
       parentID = bone.parentID;
     }
-    this.getMatrix().applyToArray(currentPos);
     
     let x0 = this.effectSprite.x = currentPos[0];
     let y0 = this.effectSprite.y = currentPos[1];
@@ -1773,6 +1774,19 @@ var PathWorker = {
           if(typeof DebugPath !== "undefined") {
             DebugPath.keyUp(PathCtr.pathContainer, data.code);
           }
+          return false;
+          
+        case "set-group-control":
+          ((group)=> {
+            if(typeof group === "undefined") {
+              console.error(data.name + " is not found.");
+              return;
+            }
+            if(typeof data.prop !== "undefined") {
+              Object.assign(group, data.prop);
+            }
+            group.control = new Function("pathContainer", data.func);
+          })(PathCtr.pathContainer.getGroup(data.name));
           return false;
           
           
