@@ -8,9 +8,7 @@ var PathCtr = {
   debugPrint: function() {
     if(!PathCtr.isOutputDebugPrint) return;
     //console.log("Func : " + PathCtr.debugPrint.caller.name);
-    for(let i = 0; i < arguments.length; ++i) {
-      console.log(arguments[i]);
-    }
+    console.log.apply(null, arguments);
   },
   
   isOutputLoadState: true,
@@ -46,7 +44,7 @@ var PathCtr = {
   
   cancelRequestAnimation: function() {
     if(PathCtr.requestAnimationIDs.length > 1 || PathCtr.setTimeoutIDs.length > 1) {
-      PathCtr.debugPrint("requestAnimationIDs:" + PathCtr.requestAnimationIDs.length + ", " + PathCtr.setTimeoutIDs.length);
+      console.error("requestAnimationIDs:" + PathCtr.requestAnimationIDs.length + ", " + PathCtr.setTimeoutIDs.length);
     }
     PathCtr.requestAnimationIDs.forEach(cancelAnimationFrame);
     PathCtr.requestAnimationIDs.length = 0;
@@ -88,7 +86,7 @@ var PathCtr = {
     
     let elapsed = (timestamp - PathCtr.prevTimestamp) / 1000;
     PathCtr.average = (PathCtr.average + elapsed) / 2;
-    PathCtr.debugPrint((PathCtr.average * 100000)^0);
+    //PathCtr.debugPrint((PathCtr.average * 100000)^0);
     
     if(!PathCtr.pathContainer) return;
     
@@ -494,6 +492,11 @@ class ActionContainer {
       frame = 0;
     }
     
+    let output =(action, val)=> {
+      if(!PathCtr.isOutputDebugPrint) return;
+      if(this.result == val) return;
+      PathCtr.debugPrint(action.name, action.pastFrame, action.currentFrame, val);
+    };
     let data = null;
     
     this.data.forEach((actionDataList, targetActionID)=> {
@@ -508,6 +511,7 @@ class ActionContainer {
           let targetData = actionDataList[targetFrame];
           if(typeof targetData === "undefined") continue;
           data = targetData;
+          output(action, data);
           break;
         }
       } else {
@@ -519,6 +523,7 @@ class ActionContainer {
             let targetData = actionDataList[targetFrame];
             if(typeof targetData === "undefined") continue;
             data = targetData;
+            output(action, data);
             break;
           }
           break;
@@ -526,7 +531,7 @@ class ActionContainer {
       }
     });
     
-    if(!!data) {
+    if(!!data && this.result != data) {
       this.result = data;
     }
   };
@@ -1293,8 +1298,9 @@ class PathContainer extends Sprite {
     });
     
     this.actionList.forEach(targetAction=>{
-      if(targetAction.id == action.id || !targetAction.smartBoneID) return;
+      if(targetAction.id == action.id) return;
       targetAction.pastFrame = targetAction.currentFrame;
+      if(!targetAction.smartBoneID) return;
       targetAction.currentFrame = this.groups[targetAction.smartBoneID].getSmartFrame(targetAction.totalFrames);
     });
     

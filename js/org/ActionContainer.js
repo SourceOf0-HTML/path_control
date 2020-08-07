@@ -75,6 +75,11 @@ class ActionContainer {
       frame = 0;
     }
     
+    let output =(action, val)=> {
+      if(!PathCtr.isOutputDebugPrint) return;
+      if(this.result == val) return;
+      PathCtr.debugPrint(action.name, action.pastFrame, action.currentFrame, val);
+    };
     let data = null;
     
     this.data.forEach((actionDataList, targetActionID)=> {
@@ -89,6 +94,7 @@ class ActionContainer {
           let targetData = actionDataList[targetFrame];
           if(typeof targetData === "undefined") continue;
           data = targetData;
+          output(action, data);
           break;
         }
       } else {
@@ -100,6 +106,7 @@ class ActionContainer {
             let targetData = actionDataList[targetFrame];
             if(typeof targetData === "undefined") continue;
             data = targetData;
+            output(action, data);
             break;
           }
           break;
@@ -107,7 +114,7 @@ class ActionContainer {
       }
     });
     
-    if(!!data) {
+    if(!!data && this.result != data) {
       this.result = data;
     }
   };

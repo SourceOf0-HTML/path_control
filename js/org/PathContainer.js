@@ -106,8 +106,9 @@ class PathContainer extends Sprite {
     });
     
     this.actionList.forEach(targetAction=>{
-      if(targetAction.id == action.id || !targetAction.smartBoneID) return;
+      if(targetAction.id == action.id) return;
       targetAction.pastFrame = targetAction.currentFrame;
+      if(!targetAction.smartBoneID) return;
       targetAction.currentFrame = this.groups[targetAction.smartBoneID].getSmartFrame(targetAction.totalFrames);
     });
     

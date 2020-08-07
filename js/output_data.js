@@ -1,13 +1,14 @@
 function loadComplete() {
   PathMain.loadBone("../resource/bones.json");
   document.getElementById("output-btn").disabled = "";
-  
+  /*
   PathMain.postMessage({
     cmd: "set-group-control",
     name: "bone11_hair",
     prop: {mRotation: 0},
     func: "this.mRotation += 0.1; this.rotation = this.mRotation;"
   });
+  */
 }
 
 SVGLoader.init([
