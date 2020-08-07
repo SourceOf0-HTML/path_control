@@ -3,8 +3,10 @@ function loadComplete() {
   document.getElementById("output-btn").disabled = "";
   
   PathMain.postMessage({
-    cmd: "change-action", 
-    name: "walk",
+    cmd: "set-group-control",
+    name: "bone11_hair",
+    prop: {mRotation: 0},
+    func: "this.mRotation += 0.1; this.rotation = this.mRotation;"
   });
 }
 
