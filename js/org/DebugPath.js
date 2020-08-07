@@ -21,6 +21,7 @@ var DebugPath = {
   controlSize: 1,
   controlColor: "rgb(255, 255, 0)",
   
+  actionIndex: 0,
   
   /**
    * @param {PathContainer} pathContainer
@@ -46,6 +47,10 @@ var DebugPath = {
    * @param {String} code - code when fired keyup event
    */
   keyUp: function(pathContainer, code) {
+    let setAction =name=> {
+      console.log(name);
+      PathCtr.actionName = name;
+    };
     switch(code) {
       case "Space":
         this.isStop = !this.isStop;
@@ -53,6 +58,14 @@ var DebugPath = {
         break;
       case "ArrowRight":
         this.isStep = true;
+        break;
+      case "ArrowDown":
+        this.actionIndex = (this.actionIndex + 1) % PathCtr.pathContainer.actionList.length;
+        setAction(PathCtr.pathContainer.actionList[this.actionIndex].name);
+        break;
+      case "ArrowUp":
+        if(--this.actionIndex < 0) this.actionIndex = PathCtr.pathContainer.actionList.length - 1;
+        setAction(PathCtr.pathContainer.actionList[this.actionIndex].name);
         break;
       case "KeyD":
         PathCtr.isOutputDebugPrint = !PathCtr.isOutputDebugPrint;

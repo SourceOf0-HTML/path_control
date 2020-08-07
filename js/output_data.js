@@ -2,41 +2,10 @@ function loadComplete() {
   PathMain.loadBone("../resource/bones.json");
   document.getElementById("output-btn").disabled = "";
   
-  let index = 0;
-  let actionList = [
-    "walk",
-    "face",
-    "pupils",
-    "eyelids",
-    "jacket",
-    "left_arm",
-    "right_leg",
-    "left_leg",
-    "base",
-  ];
-  
-  let setAction =()=> {
-    console.log(actionList[index]);
-    PathMain.postMessage({
-      cmd: "change-action", 
-      name: actionList[index],
-    });
-  };
-  
-  setAction();
-  window.addEventListener("keyup", function(e) {
-    switch(e.code) {
-      case "ArrowDown":
-        index = (index + 1) % actionList.length;
-        setAction();
-        break;
-      case "ArrowUp":
-        if(--index < 0) index = actionList.length - 1;
-        setAction();
-        break;
-    }
+  PathMain.postMessage({
+    cmd: "change-action", 
+    name: "walk",
   });
-  
 }
 
 SVGLoader.init([
