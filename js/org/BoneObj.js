@@ -85,8 +85,6 @@ class BoneObj extends Sprite {
     let distY = y1 - y0;
     this.currentState.distance = Math.sqrt(distX*distX + distY*distY);
     this.currentState.angle = Math.atan2(distY, distX);
-    this.x = this.anchorX = this.defState.x0;
-    this.y = this.anchorY = this.defState.y0;
   };
   
   /**
@@ -107,7 +105,7 @@ class BoneObj extends Sprite {
     let currentPos = this.currentState.pos;
     let parentID = this.parentID;
     
-    this.getMatrix().applyToArray(currentPos);
+    this.getMatrix(currentPos[0], currentPos[1]).applyToArray(currentPos);
     while(typeof parentID !== "undefined") {
       let bone = pathContainer.groups[parentID];
       bone.diff(pathContainer);
@@ -119,7 +117,7 @@ class BoneObj extends Sprite {
         currentPos[2] += x;
         currentPos[3] += y;
       } else {
-        bone.getMatrix().applyToArray(currentPos);
+        bone.getMatrix(bone.currentState.pos[0], bone.currentState.pos[1]).applyToArray(currentPos);
       }
       parentID = bone.parentID;
     }
