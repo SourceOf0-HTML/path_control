@@ -35,6 +35,7 @@ var PathWorker = {
           
         case "load-bin":
           BinaryLoader.load(PathWorker.isWorker? data.path : data.path.slice(1), ()=>{
+            PathCtr.loadComplete();
             PathWorker.postMessage({cmd: "main-init-complete"});
           });
           return false;
@@ -58,8 +59,8 @@ var PathWorker = {
           return false;
           
         case "move-mouse":
-          if(typeof DebugPath !== "undefined") {
-            DebugPath.moveMouse(PathCtr.pathContainer, data.x, data.y);
+          if(!!PathCtr.pathContainer) {
+            PathCtr.pathContainer.setMouse(data.x, data.y);
           }
           return false;
           
@@ -75,10 +76,7 @@ var PathWorker = {
               console.error(data.name + " is not found.");
               return;
             }
-            if(typeof data.prop !== "undefined") {
-              Object.assign(group, data.prop);
-            }
-            group.control = new Function("pathContainer", data.func);
+            group.setCustomFunc(data);
           })(PathCtr.pathContainer.getGroup(data.name));
           return false;
           

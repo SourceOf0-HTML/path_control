@@ -16,6 +16,17 @@ class GroupObj extends Sprite {
   };
   
   /**
+   * @param {Object} data
+   */
+  setCustomFunc(data) {
+    if(typeof data.initFuncStr !== "undefined") {
+      this.customInit = new Function("pathContainer", data.initFuncStr);
+      this.customInit();
+      this.customInit = undefined;
+    }
+  };
+  
+  /**
    * @param {PathContainer} pathContainer
    */
   preprocessing(pathContainer) {
@@ -64,7 +75,7 @@ class GroupObj extends Sprite {
           let ratioList = [];
           let sum = 0;
           flexi.forEach(id=>{
-            let val = pathContainer.groups[id].calc(x, y);
+            let val = pathContainer.groups[id].getInfluence(x, y);
             sum += val;
             ratioList.push(val);
           });

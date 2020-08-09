@@ -52,7 +52,7 @@ class Matrix {
   };
   
   /**
-   * @param {Matrix} m2
+   * @param {Matrix} m2 - Matrix
    * @param {Number} t - interpolation [0.0, 1.0]
    * @return {Matrix} - new Matrix
    */
@@ -144,6 +144,7 @@ class Matrix {
     return this.transform(cos, sin, -sin, cos, 0, 0);
   };
   
+  transformFromMatrix(m2) { return this.transform(m2.a, m2.b, m2.c, m2.d, m2.e, m2.f) };
   scale(sx, sy = sx) { return this.transform(sx, 0, 0, sy, 0, 0) };
   scaleX(sx) { return this.transform(sx, 0, 0, 1, 0, 0) };
   scaleY(sy) { return this.transform(1, 0, 0, sy, 0, 0) };

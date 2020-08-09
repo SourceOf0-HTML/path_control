@@ -63,15 +63,15 @@ var PathCtr = {
     PathCtr.update();
   },
   
-  /**
-   * @param {PathContainer} pathContainer
-   */
-  loadComplete: function(pathContainer) {
+  loadComplete: function() {
     PathCtr.pathContainer = PathCtr.initTarget;
     PathCtr.pathContainer.context = PathWorker.isWorker? PathCtr.context:PathCtr.subContext;
     PathCtr.setSize(PathCtr.viewWidth, PathCtr.viewHeight);
     PathCtr.initTarget = null;
     PathCtr.loadState(PathCtr.pathContainer);
+    if(typeof DebugPath !== "undefined") {
+      DebugPath.init(PathCtr.pathContainer);
+    }
     PathCtr.update();
   },
   

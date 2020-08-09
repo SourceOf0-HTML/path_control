@@ -25,20 +25,15 @@ var DebugPath = {
   
   /**
    * @param {PathContainer} pathContainer
-   * @param {Number} mouseX
-   * @param {Number} mouseY
    */
-  moveMouse: function(pathContainer, x, y) {
+  init: function(pathContainer) {
     if(!pathContainer) return;
-    x /= pathContainer.pathRatio;
-    y /= pathContainer.pathRatio;
     
     let bone = pathContainer.getGroup("bone1_clothes");
     if(!bone) return;
     bone.control = function(pathContainer) {
-      this.rotation = Math.atan2(x - this.currentState.pos[0] - pathContainer.x, - y + this.currentState.pos[1]);
-      //this.x = x;
-      //this.y = y;
+      if(typeof pathContainer.mouseX === "undefined") return;
+      this.rotation = Math.atan2(pathContainer.mouseX - this.currentState.pos[0] - pathContainer.x, - pathContainer.mouseY + this.currentState.pos[1]);
     };
   },
   

@@ -63,15 +63,15 @@ var PathCtr = {
     PathCtr.update();
   },
   
-  /**
-   * @param {PathContainer} pathContainer
-   */
-  loadComplete: function(pathContainer) {
+  loadComplete: function() {
     PathCtr.pathContainer = PathCtr.initTarget;
     PathCtr.pathContainer.context = PathWorker.isWorker? PathCtr.context:PathCtr.subContext;
     PathCtr.setSize(PathCtr.viewWidth, PathCtr.viewHeight);
     PathCtr.initTarget = null;
     PathCtr.loadState(PathCtr.pathContainer);
+    if(typeof DebugPath !== "undefined") {
+      DebugPath.init(PathCtr.pathContainer);
+    }
     PathCtr.update();
   },
   
@@ -216,7 +216,7 @@ class Matrix {
   };
   
   /**
-   * @param {Matrix} m2
+   * @param {Matrix} m2 - Matrix
    * @param {Number} t - interpolation [0.0, 1.0]
    * @return {Matrix} - new Matrix
    */
@@ -308,6 +308,7 @@ class Matrix {
     return this.transform(cos, sin, -sin, cos, 0, 0);
   };
   
+  transformFromMatrix(m2) { return this.transform(m2.a, m2.b, m2.c, m2.d, m2.e, m2.f) };
   scale(sx, sy = sx) { return this.transform(sx, 0, 0, sy, 0, 0) };
   scaleX(sx) { return this.transform(sx, 0, 0, 1, 0, 0) };
   scaleY(sy) { return this.transform(1, 0, 0, sy, 0, 0) };
@@ -766,6 +767,17 @@ class GroupObj extends Sprite {
   };
   
   /**
+   * @param {Object} data
+   */
+  setCustomFunc(data) {
+    if(typeof data.initFuncStr !== "undefined") {
+      this.customInit = new Function("pathContainer", data.initFuncStr);
+      this.customInit();
+      this.customInit = undefined;
+    }
+  };
+  
+  /**
    * @param {PathContainer} pathContainer
    */
   preprocessing(pathContainer) {
@@ -814,7 +826,7 @@ class GroupObj extends Sprite {
           let ratioList = [];
           let sum = 0;
           flexi.forEach(id=>{
-            let val = pathContainer.groups[id].calc(x, y);
+            let val = pathContainer.groups[id].getInfluence(x, y);
             sum += val;
             ratioList.push(val);
           });
@@ -949,6 +961,7 @@ class BoneObj extends Sprite {
     
     this.effectSprite = new Sprite();  // actual effect sprite
     this.isReady = false;              // can be used for calculation
+    this.resultMatrix = new Matrix();  // rendering matrix
     
     if(!!paths && paths.length > 0) {
       BoneObj.setPath(this, paths[0]);
@@ -983,6 +996,20 @@ class BoneObj extends Sprite {
   };
   
   /**
+   * @param {Object} data
+   */
+  setCustomFunc(data) {
+    if(typeof data.initFuncStr !== "undefined") {
+      this.customInit = new Function("pathContainer", data.initFuncStr);
+      this.customInit();
+      this.customInit = undefined;
+    }
+    if(typeof data.controlFuncStr !== "undefined") {
+      this.control = new Function("pathContainer", data.controlFuncStr);
+    }
+  };
+  
+  /**
    * @param {Integer} totalFrames - action total frames
    */
   getSmartFrame(totalFrames) {
@@ -1004,6 +1031,7 @@ class BoneObj extends Sprite {
    */
   preprocessing(pathContainer) {
     this.reset();
+    this.resultMatrix.reset();
     if(!this.defState) return;
     
     let pathDataList = this.paths[0].getPathDataList(pathContainer.actionList[pathContainer.currentActionID].currentFrame, pathContainer.currentActionID);
@@ -1029,37 +1057,39 @@ class BoneObj extends Sprite {
   /**
    * @param {PathContainer} pathContainer
    */
-  control(pathContainer) {
-    // do nothing.
+  calcForwardKinematics(pathContainer) {
+    if(!this.defState || this.isReady) return;
+    this.isReady = true;
+    
+    let parentID = this.parentID;
+    
+    while(typeof parentID !== "undefined") {
+      let bone = pathContainer.groups[parentID];
+      bone.calcForwardKinematics(pathContainer);
+      if(this.isParentPin) {
+        this.resultMatrix.translate(bone.x - bone.anchorX, bone.y - bone.anchorY);
+      } else {
+        this.resultMatrix.transformFromMatrix(bone.getMatrix(bone.currentState.pos[0], bone.currentState.pos[1]));
+      }
+      parentID = bone.parentID;
+    }
+    this.resultMatrix.transformFromMatrix(this.getMatrix(this.currentState.pos[0], this.currentState.pos[1]));
   };
   
   /**
    * @param {PathContainer} pathContainer
    */
-  diff(pathContainer) {
-    if(!this.defState || this.isReady) return;
-    this.isReady = true;
+  control(pathContainer) {
+    // do nothing.
+  };
+  
+  calc() {
+    if(!this.defState) return;
     this.effectSprite.reset();
     
     let currentPos = this.currentState.pos;
-    let parentID = this.parentID;
     
-    this.getMatrix(currentPos[0], currentPos[1]).applyToArray(currentPos);
-    while(typeof parentID !== "undefined") {
-      let bone = pathContainer.groups[parentID];
-      bone.diff(pathContainer);
-      if(this.isParentPin) {
-        let x = bone.x - bone.anchorX;
-        let y = bone.y - bone.anchorY;
-        currentPos[0] += x;
-        currentPos[1] += y;
-        currentPos[2] += x;
-        currentPos[3] += y;
-      } else {
-        bone.getMatrix(bone.currentState.pos[0], bone.currentState.pos[1]).applyToArray(currentPos);
-      }
-      parentID = bone.parentID;
-    }
+    this.resultMatrix.applyToArray(currentPos);
     
     let x0 = this.effectSprite.x = currentPos[0];
     let y0 = this.effectSprite.y = currentPos[1];
@@ -1075,11 +1105,11 @@ class BoneObj extends Sprite {
     this.effectSprite.scaleY = distance / this.defState.distance;
     this.effectSprite.rotation = angle - this.defState.angle;
   };
-    
+  
   /**
    * @param {Array} points
    */
-  calc(x0, y0) {
+  getInfluence(x0, y0) {
     let strength = this.strength;
     if(!strength) return 0;
     
@@ -1268,6 +1298,15 @@ class PathContainer extends Sprite {
   };
   
   /**
+   * @param {Number} x - reference mouse x
+   * @param {Number} y - reference mouse y
+   */
+  setMouse(x, y) {
+    this.mouseX = x / this.pathRatio;
+    this.mouseY = y / this.pathRatio;
+  }
+  
+  /**
    * @param {Integer} frame
    * @param {String} actionName
    */
@@ -1290,9 +1329,13 @@ class PathContainer extends Sprite {
       group.preprocessing(this);
     });
     this.bones.forEach(id=>{
-      let bone = this.groups[id];
-      bone.control(this);
-      bone.diff(this);
+      this.groups[id].control(this);
+    });
+    this.bones.forEach(id=>{
+      this.groups[id].calcForwardKinematics(this);
+    });
+    this.bones.forEach(id=>{
+      this.groups[id].calc();
     });
     
     this.actionList.forEach(targetAction=>{
@@ -1577,7 +1620,6 @@ var BinaryLoader = {
       let pathContainer = BinaryLoader.init(buffer);
       PathCtr.loadState("loading completed");
       
-      PathCtr.loadComplete(pathContainer);
       if(!!completeFunc) {
         completeFunc();
       }
@@ -1746,6 +1788,7 @@ var PathWorker = {
           
         case "load-bin":
           BinaryLoader.load(PathWorker.isWorker? data.path : data.path.slice(1), ()=>{
+            PathCtr.loadComplete();
             PathWorker.postMessage({cmd: "main-init-complete"});
           });
           return false;
@@ -1769,8 +1812,8 @@ var PathWorker = {
           return false;
           
         case "move-mouse":
-          if(typeof DebugPath !== "undefined") {
-            DebugPath.moveMouse(PathCtr.pathContainer, data.x, data.y);
+          if(!!PathCtr.pathContainer) {
+            PathCtr.pathContainer.setMouse(data.x, data.y);
           }
           return false;
           
@@ -1786,10 +1829,7 @@ var PathWorker = {
               console.error(data.name + " is not found.");
               return;
             }
-            if(typeof data.prop !== "undefined") {
-              Object.assign(group, data.prop);
-            }
-            group.control = new Function("pathContainer", data.func);
+            group.setCustomFunc(data);
           })(PathCtr.pathContainer.getGroup(data.name));
           return false;
           

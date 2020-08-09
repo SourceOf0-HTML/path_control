@@ -78,6 +78,15 @@ class PathContainer extends Sprite {
   };
   
   /**
+   * @param {Number} x - reference mouse x
+   * @param {Number} y - reference mouse y
+   */
+  setMouse(x, y) {
+    this.mouseX = x / this.pathRatio;
+    this.mouseY = y / this.pathRatio;
+  }
+  
+  /**
    * @param {Integer} frame
    * @param {String} actionName
    */
@@ -100,9 +109,13 @@ class PathContainer extends Sprite {
       group.preprocessing(this);
     });
     this.bones.forEach(id=>{
-      let bone = this.groups[id];
-      bone.control(this);
-      bone.diff(this);
+      this.groups[id].control(this);
+    });
+    this.bones.forEach(id=>{
+      this.groups[id].calcForwardKinematics(this);
+    });
+    this.bones.forEach(id=>{
+      this.groups[id].calc();
     });
     
     this.actionList.forEach(targetAction=>{
