@@ -110,11 +110,8 @@ class PathContainer extends Sprite {
     });
     this.bones.forEach(id=>{
       this.groups[id].control(this);
-    });
-    this.bones.forEach(id=>{
       this.groups[id].calcForwardKinematics(this);
-    });
-    this.bones.forEach(id=>{
+      this.groups[id].calcInverseKinematics(this);
       this.groups[id].calc();
     });
     

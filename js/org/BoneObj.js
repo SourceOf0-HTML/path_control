@@ -10,7 +10,6 @@ class BoneObj extends Sprite {
     
     this.effectSprite = new Sprite();  // actual effect sprite
     this.isReady = false;              // can be used for calculation
-    this.resultMatrix = new Matrix();  // rendering matrix
     
     if(!!paths && paths.length > 0) {
       BoneObj.setPath(this, paths[0]);
@@ -80,7 +79,6 @@ class BoneObj extends Sprite {
    */
   preprocessing(pathContainer) {
     this.reset();
-    this.resultMatrix.reset();
     if(!this.defState) return;
     
     let pathDataList = this.paths[0].getPathDataList(pathContainer.actionList[pathContainer.currentActionID].currentFrame, pathContainer.currentActionID);
@@ -111,18 +109,45 @@ class BoneObj extends Sprite {
     this.isReady = true;
     
     let parentID = this.parentID;
+    let currentPos = this.currentState.pos;
     
     while(typeof parentID !== "undefined") {
       let bone = pathContainer.groups[parentID];
       bone.calcForwardKinematics(pathContainer);
       if(this.isParentPin) {
-        this.resultMatrix.translate(bone.x - bone.anchorX, bone.y - bone.anchorY);
+        let x = bone.x - bone.anchorX;
+        let y = bone.y - bone.anchorY;
+        currentPos[0] += x;
+        currentPos[1] += y;
+        currentPos[2] += x;
+        currentPos[3] += y;
       } else {
-        this.resultMatrix.transformFromMatrix(bone.getMatrix(bone.currentState.pos[0], bone.currentState.pos[1]));
+        bone.getMatrix(bone.currentState.pos[0], bone.currentState.pos[1]).applyToArray(currentPos);
       }
       parentID = bone.parentID;
     }
-    this.resultMatrix.transformFromMatrix(this.getMatrix(this.currentState.pos[0], this.currentState.pos[1]));
+    this.getMatrix(currentPos[0], currentPos[1]).applyToArray(currentPos);
+  };
+  
+  /**
+   * @param {PathContainer} pathContainer
+   */
+  calcInverseKinematics(pathContainer) {
+    if(!this.defState) return;
+    if(this.id != "bone4_head") return;
+    
+    let parentID = this.parentID;
+    let currentPos = this.currentState.pos;
+    
+    while(typeof parentID !== "undefined") {
+      let bone = pathContainer.groups[parentID];
+      if(!bone.feedback) break;
+      if(this.isParentPin) {
+      } else {
+      }
+      bone.calcInverseKinematics(pathContainer);
+      parentID = bone.parentID;
+    }
   };
   
   /**
@@ -137,8 +162,6 @@ class BoneObj extends Sprite {
     this.effectSprite.reset();
     
     let currentPos = this.currentState.pos;
-    
-    this.resultMatrix.applyToArray(currentPos);
     
     let x0 = this.effectSprite.x = currentPos[0];
     let y0 = this.effectSprite.y = currentPos[1];
