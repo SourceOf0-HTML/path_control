@@ -79,7 +79,7 @@ var PathCtr = {
     if(typeof DebugPath !== "undefined" && DebugPath.isStop) {
       if(!DebugPath.isStep) return;
       DebugPath.isStep = false;
-      console.log("--STEP--");
+      console.log("STEP: " + PathCtr.actionName + " - " + PathCtr.frameNumber);
     }
     
     if(typeof timestamp === "undefined") return;
@@ -1058,26 +1058,25 @@ class BoneObj extends Sprite {
   calcForwardKinematics(pathContainer) {
     if(!this.defState || this.isReady) return;
     this.isReady = true;
+    this.calc();
     
     let parentID = this.parentID;
     let currentPos = this.currentState.pos;
     
-    while(typeof parentID !== "undefined") {
+    if(typeof parentID !== "undefined") {
       let bone = pathContainer.groups[parentID];
       bone.calcForwardKinematics(pathContainer);
       if(this.isParentPin) {
-        let x = bone.x - bone.anchorX;
-        let y = bone.y - bone.anchorY;
+        let x = bone.effectSprite.x - bone.effectSprite.anchorX;
+        let y = bone.effectSprite.y - bone.effectSprite.anchorY;
         currentPos[0] += x;
         currentPos[1] += y;
         currentPos[2] += x;
         currentPos[3] += y;
       } else {
-        bone.getMatrix(bone.currentState.pos[0], bone.currentState.pos[1]).applyToArray(currentPos);
+        bone.effectSprite.getMatrix().applyToArray(currentPos);
       }
-      parentID = bone.parentID;
     }
-    this.getMatrix(currentPos[0], currentPos[1]).applyToArray(currentPos);
   };
   
   /**
@@ -1086,20 +1085,19 @@ class BoneObj extends Sprite {
   calcInverseKinematics(pathContainer) {
     if(!this.defState) return;
     if(this.id != "bone4_head") return;
-    
+    return;
     let parentID = this.parentID;
     let currentPos = this.currentState.pos;
     
     while(typeof parentID !== "undefined") {
       let bone = pathContainer.groups[parentID];
-      if(!bone.feedback) return;
+      if(!bone.feedback) break;
       if(this.isParentPin) {
       } else {
       }
       bone.calcInverseKinematics(pathContainer);
       parentID = bone.parentID;
     }
-    this.getMatrix(currentPos[0], currentPos[1]).applyToArray(currentPos);
   };
   
   /**
@@ -1355,9 +1353,9 @@ class PathContainer extends Sprite {
     this.bones.forEach(id=>{
       this.groups[id].control(this);
       this.groups[id].calcForwardKinematics(this);
+      this.groups[id].calcInverseKinematics(this);
       this.groups[id].calc();
     });
-
     
     this.actionList.forEach(targetAction=>{
       if(targetAction.id == action.id) return;
@@ -1765,8 +1763,99 @@ var BoneLoader = {
         });
       }
       
+      
+      let amendBonePos =(id, actionID, frame, boneIDs)=> {
+        if(boneIDs.includes(id)) return;
+        boneIDs.push(id);
+        
+        let bone = pathContainer.groups[id];
+        if(!bone.defState) return;
+        
+        let pathDiffList = bone.paths[0].pathDiffList;
+        if(!pathDiffList.hasActionID(actionID)) return;
+        
+        let pathDiffListData = pathDiffList.data[actionID][frame];
+        if(typeof pathDiffListData === "undefined") return;
+        
+        let pathDataList = bone.paths[0].getPathDataList(frame, actionID);
+        
+        let parentID = bone.parentID;
+        if(typeof parentID !== "undefined") {
+          let target = pathContainer.groups[parentID];
+          amendBonePos(parentID, actionID, frame, boneIDs);
+          if(bone.isParentPin) {
+            let diffX = target.anchorX - target.defState.x0;
+            let diffY = target.anchorY - target.defState.y0;
+            pathDiffListData[0][0] -= diffX;
+            pathDiffListData[0][1] -= diffY;
+            pathDiffListData[1][0] -= diffX;
+            pathDiffListData[1][1] -= diffY;
+          } else {
+            let diffX = target.x - target.defState.x1;
+            let diffY = target.y - target.defState.y1;
+            let data = [pathDataList[0].pos[0] - diffX, pathDataList[0].pos[1] - diffY, pathDataList[1].pos[0] - diffX, pathDataList[1].pos[1] - diffY];
+            target.effectSprite.x = target.effectSprite.anchorX = data[0];
+            target.effectSprite.y = target.effectSprite.anchorY = data[1];
+            target.effectSprite.getMatrix().applyToArray(data);
+            pathDiffListData[0][0] = data[0] - bone.defState.x0;
+            pathDiffListData[0][1] = data[1] - bone.defState.y0;
+            pathDiffListData[1][0] = data[2] - bone.defState.x1;
+            pathDiffListData[1][1] = data[3] - bone.defState.y1;
+          }
+        }
+      };
+      
+      pathContainer.actionList.forEach(action=> {
+        let actionID = action.id;
+        for(let frame = 1; frame < action.totalFrames; ++frame) {
+          pathContainer.bones.forEach(id=> {
+            let bone = pathContainer.groups[id];
+            if(!bone.defState) return;
+            
+            let pathDiffList = bone.paths[0].pathDiffList;
+            if(!pathDiffList.hasActionID(actionID)) {
+              if(frame != 1) return;
+            } else {
+              let pathDiffListData = pathDiffList.data[actionID][frame];
+              if(typeof pathDiffListData === "undefined") return;
+            }
+            
+            let pathDataList = bone.paths[0].getPathDataList(frame, actionID);
+            
+            let x0 = bone.anchorX = pathDataList[0].pos[0];
+            let y0 = bone.anchorY = pathDataList[0].pos[1];
+            let x1 = bone.x = pathDataList[1].pos[0];
+            let y1 = bone.y = pathDataList[1].pos[1];
+            bone.effectSprite.rotation = bone.defState.angle - Math.atan2(y1 - y0, x1 - x0);
+          });
+          let boneIDs = [];
+          pathContainer.bones.forEach(id=>amendBonePos(id, actionID, frame, boneIDs));
+        }
+      });
+      
+      pathContainer.bones.forEach(id=> {
+        let bone = pathContainer.groups[id];
+        bone.reset();
+        if(!bone.defState) return;
+        let pathDataList = bone.paths[0].getPathDataList(0, 0);
+        let x0 = pathDataList[0].pos[0];
+        let y0 = pathDataList[0].pos[1];
+        let x1 = pathDataList[1].pos[0];
+        let y1 = pathDataList[1].pos[1];
+        let distX = x1 - x0;
+        let distY = y1 - y0;
+        bone.effectSprite.reset();
+        bone.defState.x0 = x0;
+        bone.defState.y0 = y0;
+        bone.defState.x1 = x1;
+        bone.defState.y1 = y1;
+        bone.defState.distance = Math.sqrt(distX*distX + distY*distY);
+        bone.defState.angle = Math.atan2(distY, distX);
+      });
+      
       PathCtr.loadState("bones JSON load complete.");
       PathCtr.loadState(pathContainer);
+      PathWorker.postMessage({cmd: "main-bone-load-complete"});
     }
     request.open("GET", filePath, true);
     request.send();

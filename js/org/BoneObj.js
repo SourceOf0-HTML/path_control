@@ -107,26 +107,25 @@ class BoneObj extends Sprite {
   calcForwardKinematics(pathContainer) {
     if(!this.defState || this.isReady) return;
     this.isReady = true;
+    this.calc();
     
     let parentID = this.parentID;
     let currentPos = this.currentState.pos;
     
-    while(typeof parentID !== "undefined") {
+    if(typeof parentID !== "undefined") {
       let bone = pathContainer.groups[parentID];
       bone.calcForwardKinematics(pathContainer);
       if(this.isParentPin) {
-        let x = bone.x - bone.anchorX;
-        let y = bone.y - bone.anchorY;
+        let x = bone.effectSprite.x - bone.effectSprite.anchorX;
+        let y = bone.effectSprite.y - bone.effectSprite.anchorY;
         currentPos[0] += x;
         currentPos[1] += y;
         currentPos[2] += x;
         currentPos[3] += y;
       } else {
-        bone.getMatrix(bone.currentState.pos[0], bone.currentState.pos[1]).applyToArray(currentPos);
+        bone.effectSprite.getMatrix().applyToArray(currentPos);
       }
-      parentID = bone.parentID;
     }
-    this.getMatrix(currentPos[0], currentPos[1]).applyToArray(currentPos);
   };
   
   /**
@@ -135,7 +134,7 @@ class BoneObj extends Sprite {
   calcInverseKinematics(pathContainer) {
     if(!this.defState) return;
     if(this.id != "bone4_head") return;
-    
+    return;
     let parentID = this.parentID;
     let currentPos = this.currentState.pos;
     

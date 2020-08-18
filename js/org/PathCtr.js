@@ -79,7 +79,7 @@ var PathCtr = {
     if(typeof DebugPath !== "undefined" && DebugPath.isStop) {
       if(!DebugPath.isStep) return;
       DebugPath.isStep = false;
-      console.log("--STEP--");
+      console.log("STEP: " + PathCtr.actionName + " - " + PathCtr.frameNumber);
     }
     
     if(typeof timestamp === "undefined") return;

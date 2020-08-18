@@ -41,8 +41,8 @@ var PathMain = {
       let data = !e.data? e.detail : e.data;
       switch(data.cmd) {
         case "main-init-complete":
+        case "main-bone-load-complete":
           PathMain.completeFunc();
-          PathMain.completeFunc = null;
           return false;
           
         case "main-confirm":
@@ -141,14 +141,16 @@ var PathMain = {
   
   /**
    * @param {String} path - file path info
+   * @param {Function} completeFunc - callback when loading complete
    */
-  loadBone: function(path) {
+  loadBone: function(path, completeFunc) {
+    PathMain.completeFunc = completeFunc;
     PathMain.postMessage({cmd: "load-bone", path: path});
   },
   
   /**
    * @param {String} path - file path info
-   * @param {Function} completeFunc - call when completed load
+   * @param {Function} completeFunc - callback when loading complete
    * @param {Boolean} isDebug - use debug mode when true
    */
   init: function(path, completeFunc, isDebug) {
