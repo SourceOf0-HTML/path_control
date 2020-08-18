@@ -808,7 +808,7 @@ class GroupObj extends Sprite {
     if(flexi.length <= 0) return;
     
     this.paths.forEach(path=> {
-      path.resultPathList.forEach(d=>{
+      path.resultPathList.forEach(d=> {
         if(!d.pos || d.pos.length == 0) return;
         let points = d.pos;
         let pointsNum = points.length;
@@ -1026,14 +1026,40 @@ class BoneObj extends Sprite {
   };
   
   /**
+   * @param {Array} pos
+   */
+  setCurrentPos(pos) {
+    let currentPos = this.currentState.pos;
+    currentPos[0] = pos[0];
+    currentPos[1] = pos[1];
+    currentPos[2] = pos[2];
+    currentPos[3] = pos[3];
+    this.calcCurrentState();
+  };
+  
+  calcCurrentState() {
+    let currentPos = this.currentState.pos;
+    let distX = currentPos[2] - currentPos[0];
+    let distY = currentPos[3] - currentPos[1];
+    let dist = this.currentState.distance = Math.sqrt(distX*distX + distY*distY);
+    let angle = this.currentState.angle = Math.atan2(distY, distX);
+    
+    let sprite = this.effectSprite;
+    sprite.x = currentPos[0];
+    sprite.y = currentPos[1];
+    sprite.anchorX = this.defState.x0;
+    sprite.anchorY = this.defState.y0;
+    sprite.scaleY = dist / this.defState.distance;
+    sprite.rotation = angle - this.defState.angle;
+  };
+  
+  /**
    * @param {PathContainer} pathContainer
    */
   preprocessing(pathContainer) {
-    this.reset();
     if(!this.defState) return;
     
     let pathDataList = this.paths[0].getPathDataList(pathContainer.actionList[pathContainer.currentActionID].currentFrame, pathContainer.currentActionID);
-    
     if(pathDataList.length != 2) {
       this.isReady = true;
       return;
@@ -1041,42 +1067,9 @@ class BoneObj extends Sprite {
     
     this.isReady = false;
     
-    let currentPos = this.currentState.pos;
-    let x0 = currentPos[0] = pathDataList[0].pos[0];
-    let y0 = currentPos[1] = pathDataList[0].pos[1];
-    let x1 = currentPos[2] = pathDataList[1].pos[0];
-    let y1 = currentPos[3] = pathDataList[1].pos[1];
-    let distX = x1 - x0;
-    let distY = y1 - y0;
-    this.currentState.distance = Math.sqrt(distX*distX + distY*distY);
-    this.currentState.angle = Math.atan2(distY, distX);
-  };
-  
-  /**
-   * @param {PathContainer} pathContainer
-   */
-  calcForwardKinematics(pathContainer) {
-    if(!this.defState || this.isReady) return;
-    this.isReady = true;
-    this.calc();
-    
-    let parentID = this.parentID;
-    let currentPos = this.currentState.pos;
-    
-    if(typeof parentID !== "undefined") {
-      let bone = pathContainer.groups[parentID];
-      bone.calcForwardKinematics(pathContainer);
-      if(this.isParentPin) {
-        let x = bone.effectSprite.x - bone.effectSprite.anchorX;
-        let y = bone.effectSprite.y - bone.effectSprite.anchorY;
-        currentPos[0] += x;
-        currentPos[1] += y;
-        currentPos[2] += x;
-        currentPos[3] += y;
-      } else {
-        bone.effectSprite.getMatrix().applyToArray(currentPos);
-      }
-    }
+    let data = [pathDataList[0].pos[0], pathDataList[0].pos[1], pathDataList[1].pos[0], pathDataList[1].pos[1]];
+    this.getMatrix(data[0], data[1]).applyToArray(data);
+    this.setCurrentPos(data);
   };
   
   /**
@@ -1085,19 +1078,79 @@ class BoneObj extends Sprite {
   calcInverseKinematics(pathContainer) {
     if(!this.defState) return;
     if(this.id != "bone4_head") return;
-    return;
-    let parentID = this.parentID;
-    let currentPos = this.currentState.pos;
+    if(!pathContainer.mouseX && !pathContainer.mouseY) return;
+    this.isReady = true;
     
+    let reach =(bone, x1, y1)=> {
+      let currentPos = bone.currentState.pos;
+      let distX = currentPos[2] - currentPos[0];
+      let distY = currentPos[3] - currentPos[1];
+      let distance = Math.sqrt(distX*distX + distY*distY);
+      let x0 = currentPos[0];
+      let y0 = currentPos[1];
+      let angle = Math.atan2(y1 - y0, x1 - x0);
+      let x = currentPos[2] = x0 + Math.cos(angle) * distance;
+      let y = currentPos[3] = y0 + Math.sin(angle) * distance;
+      return {
+        x: x1 - (x - x0),
+        y: y1 - (y - y0)
+      };
+    };
+    
+    let boneIDs = [this.uid];
+    let parentID = this.parentID;
+    let bone = this;
+    let pos = reach(this, pathContainer.mouseX, pathContainer.mouseY);
     while(typeof parentID !== "undefined") {
-      let bone = pathContainer.groups[parentID];
+      bone = pathContainer.groups[parentID];
+      bone.isReady = true;
+      pos = reach(bone, pos.x, pos.y);
       if(!bone.feedback) break;
-      if(this.isParentPin) {
-      } else {
-      }
-      bone.calcInverseKinematics(pathContainer);
+      boneIDs.unshift(parentID);
       parentID = bone.parentID;
     }
+    
+    boneIDs.forEach(parentID=> {
+      let target = pathContainer.groups[parentID];
+      let dx = bone.currentState.pos[2] - target.currentState.pos[0];
+      let dy = bone.currentState.pos[3] - target.currentState.pos[1];
+      target.currentState.pos[0] += dx;
+      target.currentState.pos[1] += dy;
+      target.currentState.pos[2] += dx;
+      target.currentState.pos[3] += dy;
+      target.calcCurrentState();
+      bone = target;
+    });
+  };
+  
+  /**
+   * @param {PathContainer} pathContainer
+   */
+  calcForwardKinematics(pathContainer) {
+    if(!this.defState || this.isReady) return;
+    this.isReady = true;
+    
+    let parentID = this.parentID;
+    let currentPos = this.currentState.pos;
+    let bone = this;
+    
+    if(typeof parentID !== "undefined") {
+      let target = pathContainer.groups[parentID];
+      target.calcForwardKinematics(pathContainer);
+      if(bone.isParentPin) {
+        let x = target.effectSprite.x - target.effectSprite.anchorX;
+        let y = target.effectSprite.y - target.effectSprite.anchorY;
+        currentPos[0] += x;
+        currentPos[1] += y;
+        currentPos[2] += x;
+        currentPos[3] += y;
+      } else {
+        target.effectSprite.getMatrix().applyToArray(currentPos);
+      }
+      parentID = target.parentID;
+      bone = target;
+    }
+    this.calcCurrentState();
   };
   
   /**
@@ -1107,27 +1160,6 @@ class BoneObj extends Sprite {
     // do nothing.
   };
   
-  calc() {
-    if(!this.defState) return;
-    this.effectSprite.reset();
-    
-    let currentPos = this.currentState.pos;
-    
-    let x0 = this.effectSprite.x = currentPos[0];
-    let y0 = this.effectSprite.y = currentPos[1];
-    let x1 = currentPos[2];
-    let y1 = currentPos[3];
-    let distX = x1 - x0;
-    let distY = y1 - y0;
-    let distance = this.currentState.distance = Math.sqrt(distX*distX + distY*distY);
-    let angle = this.currentState.angle = Math.atan2(distY, distX);
-    
-    this.effectSprite.anchorX = this.defState.x0;
-    this.effectSprite.anchorY = this.defState.y0;
-    this.effectSprite.scaleY = distance / this.defState.distance;
-    this.effectSprite.rotation = angle - this.defState.angle;
-  };
-  
   /**
    * @param {Array} points
    */
@@ -1135,7 +1167,6 @@ class BoneObj extends Sprite {
     let strength = this.strength;
     if(!strength) return 0;
     
-    let currentPos = this.currentState.pos;
     let x1 = this.defState.x0;
     let y1 = this.defState.y0;
     let x2 = this.defState.x1;
@@ -1347,14 +1378,17 @@ class PathContainer extends Sprite {
     
     this.currentActionID = action.id;
     
+    this.bones.forEach(id=>{
+      this.groups[id].control(this);
+    });
     this.groups.forEach(group=>{
       group.preprocessing(this);
     });
     this.bones.forEach(id=>{
-      this.groups[id].control(this);
-      this.groups[id].calcForwardKinematics(this);
       this.groups[id].calcInverseKinematics(this);
-      this.groups[id].calc();
+    });
+    this.bones.forEach(id=>{
+      this.groups[id].calcForwardKinematics(this);
     });
     
     this.actionList.forEach(targetAction=>{
@@ -2120,6 +2154,7 @@ var DebugPath = {
    * @param {PathContainer} pathContainer
    */
   init: function(pathContainer) {
+    /*
     if(!pathContainer) return;
     
     let bone = pathContainer.getGroup("bone1_clothes");
@@ -2128,6 +2163,7 @@ var DebugPath = {
       if(typeof pathContainer.mouseX === "undefined") return;
       this.rotation = Math.atan2(pathContainer.mouseX - this.currentState.pos[0] - pathContainer.x, - pathContainer.mouseY + this.currentState.pos[1]);
     };
+    */
   },
   
   /**

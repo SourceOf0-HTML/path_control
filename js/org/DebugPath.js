@@ -27,6 +27,7 @@ var DebugPath = {
    * @param {PathContainer} pathContainer
    */
   init: function(pathContainer) {
+    /*
     if(!pathContainer) return;
     
     let bone = pathContainer.getGroup("bone1_clothes");
@@ -35,6 +36,7 @@ var DebugPath = {
       if(typeof pathContainer.mouseX === "undefined") return;
       this.rotation = Math.atan2(pathContainer.mouseX - this.currentState.pos[0] - pathContainer.x, - pathContainer.mouseY + this.currentState.pos[1]);
     };
+    */
   },
   
   /**
