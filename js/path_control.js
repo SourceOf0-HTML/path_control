@@ -642,6 +642,46 @@ class PathObj {
   };
   
   /**
+   * @param {PathContainer} pathContainer
+   * @param {Array} flexiIDs - used to transform with flexi bone IDs
+   */
+  calcFlexi(pathContainer, flexiIDs) {
+    this.resultPathList.forEach(d=> {
+      if(!d.pos || d.pos.length == 0) return;
+      let points = d.pos;
+      let pointsNum = points.length;
+      for(let i = 0; i < pointsNum; i += 2) {
+        if(flexiIDs.length == 1) {
+          let id = flexiIDs[0];
+          if(pathContainer.groups[id].strength == 0) continue;
+          pathContainer.groups[id].effectSprite.getMatrix().applyToPoint(points, i);
+          continue;
+        }
+        
+        let x = points[i];
+        let y = points[i+1];
+        
+        let ratioList = [];
+        let sum = 0;
+        flexiIDs.forEach(id=>{
+          let val = pathContainer.groups[id].getInfluence(x, y);
+          sum += val;
+          ratioList.push(val);
+        });
+        
+        if(sum == 0) continue;
+        
+        points[i] = 0;
+        points[i+1] = 0;
+        
+        flexiIDs.forEach((id, j)=>{
+          pathContainer.groups[id].effectSprite.getMatrix().multAndAddPoint(1 - ratioList[j]/sum, x, y, points, i);
+        });
+      }
+    });
+  };
+  
+  /**
    * @param {Integer} frame - frame number
    * @param {Integer} actionID - action ID
    * @param {PathContainer} pathContainer
@@ -787,12 +827,13 @@ class GroupObj extends Sprite {
   /**
    * @param {PathContainer} pathContainer
    * @param {Sprite} sprite - used to transform the path
+   * @param {Array} flexiIDs - used to transform with flexi bone IDs
    */
-  update(pathContainer, sprite, flexiIDList = []) {
+  update(pathContainer, sprite, flexiIDs = []) {
     let actionID = pathContainer.currentActionID;
     let frame = pathContainer.actionList[actionID].currentFrame;
     let groupSprite = sprite.compSprite(this);
-    let flexi = flexiIDList.concat(this.flexi);
+    let flexi = flexiIDs.concat(this.flexi);
     let groupMatrix = groupSprite.getMatrix();
     
     this.paths.forEach(path=>{
@@ -806,42 +847,7 @@ class GroupObj extends Sprite {
     });
     
     if(flexi.length <= 0) return;
-    
-    this.paths.forEach(path=> {
-      path.resultPathList.forEach(d=> {
-        if(!d.pos || d.pos.length == 0) return;
-        let points = d.pos;
-        let pointsNum = points.length;
-        for(let i = 0; i < pointsNum; i += 2) {
-          if(flexi.length == 1) {
-            let id = flexi[0];
-            if(pathContainer.groups[id].strength == 0) continue;
-            pathContainer.groups[id].effectSprite.getMatrix().applyToPoint(points, i);
-            continue;
-          }
-          
-          let x = points[i];
-          let y = points[i+1];
-          
-          let ratioList = [];
-          let sum = 0;
-          flexi.forEach(id=>{
-            let val = pathContainer.groups[id].getInfluence(x, y);
-            sum += val;
-            ratioList.push(val);
-          });
-          
-          if(sum == 0) continue;
-          
-          points[i] = 0;
-          points[i+1] = 0;
-          
-          flexi.forEach((id, j)=>{
-            pathContainer.groups[id].effectSprite.getMatrix().multAndAddPoint(1 - ratioList[j]/sum, x, y, points, i);
-          });
-        }
-      });
-    });
+    this.paths.forEach(path=>path.calcFlexi(pathContainer, flexi));
   };
   
   /**
@@ -1378,27 +1384,27 @@ class PathContainer extends Sprite {
     
     this.currentActionID = action.id;
     
-    this.bones.forEach(id=>{
+    this.bones.forEach(id=> {
       this.groups[id].control(this);
     });
-    this.groups.forEach(group=>{
+    this.groups.forEach(group=> {
       group.preprocessing(this);
     });
-    this.bones.forEach(id=>{
+    this.bones.forEach(id=> {
       this.groups[id].calcInverseKinematics(this);
     });
-    this.bones.forEach(id=>{
+    this.bones.forEach(id=> {
       this.groups[id].calcForwardKinematics(this);
     });
     
-    this.actionList.forEach(targetAction=>{
+    this.actionList.forEach(targetAction=> {
       if(targetAction.id == action.id) return;
       targetAction.pastFrame = targetAction.currentFrame;
       if(!targetAction.smartBoneID) return;
       targetAction.currentFrame = this.groups[targetAction.smartBoneID].getSmartFrame(targetAction.totalFrames);
     });
     
-    this.rootGroups.forEach(id=>{
+    this.rootGroups.forEach(id=> {
       this.groups[id].update(this, (new Sprite().setSprite(this)));
     });
   };

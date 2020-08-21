@@ -105,27 +105,27 @@ class PathContainer extends Sprite {
     
     this.currentActionID = action.id;
     
-    this.bones.forEach(id=>{
+    this.bones.forEach(id=> {
       this.groups[id].control(this);
     });
-    this.groups.forEach(group=>{
+    this.groups.forEach(group=> {
       group.preprocessing(this);
     });
-    this.bones.forEach(id=>{
+    this.bones.forEach(id=> {
       this.groups[id].calcInverseKinematics(this);
     });
-    this.bones.forEach(id=>{
+    this.bones.forEach(id=> {
       this.groups[id].calcForwardKinematics(this);
     });
     
-    this.actionList.forEach(targetAction=>{
+    this.actionList.forEach(targetAction=> {
       if(targetAction.id == action.id) return;
       targetAction.pastFrame = targetAction.currentFrame;
       if(!targetAction.smartBoneID) return;
       targetAction.currentFrame = this.groups[targetAction.smartBoneID].getSmartFrame(targetAction.totalFrames);
     });
     
-    this.rootGroups.forEach(id=>{
+    this.rootGroups.forEach(id=> {
       this.groups[id].update(this, (new Sprite().setSprite(this)));
     });
   };
