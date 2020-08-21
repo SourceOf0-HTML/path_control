@@ -1082,8 +1082,7 @@ class BoneObj extends Sprite {
    * @param {PathContainer} pathContainer
    */
   calcInverseKinematics(pathContainer) {
-    if(!this.defState) return;
-    if(this.id != "bone4_head") return;
+    if(!this.defState || this.isReady) return;
     if(!pathContainer.mouseX && !pathContainer.mouseY) return;
     this.isReady = true;
     
@@ -1157,6 +1156,17 @@ class BoneObj extends Sprite {
       bone = target;
     }
     this.calcCurrentState();
+  };
+  
+  /**
+   * @param {PathContainer} pathContainer
+   */
+  calcKinematics(pathContainer) {
+    if(this.id == "bone4_head") {
+      this.calcInverseKinematics(pathContainer);
+    } else {
+      this.calcForwardKinematics(pathContainer);
+    }
   };
   
   /**
@@ -1391,10 +1401,7 @@ class PathContainer extends Sprite {
       group.preprocessing(this);
     });
     this.bones.forEach(id=> {
-      this.groups[id].calcInverseKinematics(this);
-    });
-    this.bones.forEach(id=> {
-      this.groups[id].calcForwardKinematics(this);
+      this.groups[id].calcKinematics(this);
     });
     
     this.actionList.forEach(targetAction=> {

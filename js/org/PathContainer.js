@@ -112,10 +112,7 @@ class PathContainer extends Sprite {
       group.preprocessing(this);
     });
     this.bones.forEach(id=> {
-      this.groups[id].calcInverseKinematics(this);
-    });
-    this.bones.forEach(id=> {
-      this.groups[id].calcForwardKinematics(this);
+      this.groups[id].calcKinematics(this);
     });
     
     this.actionList.forEach(targetAction=> {
