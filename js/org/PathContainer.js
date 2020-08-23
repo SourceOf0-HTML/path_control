@@ -105,14 +105,51 @@ class PathContainer extends Sprite {
     
     this.currentActionID = action.id;
     
-    this.bones.forEach(id=> {
-      this.groups[id].control(this);
+    let bonesMap = this.bones.map((id, i)=> {
+      let bone = this.groups[id];
+      let ret = { id: id, priority: -1 };
+      if(!bone.defState) return ret;
+      
+      let offset = this.groups.length;
+      let priority = 0;
+      let childNum = 0;
+      this.bones.forEach(targetID=> {
+        if(this.groups[targetID].parentID == bone.uid) {
+          childNum += 1;
+        } else {
+          priority += 1;
+        }
+      });
+      
+      if(typeof bone.parentID === "undefined") {
+        if(childNum == 0) {
+          priority += offset * 2;
+        } else {
+          priority = 0;
+        }
+      } else if(childNum == 0) {
+        priority += offset;
+      }
+      ret.priority = priority;
+      return ret;
+    });
+    
+    bonesMap.sort((a, b)=> {
+      if(b.priority < 0) return -1;
+      if(a.priority > b.priority) return 1;
+      if(a.priority < b.priority) return -1;
+      return 0;
+    });
+    bonesMap.some(boneData=> {
+      if(boneData.priority < 0) return true;
+      this.groups[boneData.id].control(this);
     });
     this.groups.forEach(group=> {
       group.preprocessing(this);
     });
-    this.bones.forEach(id=> {
-      this.groups[id].calcKinematics(this);
+    bonesMap.some(boneData=> {
+      if(boneData.priority < 0) return true;
+      this.groups[boneData.id].calcKinematics(this);
     });
     
     this.actionList.forEach(targetAction=> {

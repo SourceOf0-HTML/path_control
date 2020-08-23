@@ -9,7 +9,6 @@ class BoneObj extends Sprite {
     this.childGroups = childGroups;   // list of group id
     
     this.effectSprite = new Sprite();  // actual effect sprite
-    this.isReady = false;              // can be used for calculation
     
     if(!!paths && paths.length > 0) {
       BoneObj.setPath(this, paths[0]);
@@ -105,16 +104,17 @@ class BoneObj extends Sprite {
   /**
    * @param {PathContainer} pathContainer
    */
+  control(pathContainer) {
+    // do nothing.
+  };
+  
+  /**
+   * @param {PathContainer} pathContainer
+   */
   preprocessing(pathContainer) {
     if(!this.defState) return;
-    
     let pathDataList = this.paths[0].getPathDataList(pathContainer.actionList[pathContainer.currentActionID].currentFrame, pathContainer.currentActionID);
-    if(pathDataList.length != 2) {
-      this.isReady = true;
-      return;
-    }
-    
-    this.isReady = false;
+    if(pathDataList.length != 2) return;
     
     let data = [pathDataList[0].pos[0], pathDataList[0].pos[1], pathDataList[1].pos[0], pathDataList[1].pos[1]];
     this.getMatrix(data[0], data[1]).applyToArray(data);
@@ -125,9 +125,7 @@ class BoneObj extends Sprite {
    * @param {PathContainer} pathContainer
    */
   calcInverseKinematics(pathContainer) {
-    if(!this.defState || this.isReady) return;
     if(!pathContainer.mouseX && !pathContainer.mouseY) return;
-    this.isReady = true;
     
     let reach =(bone, x1, y1)=> {
       let currentPos = bone.currentState.pos;
@@ -151,7 +149,6 @@ class BoneObj extends Sprite {
     let pos = reach(this, pathContainer.mouseX, pathContainer.mouseY);
     while(typeof parentID !== "undefined") {
       bone = pathContainer.groups[parentID];
-      bone.isReady = true;
       pos = reach(bone, pos.x, pos.y);
       if(!bone.feedback) break;
       boneIDs.unshift(parentID);
@@ -175,16 +172,12 @@ class BoneObj extends Sprite {
    * @param {PathContainer} pathContainer
    */
   calcForwardKinematics(pathContainer) {
-    if(!this.defState || this.isReady) return;
-    this.isReady = true;
-    
     let parentID = this.parentID;
     let currentPos = this.currentState.pos;
     let bone = this;
     
     if(typeof parentID !== "undefined") {
       let target = pathContainer.groups[parentID];
-      target.calcForwardKinematics(pathContainer);
       if(bone.isParentPin) {
         let x = target.effectSprite.x - target.effectSprite.anchorX;
         let y = target.effectSprite.y - target.effectSprite.anchorY;
@@ -210,13 +203,6 @@ class BoneObj extends Sprite {
     } else {
       this.calcForwardKinematics(pathContainer);
     }
-  };
-  
-  /**
-   * @param {PathContainer} pathContainer
-   */
-  control(pathContainer) {
-    // do nothing.
   };
   
   /**

@@ -51,7 +51,7 @@ class GroupObj extends Sprite {
     
     let childGroups = this.childGroups.update(pathContainer, actionID, frame);
     
-    this.childGroups.result.forEach(childGroup=>{
+    this.childGroups.result.forEach(childGroup=> {
       pathContainer.groups[childGroup].update(pathContainer, groupSprite, flexi);
     });
     
