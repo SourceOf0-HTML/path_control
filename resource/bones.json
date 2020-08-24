@@ -47,7 +47,7 @@
       "feedback": true,
       "strength": 0.05,
       "flexiPoint": {
-        "dataIndex": 0,
+        "dataIndex": 1,
         "bones": ["bone1_clothes", "bone2_clothes"]
       }
     },
