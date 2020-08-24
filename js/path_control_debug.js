@@ -1008,6 +1008,18 @@ class BoneObj extends Sprite {
   };
   
   /**
+   * @param {Number} x
+   * @param {Number} y
+   */
+  initIK(x = 0, y = 0) {
+    this.posIK = {
+      enable: false,
+      x: x,
+      y: y,
+    };
+  };
+  
+  /**
    * @param {Object} data
    */
   setCustomFunc(data) {
@@ -1090,8 +1102,6 @@ class BoneObj extends Sprite {
    * @param {PathContainer} pathContainer
    */
   calcInverseKinematics(pathContainer) {
-    if(!pathContainer.mouseX && !pathContainer.mouseY) return;
-    
     let reach =(bone, x1, y1)=> {
       let currentPos = bone.currentState.pos;
       let distX = currentPos[2] - currentPos[0];
@@ -1157,7 +1167,7 @@ class BoneObj extends Sprite {
    * @param {PathContainer} pathContainer
    */
   calc(pathContainer) {
-    if(this.id == "bone4_head") {
+    if("posIK" in this && this.posIK.enable) {
       this.calcInverseKinematics(pathContainer);
     } else {
       this.calcForwardKinematics(pathContainer);
@@ -1846,6 +1856,7 @@ var PathWorker = {
               return;
             }
             group.setCustomFunc(data);
+            PathCtr.loadState("set group control: " + group.id);
           })(PathCtr.pathContainer.getGroup(data.name));
           return false;
           
@@ -2011,38 +2022,52 @@ var BoneLoader = {
     let request = new XMLHttpRequest();
     let setJSONData =(bone, data)=> {
       if(!bone || !data) return;
-      PathCtr.loadState("BONE:" + bone.id);
+      PathCtr.loadState("BONE: " + bone.id);
       
       let parentBone = pathContainer.getBone(data.parent);
       if("parent" in data && !!parentBone) {
         bone.parentID = parentBone.uid;
-        PathCtr.loadState("  parentID:" + bone.parentID + "(" + data.parent + ")");
+        PathCtr.loadState("  parentID: " + bone.parentID + "(" + data.parent + ")");
       }
       
       if("isParentPin" in data && (typeof data.isParentPin === "boolean")) {
         bone.isParentPin = data.isParentPin;
-        PathCtr.loadState("  isParentPin:" + bone.isParentPin);
+        PathCtr.loadState("  isParentPin: " + bone.isParentPin);
       }
       
       if("feedback" in data && (typeof data.feedback === "boolean")) {
         bone.feedback = data.feedback;
-        PathCtr.loadState("  feedback:" + bone.feedback);
+        PathCtr.loadState("  feedback: " + bone.feedback);
       }
       
       if("strength" in data && Number.isFinite(data.strength)) {
         bone.strength = data.strength;
-        PathCtr.loadState("  strength:" + bone.strength);
+        PathCtr.loadState("  strength: " + bone.strength);
       }
+      
       
       if("smartBase" in data && Number.isFinite(data.smartBase)) {
         bone.smartBase = data.smartBase/180 * Math.PI;
-        PathCtr.loadState("  smartBase:" + bone.smartBase);
+        PathCtr.loadState("  smartBase: " + bone.smartBase);
       }
       
       if("smartMax" in data && Number.isFinite(data.smartMax)) {
         bone.smartMax = data.smartMax/180 * Math.PI;
-        PathCtr.loadState("  smartMax:" + bone.smartMax);
+        PathCtr.loadState("  smartMax: " + bone.smartMax);
       }
+      
+      if("smartAction" in data && (typeof data.smartAction === "string")) {
+        let action = pathContainer.actionList.find(action=>action.name == data.smartAction);
+        if(!action) {
+          console.error("smart action is not found : " + data.smartAction);
+          return;
+        }
+        bone.isSmartBone = true;
+        action.smartBoneID = bone.uid;
+        PathCtr.loadState("  isSmartBone: " + bone.isSmartBone);
+        PathCtr.loadState("    smartAction: " + action.name);
+      }
+      
       
       if("flexiPoint" in data && (typeof data.flexiPoint === "object")) {
         let dataIndex = data.flexiPoint.dataIndex;
@@ -2064,19 +2089,6 @@ var BoneLoader = {
           dataIndex: dataIndex,
           bones: bones,
         };
-      }
-      
-      if("smartAction" in data && (typeof data.smartAction === "string")) {
-        let action = pathContainer.actionList.find(action=>action.name == data.smartAction);
-        if(!action) {
-          console.error("smart action is not found : " + data.smartAction);
-          return;
-        }
-        bone.isSmartBone = true;
-        PathCtr.loadState("  isSmartBone:" + bone.isSmartBone);
-        
-        action.smartBoneID = bone.uid;
-        PathCtr.loadState("  smartAction: " + action.name);
       }
     };
     
@@ -2106,7 +2118,7 @@ var BoneLoader = {
           }
           let groupNameList = ret.flexi[name];
           if(!groupNameList || !Array.isArray(groupNameList) || groupNameList.length == 0) return;
-          PathCtr.loadState("FLEXI GROUP:" + group.id);
+          PathCtr.loadState("FLEXI GROUP: " + group.id);
           
           group.flexi = [];
           PathCtr.loadState("  flexi:");

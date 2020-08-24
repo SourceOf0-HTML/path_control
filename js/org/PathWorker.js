@@ -77,6 +77,7 @@ var PathWorker = {
               return;
             }
             group.setCustomFunc(data);
+            PathCtr.loadState("set group control: " + group.id);
           })(PathCtr.pathContainer.getGroup(data.name));
           return false;
           

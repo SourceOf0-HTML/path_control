@@ -48,6 +48,11 @@ BoneObj
   isSmartBone = isSmartBone;      // is smart bone or not
   smartBase = smartBase;          // base angle
   smartMax = smartMax;            // max angle
+  posIK = {                       // data for inverse kinematics
+    enable: enable,
+    x: x,
+    y: y,
+  };
   
   effectSprite = <Sprite>;        // actual effect sprite
   defState = { x0, y0, x1, y1, distance, angle }        // default bone state

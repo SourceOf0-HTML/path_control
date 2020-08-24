@@ -1008,6 +1008,18 @@ class BoneObj extends Sprite {
   };
   
   /**
+   * @param {Number} x
+   * @param {Number} y
+   */
+  initIK(x = 0, y = 0) {
+    this.posIK = {
+      enable: false,
+      x: x,
+      y: y,
+    };
+  };
+  
+  /**
    * @param {Object} data
    */
   setCustomFunc(data) {
@@ -1090,8 +1102,6 @@ class BoneObj extends Sprite {
    * @param {PathContainer} pathContainer
    */
   calcInverseKinematics(pathContainer) {
-    if(!pathContainer.mouseX && !pathContainer.mouseY) return;
-    
     let reach =(bone, x1, y1)=> {
       let currentPos = bone.currentState.pos;
       let distX = currentPos[2] - currentPos[0];
@@ -1157,7 +1167,7 @@ class BoneObj extends Sprite {
    * @param {PathContainer} pathContainer
    */
   calc(pathContainer) {
-    if(this.id == "bone4_head") {
+    if("posIK" in this && this.posIK.enable) {
       this.calcInverseKinematics(pathContainer);
     } else {
       this.calcForwardKinematics(pathContainer);
@@ -1846,6 +1856,7 @@ var PathWorker = {
               return;
             }
             group.setCustomFunc(data);
+            PathCtr.loadState("set group control: " + group.id);
           })(PathCtr.pathContainer.getGroup(data.name));
           return false;
           

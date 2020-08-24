@@ -4,7 +4,7 @@ function loadComplete() {
     cmd: "change-action", 
     name: "walk",
   });
-  
+  /*
   PathMain.postMessage({
     cmd: "set-group-control",
     name: "bone11_hair",
@@ -16,7 +16,23 @@ function loadComplete() {
       this.rotation = this.mRotation;
     `,
   });
-  
+  */
+  PathMain.postMessage({
+    cmd: "set-group-control",
+    name: "bone4_head",
+    initFuncStr: `
+      this.initIK();
+    `,
+    controlFuncStr: `
+      if(!pathContainer.mouseX && !pathContainer.mouseY) {
+        this.posIK.enable = false;
+        return;
+      }
+      this.posIK.enable = true;
+      this.posIK.x = pathContainer.mouseX;
+      this.posIK.y = pathContainer.mouseY;
+    `,
+  });
 }
 
 PathMain.init("../resource/path_data.bin", loadComplete, true);
