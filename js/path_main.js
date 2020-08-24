@@ -78,7 +78,7 @@ var PathMain = {
         x: e.clientX,
         y: e.clientY,
       });
-    });
+    }, { passive: false });
     
     window.addEventListener("touchmove", function(e) {
       PathMain.postMessage({
@@ -86,7 +86,7 @@ var PathMain = {
         x: e.touches[0].pageX,
         y: e.touches[0].pageY,
       });
-    });
+    }, { passive: false });
     
     window.addEventListener("keyup", function(e) {
       PathMain.postMessage({
