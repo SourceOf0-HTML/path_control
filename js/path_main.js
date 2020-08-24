@@ -175,7 +175,7 @@ var PathMain = {
     
     let subCanvas = PathMain.subCanvas = document.createElement("canvas");
     subCanvas.className = "sub-canvas";
-    subCanvas.style.cssText = "display:none;";
+    subCanvas.setAttribute("style", "display:none;");
     container.appendChild(subCanvas);
     
     PathMain.useWorker = !!Worker && !!canvas.transferControlToOffscreen;
