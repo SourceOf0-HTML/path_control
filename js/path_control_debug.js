@@ -1825,6 +1825,38 @@ var BoneLoader = {
         bone.smartMax = data.smartMax/180 * Math.PI;
         PathCtr.loadState("  smartMax:" + bone.smartMax);
       }
+      
+      if("flexiPoint" in data && (typeof data.flexiPoint === "object")) {
+        let dataIndex = data.flexiPoint.dataIndex;
+        let boneNameList = data.flexiPoint.bones;
+        if(!Number.isFinite(dataIndex) || !Array.isArray(boneNameList)) return;
+        if(dataIndex >= 2) return;
+        
+        PathCtr.loadState("  flexiPoint:");
+        PathCtr.loadState("    dataIndex: " + dataIndex);
+        let bones = [];
+        boneNameList.forEach(name=> {
+          let bone = pathContainer.getBone(name);
+          if(!!bone) {
+            bones.push(bone.uid);
+            PathCtr.loadState("    bone: " + name);
+          }
+        });
+        bone.flexiPoint = {
+          dataIndex: dataIndex,
+          bones: bones,
+        };
+      }
+      
+      if("smartAction" in data && (typeof data.smartAction === "string")) {
+        let action = pathContainer.actionList.find(action=>action.name == data.smartAction);
+        if(!action) {
+          console.error("smart action is not found : " + data.smartAction);
+          return;
+        }
+        action.smartBoneID = bone.uid;
+        PathCtr.loadState("  smartAction: " + action.name);
+      }
     };
     
     request.onload = function(e) {
@@ -1833,7 +1865,7 @@ var BoneLoader = {
       if(target.status != 200 && target.status != 0) return;
       
       let ret = JSON.parse(target.responseText);
-      if(!!ret.bones) {
+      if("bones" in ret && (typeof ret.bones === "object")) {
         Object.keys(ret.bones).forEach(id=>{
           let bone = pathContainer.getBone(id);
           if(!bone) {
@@ -1844,39 +1876,7 @@ var BoneLoader = {
         });
       }
       
-      if(!!ret.flexiPoint) {
-        Object.keys(ret.flexiPoint).forEach(name=> {
-          let bone = pathContainer.getGroup(name);
-          if(!bone) {
-            console.error("bone is not found : " + name);
-            return;
-          }
-          PathCtr.loadState("FLEXI BONE:" + bone.id);
-          
-          let target = ret.flexiPoint[name];
-          let dataIndex = target.dataIndex;
-          let boneNameList = target.bones;
-          if(!Number.isFinite(dataIndex) || !Array.isArray(boneNameList)) return;
-          if(dataIndex >= 2) return;
-          
-          PathCtr.loadState("  flexiPoint:");
-          PathCtr.loadState("    dataIndex: " + dataIndex);
-          let bones = [];
-          boneNameList.forEach(name=> {
-            let bone = pathContainer.getBone(name);
-            if(!!bone) {
-              bones.push(bone.uid);
-              PathCtr.loadState("    bone: " + name);
-            }
-          });
-          bone.flexiPoint = {
-            dataIndex: dataIndex,
-            bones: bones,
-          };
-        });
-      }
-      
-      if(!!ret.flexi) {
+      if("flexi" in ret && (typeof ret.flexi === "object")) {
         Object.keys(ret.flexi).forEach(name=> {
           let group = pathContainer.getGroup(name);
           if(!group) {
@@ -1898,25 +1898,6 @@ var BoneLoader = {
           });
         });
       }
-      
-      if(!!ret.smartAction) {
-        Object.keys(ret.smartAction).forEach(name=>{
-          let action = pathContainer.actionList.find(data=>data.name == name);
-          if(!action) {
-            console.error("smart action is not found : " + name);
-            return;
-          }
-          let boneName = ret.smartAction[name];
-          let bone = pathContainer.getBone(boneName);
-          if(!bone) {
-            console.error("smart bone is not found : " + boneName);
-            return;
-          }
-          action.smartBoneID = bone.uid;
-          PathCtr.loadState("smartAction: " + name + " - " + boneName);
-        });
-      }
-      
       
       let amendBonePos =(id, actionID, frame, boneIDs)=> {
         if(boneIDs.includes(id)) return;

@@ -24,7 +24,11 @@
     
     "bone5_left_arm": {
       "parent": "bone2_clothes",
-      "strength": 0.05
+      "strength": 0.05,
+      "flexiPoint": {
+        "dataIndex": 0,
+        "bones": ["bone1_clothes", "bone2_clothes"]
+      }
     },
     
     "bone6_left_arm": {
@@ -41,7 +45,11 @@
     "bone8_right_arm": {
       "parent": "bone7_right_arm",
       "feedback": true,
-      "strength": 0.05
+      "strength": 0.05,
+      "flexiPoint": {
+        "dataIndex": 0,
+        "bones": ["bone1_clothes", "bone2_clothes"]
+      }
     },
     
     "bone9_left_leg": {
@@ -64,54 +72,50 @@
     "bone12_left_leg_S": {
       "isSmartBone": true,
       "smartBase": 90,
-      "smartMax": 360
+      "smartMax": 360,
+      "smartAction": "left_leg"
     },
     
     "bone13_right_leg_S": {
       "isSmartBone": true,
       "smartBase": 90,
-      "smartMax": 360
+      "smartMax": 360,
+      "smartAction": "right_leg"
     },
     
     "bone14_left_arm_S": {
       "isSmartBone": true,
       "smartBase": 90,
-      "smartMax": 90
+      "smartMax": 90,
+      "smartAction": "left_arm"
     },
     
     "bone15_jacket_S": {
       "isSmartBone": true,
       "smartBase": 90,
-      "smartMax": 360
+      "smartMax": 360,
+      "smartAction": "jacket"
     },
     
     "bone16_pupils_S": {
       "isSmartBone": true,
       "smartBase": 0,
-      "smartMax": 180
+      "smartMax": 180,
+      "smartAction": "pupils"
     },
     
     "bone17_eyelids_S": {
       "isSmartBone": true,
       "smartBase": 90,
-      "smartMax": 90
+      "smartMax": 90,
+      "smartAction": "eyelids"
     },
     
     "bone18_face_S": {
       "isSmartBone": true,
       "smartBase": 0,
-      "smartMax": 90
-    }
-  },
-  
-  "flexiPoint": {
-    "bone5_left_arm": {
-      "dataIndex": 0,
-      "bones": ["bone1_clothes", "bone2_clothes"]
-    },
-    "bone8_right_arm": {
-      "dataIndex": 1,
-      "bones": ["bone1_clothes", "bone2_clothes"]
+      "smartMax": 90,
+      "smartAction": "face"
     }
   },
   
@@ -127,15 +131,5 @@
     "layer_left_leg": ["bone9_left_leg"],
     "layer_right_leg": ["bone10_right_leg"],
     "hair": ["bone11_hair"]
-  },
-  
-  "smartAction": {
-    "left_leg": "bone12_left_leg_S",
-    "right_leg": "bone13_right_leg_S",
-    "left_arm": "bone14_left_arm_S",
-    "jacket": "bone15_jacket_S",
-    "pupils": "bone16_pupils_S",
-    "eyelids": "bone17_eyelids_S",
-    "face": "bone18_face_S"
   }
 }
