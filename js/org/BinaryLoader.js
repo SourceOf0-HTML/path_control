@@ -116,7 +116,7 @@ var BinaryLoader = {
     let getPath=()=>{
       let maskIdToUse = getUint16() - 1;
       if(maskIdToUse < 0) maskIdToUse = null;
-      let fillRule = (getUint8() == 0 ? "nonzero" : "evenodd");
+      let fillRule = (getUint8() ? "evenodd" : "nonzero");
       
       let pathDataList = getPathData();
       
@@ -142,9 +142,11 @@ var BinaryLoader = {
       let maskIdToUse = getUint16() - 1;
       if(maskIdToUse < 0) maskIdToUse = null;
       let paths = getArray(getUint16, getPath);
+      let flexi = getArray(getUint8, getUint16);
       
+      let ret;
       if(name.startsWith(PathCtr.defaultBoneName)) {
-        let bone = new BoneObj(
+        ret = new BoneObj(
           i,
           name,
           paths,
@@ -154,43 +156,51 @@ var BinaryLoader = {
         while(kind > 0) {
           switch(kind) {
             case BinaryLoader.bonePropList["parentID"]:
-              bone.parentID = getUint16();
+              ret.parentID = getUint16();
               break;
             case BinaryLoader.bonePropList["isParentPin"]:
-              bone.isParentPin = true;
+              ret.isParentPin = true;
               break;
             case BinaryLoader.bonePropList["feedback"]:
-              bone.feedback = true;
+              ret.feedback = true;
               break;
             case BinaryLoader.bonePropList["strength"]:
-              bone.strength = getFloat32();
+              ret.strength = getFloat32();
               break;
             case BinaryLoader.bonePropList["isSmartBone"]:
-              bone.isSmartBone = true;
+              ret.isSmartBone = true;
               break;
             case BinaryLoader.bonePropList["smartBase"]:
-              bone.smartBase = getFloat32() / 180 * Math.PI;
+              ret.smartBase = getFloat32() / 180 * Math.PI;
               break;
             case BinaryLoader.bonePropList["smartMax"]:
               let rad = getFloat32();
-              bone.smartMax = rad / 180 * Math.PI;
+              ret.smartMax = rad / 180 * Math.PI;
               break;
           };
           kind = getUint8();
         }
         
-        return bone;
+        if(getUint8()) {
+          ret.flexiPoint = {
+            dataIndex: getUint8(),
+            bones: getArray(getUint8, getUint16),
+          };
+        }
       } else {
-        let group = new GroupObj(
+        ret = new GroupObj(
           i,
           name,
           paths,
           getAction(()=>getArray(getUint8, getUint16)),
           maskIdToUse
         );
-        group.flexi = getArray(getUint8, getUint16);
-        return group;
       }
+      
+      if(flexi.length > 0) {
+        ret.flexi = flexi;
+      }
+      return ret;
     };
     
     

@@ -119,16 +119,16 @@ var DebugPath = {
     let sumLength = 0;
     
     // -- prepare setting function --
-    let setUint8  =val=>{dv.setUint8(sumLength, val); sumLength += 1};
-    let setUint16 =val=>{dv.setUint16(sumLength, val); sumLength += 2};
-    let setUint32 =val=>{dv.setUint32(sumLength, val); sumLength += 4};
-    let setFloat32=val=>{dv.setFloat32(sumLength, val); sumLength += 4};
-    let setPos    =val=>{dv.setInt16(sumLength, val*PathCtr.binDataPosRange); sumLength += 2};
-    let setString=str=>{
+    let setUint8  =val=> {dv.setUint8(sumLength, val); sumLength += 1};
+    let setUint16 =val=> {dv.setUint16(sumLength, val); sumLength += 2};
+    let setUint32 =val=> {dv.setUint32(sumLength, val); sumLength += 4};
+    let setFloat32=val=> {dv.setFloat32(sumLength, val); sumLength += 4};
+    let setPos    =val=> {dv.setInt16(sumLength, val*PathCtr.binDataPosRange); sumLength += 2};
+    let setString =str=> {
       setUint8(str.length);
       [].map.call(str, c=>setUint16(c.charCodeAt(0)));
     };
-    let setColor=str=>{
+    let setColor =str=> {
       if(str == "transparent") {
         setUint8(0);  // A
       } else {
@@ -139,7 +139,11 @@ var DebugPath = {
         setUint8(colorArr[3]);  // B
       }
     };
-    let setArray=(arr, setLengFunc, setFunc)=>{
+    let setArray =(arr, setLengFunc, setFunc)=> {
+      if(!Array.isArray(arr)) {
+        setLengFunc(0);
+        return;
+      }
       let num = arr.length;
       setLengFunc(num);
       for(let i = 0; i < num;) {
@@ -163,10 +167,10 @@ var DebugPath = {
       }
     };
     
-    let setAction=(actionContainer, func)=>{
+    let setAction =(actionContainer, func)=> {
       if(actionContainer.hasAction) {
         setUint8(1);
-        setArray(actionContainer.data, setUint8, frames=>{
+        setArray(actionContainer.data, setUint8, frames=> {
           setArray(frames, setUint16, func);
         });
       } else {
@@ -175,7 +179,7 @@ var DebugPath = {
       }
     };
     
-    let setPathData=pathDataList=>{
+    let setPathData =pathDataList=> {
       setUint16(pathDataList.length);
       pathDataList.forEach(d=>{
         switch(d.type) {
@@ -205,13 +209,13 @@ var DebugPath = {
       });
     };
     
-    let setPathDiff=pathDiff=>{
-      setArray(pathDiff, setUint16, posArray=>{
+    let setPathDiff =pathDiff=> {
+      setArray(pathDiff, setUint16, posArray=> {
         setArray(posArray, setUint16, setPos);
       });
     };
     
-    let setPath=path=>{
+    let setPath =path=> {
       setUint16(path.maskIdToUse == null? 0 : path.maskIdToUse+1);
       setUint8(path.fillRule == "nonzero" ? 0 : 1);
       
@@ -223,10 +227,11 @@ var DebugPath = {
       setAction(path.pathDiffList, setPathDiff);
     };
     
-    let setGroup=group=>{
+    let setGroup =group=> {
       setString(group.id);
       setUint16(group.maskIdToUse == null? 0 : group.maskIdToUse+1);
       setArray(group.paths, setUint16, setPath);
+      setArray(group.flexi, setUint8, setUint16);
       
       if(BoneObj.prototype.isPrototypeOf(group)) {
         setArray(group.childGroups, setUint8, setUint16);
@@ -244,11 +249,18 @@ var DebugPath = {
           };
         });
         setUint8(0);
+        
+        if(!!group.flexiPoint) {
+          setUint8(1);
+          setUint8(group.flexiPoint.dataIndex);
+          setArray(group.flexiPoint.bones, setUint8, setUint16);
+        } else {
+          setUint8(0);
+        }
       } else {
-        setAction(group.childGroups, childGroups=>{
+        setAction(group.childGroups, childGroups=> {
           setArray(childGroups, setUint8, setUint16);
         });
-        setArray(group.flexi, setUint8, setUint16);
       }
     };
     
@@ -259,7 +271,7 @@ var DebugPath = {
     setUint16(pathContainer.originalHeight);
     
     setUint8(pathContainer.actionList.length);
-    pathContainer.actionList.forEach(action=>{
+    pathContainer.actionList.forEach(action=> {
       setString(action.name);
       setUint8(action.id);
       setUint16(action.totalFrames);

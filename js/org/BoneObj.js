@@ -113,7 +113,7 @@ class BoneObj extends Sprite {
    */
   preprocessing(pathContainer) {
     if(!this.defState) return;
-    let pathDataList = this.paths[0].getPathDataList(pathContainer.actionList[pathContainer.currentActionID].currentFrame, pathContainer.currentActionID);
+    let pathDataList = this.paths[0].resultPathList = this.paths[0].getPathDataList(pathContainer.actionList[pathContainer.currentActionID].currentFrame, pathContainer.currentActionID);
     if(pathDataList.length != 2) return;
     
     let data = [pathDataList[0].pos[0], pathDataList[0].pos[1], pathDataList[1].pos[0], pathDataList[1].pos[1]];
@@ -197,11 +197,35 @@ class BoneObj extends Sprite {
   /**
    * @param {PathContainer} pathContainer
    */
-  calcKinematics(pathContainer) {
+  calc(pathContainer) {
     if(this.id == "bone4_head") {
       this.calcInverseKinematics(pathContainer);
     } else {
       this.calcForwardKinematics(pathContainer);
+    }
+    
+    if(!!this.flexi) {
+      this.paths[0].calcFlexi(pathContainer, this.flexi);
+      
+      let pathDataList = this.paths[0].resultPathList;
+      this.currentState.pos[0] = pathDataList[0].pos[0];
+      this.currentState.pos[1] = pathDataList[0].pos[1];
+      this.currentState.pos[2] = pathDataList[1].pos[0];
+      this.currentState.pos[3] = pathDataList[1].pos[1];
+      this.calcCurrentState();
+    }
+    
+    if(!!this.flexiPoint) {
+      let pathDataList = this.paths[0].resultPathList;
+      let dataIndex = this.flexiPoint.dataIndex;
+      PathObj.calcFlexiPoints(pathContainer, this.flexiPoint.bones, pathDataList[dataIndex].pos, 0, 2);
+      let tx = pathDataList[dataIndex].pos[0] - this.currentState.pos[dataIndex * 2 + 0];
+      let ty = pathDataList[dataIndex].pos[1] - this.currentState.pos[dataIndex * 2 + 1];
+      this.currentState.pos[0] += tx;
+      this.currentState.pos[1] += ty;
+      this.currentState.pos[2] += tx;
+      this.currentState.pos[3] += ty;
+      this.calcCurrentState();
     }
   };
   

@@ -50,6 +50,11 @@ BoneObj
   effectSprite = <Sprite>;        // actual effect sprite
   defState = { x0, y0, x1, y1, distance, angle }        // default bone state
   currentState = { [x0, y0, x1, y1], distance, angle }  // current bone state
+  flexi = [ id, ... ];            // ID of a flexi-bonded target
+  flexiPoint = {                  // ID of a flexi-bonded target and data index
+    dataIndex: dataIndex,
+    bones: [ id, ... ],
+  };
 
 
 PathObj

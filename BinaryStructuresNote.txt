@@ -48,6 +48,9 @@ GroupObj
   5: isSmartBone: true
   6: smartBase: Float32(Degree measure)
   7: smartMax: Float32(Degree measure)
+ flexiPoint
+   length: Uint8
+   groupID: Uint16
 
 
 PathObj

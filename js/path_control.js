@@ -644,40 +644,48 @@ class PathObj {
   /**
    * @param {PathContainer} pathContainer
    * @param {Array} flexiIDs - used to transform with flexi bone IDs
+   * @param {Array} points - target points
+   */
+  static calcFlexiPoints(pathContainer, flexiIDs, points, index = 0, pointsNum = points.length) {
+    if(!points || points.length > index + pointsNum || pointsNum < 2) return;
+    for(let i = index; i < index + pointsNum; i += 2) {
+      if(flexiIDs.length == 1) {
+        let id = flexiIDs[0];
+        if(pathContainer.groups[id].strength == 0) continue;
+        pathContainer.groups[id].effectSprite.getMatrix().applyToPoint(points, i);
+        continue;
+      }
+      
+      let x = points[i];
+      let y = points[i+1];
+      
+      let ratioList = [];
+      let sum = 0;
+      flexiIDs.forEach(id=>{
+        let val = pathContainer.groups[id].getInfluence(x, y);
+        sum += val;
+        ratioList.push(val);
+      });
+      
+      if(sum == 0) continue;
+      
+      points[i] = 0;
+      points[i+1] = 0;
+      
+      flexiIDs.forEach((id, j)=>{
+        pathContainer.groups[id].effectSprite.getMatrix().multAndAddPoint(1 - ratioList[j]/sum, x, y, points, i);
+      });
+    }
+  };
+  
+  /**
+   * @param {PathContainer} pathContainer
+   * @param {Array} flexiIDs - used to transform with flexi bone IDs
    */
   calcFlexi(pathContainer, flexiIDs) {
     this.resultPathList.forEach(d=> {
       if(!d.pos || d.pos.length == 0) return;
-      let points = d.pos;
-      let pointsNum = points.length;
-      for(let i = 0; i < pointsNum; i += 2) {
-        if(flexiIDs.length == 1) {
-          let id = flexiIDs[0];
-          if(pathContainer.groups[id].strength == 0) continue;
-          pathContainer.groups[id].effectSprite.getMatrix().applyToPoint(points, i);
-          continue;
-        }
-        
-        let x = points[i];
-        let y = points[i+1];
-        
-        let ratioList = [];
-        let sum = 0;
-        flexiIDs.forEach(id=>{
-          let val = pathContainer.groups[id].getInfluence(x, y);
-          sum += val;
-          ratioList.push(val);
-        });
-        
-        if(sum == 0) continue;
-        
-        points[i] = 0;
-        points[i+1] = 0;
-        
-        flexiIDs.forEach((id, j)=>{
-          pathContainer.groups[id].effectSprite.getMatrix().multAndAddPoint(1 - ratioList[j]/sum, x, y, points, i);
-        });
-      }
+      PathObj.calcFlexiPoints(pathContainer, flexiIDs, d.pos);
     });
   };
   
@@ -1070,7 +1078,7 @@ class BoneObj extends Sprite {
    */
   preprocessing(pathContainer) {
     if(!this.defState) return;
-    let pathDataList = this.paths[0].getPathDataList(pathContainer.actionList[pathContainer.currentActionID].currentFrame, pathContainer.currentActionID);
+    let pathDataList = this.paths[0].resultPathList = this.paths[0].getPathDataList(pathContainer.actionList[pathContainer.currentActionID].currentFrame, pathContainer.currentActionID);
     if(pathDataList.length != 2) return;
     
     let data = [pathDataList[0].pos[0], pathDataList[0].pos[1], pathDataList[1].pos[0], pathDataList[1].pos[1]];
@@ -1154,11 +1162,35 @@ class BoneObj extends Sprite {
   /**
    * @param {PathContainer} pathContainer
    */
-  calcKinematics(pathContainer) {
+  calc(pathContainer) {
     if(this.id == "bone4_head") {
       this.calcInverseKinematics(pathContainer);
     } else {
       this.calcForwardKinematics(pathContainer);
+    }
+    
+    if(!!this.flexi) {
+      this.paths[0].calcFlexi(pathContainer, this.flexi);
+      
+      let pathDataList = this.paths[0].resultPathList;
+      this.currentState.pos[0] = pathDataList[0].pos[0];
+      this.currentState.pos[1] = pathDataList[0].pos[1];
+      this.currentState.pos[2] = pathDataList[1].pos[0];
+      this.currentState.pos[3] = pathDataList[1].pos[1];
+      this.calcCurrentState();
+    }
+    
+    if(!!this.flexiPoint) {
+      let pathDataList = this.paths[0].resultPathList;
+      let dataIndex = this.flexiPoint.dataIndex;
+      PathObj.calcFlexiPoints(pathContainer, this.flexiPoint.bones, pathDataList[dataIndex].pos, 0, 2);
+      let tx = pathDataList[dataIndex].pos[0] - this.currentState.pos[dataIndex * 2 + 0];
+      let ty = pathDataList[dataIndex].pos[1] - this.currentState.pos[dataIndex * 2 + 1];
+      this.currentState.pos[0] += tx;
+      this.currentState.pos[1] += ty;
+      this.currentState.pos[2] += tx;
+      this.currentState.pos[3] += ty;
+      this.calcCurrentState();
     }
   };
   
@@ -1405,8 +1437,20 @@ class PathContainer extends Sprite {
       } else if(childNum == 0) {
         priority += offset;
       }
+      
       ret.priority = priority;
       return ret;
+    });
+    
+    bonesMap.forEach(boneData=> {
+      let bone = this.groups[boneData.id];
+      if(!bone.flexiPoint) return;
+      let ret = boneData.priority;
+      bone.flexiPoint.bones.forEach(id=> {
+        let targetPri = bonesMap.find(data=> data.id == id).priority;
+        if(ret <= targetPri) ret = targetPri + 1;
+      });
+      boneData.priority = ret;
     });
     
     bonesMap.sort((a, b)=> {
@@ -1415,6 +1459,7 @@ class PathContainer extends Sprite {
       if(a.priority < b.priority) return -1;
       return 0;
     });
+    
     bonesMap.some(boneData=> {
       if(boneData.priority < 0) return true;
       this.groups[boneData.id].control(this);
@@ -1424,7 +1469,7 @@ class PathContainer extends Sprite {
     });
     bonesMap.some(boneData=> {
       if(boneData.priority < 0) return true;
-      this.groups[boneData.id].calcKinematics(this);
+      this.groups[boneData.id].calc(this);
     });
     
     this.actionList.forEach(targetAction=> {
@@ -1578,7 +1623,7 @@ var BinaryLoader = {
     let getPath=()=>{
       let maskIdToUse = getUint16() - 1;
       if(maskIdToUse < 0) maskIdToUse = null;
-      let fillRule = (getUint8() == 0 ? "nonzero" : "evenodd");
+      let fillRule = (getUint8() ? "evenodd" : "nonzero");
       
       let pathDataList = getPathData();
       
@@ -1604,9 +1649,11 @@ var BinaryLoader = {
       let maskIdToUse = getUint16() - 1;
       if(maskIdToUse < 0) maskIdToUse = null;
       let paths = getArray(getUint16, getPath);
+      let flexi = getArray(getUint8, getUint16);
       
+      let ret;
       if(name.startsWith(PathCtr.defaultBoneName)) {
-        let bone = new BoneObj(
+        ret = new BoneObj(
           i,
           name,
           paths,
@@ -1616,43 +1663,51 @@ var BinaryLoader = {
         while(kind > 0) {
           switch(kind) {
             case BinaryLoader.bonePropList["parentID"]:
-              bone.parentID = getUint16();
+              ret.parentID = getUint16();
               break;
             case BinaryLoader.bonePropList["isParentPin"]:
-              bone.isParentPin = true;
+              ret.isParentPin = true;
               break;
             case BinaryLoader.bonePropList["feedback"]:
-              bone.feedback = true;
+              ret.feedback = true;
               break;
             case BinaryLoader.bonePropList["strength"]:
-              bone.strength = getFloat32();
+              ret.strength = getFloat32();
               break;
             case BinaryLoader.bonePropList["isSmartBone"]:
-              bone.isSmartBone = true;
+              ret.isSmartBone = true;
               break;
             case BinaryLoader.bonePropList["smartBase"]:
-              bone.smartBase = getFloat32() / 180 * Math.PI;
+              ret.smartBase = getFloat32() / 180 * Math.PI;
               break;
             case BinaryLoader.bonePropList["smartMax"]:
               let rad = getFloat32();
-              bone.smartMax = rad / 180 * Math.PI;
+              ret.smartMax = rad / 180 * Math.PI;
               break;
           };
           kind = getUint8();
         }
         
-        return bone;
+        if(getUint8()) {
+          ret.flexiPoint = {
+            dataIndex: getUint8(),
+            bones: getArray(getUint8, getUint16),
+          };
+        }
       } else {
-        let group = new GroupObj(
+        ret = new GroupObj(
           i,
           name,
           paths,
           getAction(()=>getArray(getUint8, getUint16)),
           maskIdToUse
         );
-        group.flexi = getArray(getUint8, getUint16);
-        return group;
       }
+      
+      if(flexi.length > 0) {
+        ret.flexi = flexi;
+      }
+      return ret;
     };
     
     
@@ -1772,22 +1827,6 @@ var BoneLoader = {
       }
     };
     
-    let setFlexiBones =(group, nameList)=> {
-      if(!nameList || !Array.isArray(nameList) || nameList.length == 0) return;
-      PathCtr.loadState("GROUP:" + group.id);
-      
-      group.flexi.length = 0;
-      
-      nameList.forEach(name=> {
-        let bone = pathContainer.getBone(name);
-        if(!!bone) {
-          PathCtr.loadState("  flexi:");
-          group.flexi.push(bone.uid);
-          PathCtr.loadState("    " + name);
-        }
-      });
-    };
-    
     request.onload = function(e) {
       let target = e.target;
       if(target.readyState != 4) return;
@@ -1804,14 +1843,59 @@ var BoneLoader = {
           setJSONData(bone, ret.bones[id]);
         });
       }
+      
+      if(!!ret.flexiPoint) {
+        Object.keys(ret.flexiPoint).forEach(name=> {
+          let bone = pathContainer.getGroup(name);
+          if(!bone) {
+            console.error("bone is not found : " + name);
+            return;
+          }
+          PathCtr.loadState("FLEXI BONE:" + bone.id);
+          
+          let target = ret.flexiPoint[name];
+          let dataIndex = target.dataIndex;
+          let boneNameList = target.bones;
+          if(!Number.isFinite(dataIndex) || !Array.isArray(boneNameList)) return;
+          if(dataIndex >= 2) return;
+          
+          PathCtr.loadState("  flexiPoint:");
+          PathCtr.loadState("    dataIndex: " + dataIndex);
+          let bones = [];
+          boneNameList.forEach(name=> {
+            let bone = pathContainer.getBone(name);
+            if(!!bone) {
+              bones.push(bone.uid);
+              PathCtr.loadState("    bone: " + name);
+            }
+          });
+          bone.flexiPoint = {
+            dataIndex: dataIndex,
+            bones: bones,
+          };
+        });
+      }
+      
       if(!!ret.flexi) {
-        Object.keys(ret.flexi).forEach(name=>{
+        Object.keys(ret.flexi).forEach(name=> {
           let group = pathContainer.getGroup(name);
           if(!group) {
             console.error("group is not found : " + name);
             return;
           }
-          setFlexiBones(group, ret.flexi[name]);
+          let groupNameList = ret.flexi[name];
+          if(!groupNameList || !Array.isArray(groupNameList) || groupNameList.length == 0) return;
+          PathCtr.loadState("FLEXI GROUP:" + group.id);
+          
+          group.flexi = [];
+          PathCtr.loadState("  flexi:");
+          groupNameList.forEach(name=> {
+            let bone = pathContainer.getBone(name);
+            if(!!bone) {
+              group.flexi.push(bone.uid);
+              PathCtr.loadState("    " + name);
+            }
+          });
         });
       }
       

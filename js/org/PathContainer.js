@@ -130,8 +130,20 @@ class PathContainer extends Sprite {
       } else if(childNum == 0) {
         priority += offset;
       }
+      
       ret.priority = priority;
       return ret;
+    });
+    
+    bonesMap.forEach(boneData=> {
+      let bone = this.groups[boneData.id];
+      if(!bone.flexiPoint) return;
+      let ret = boneData.priority;
+      bone.flexiPoint.bones.forEach(id=> {
+        let targetPri = bonesMap.find(data=> data.id == id).priority;
+        if(ret <= targetPri) ret = targetPri + 1;
+      });
+      boneData.priority = ret;
     });
     
     bonesMap.sort((a, b)=> {
@@ -140,6 +152,7 @@ class PathContainer extends Sprite {
       if(a.priority < b.priority) return -1;
       return 0;
     });
+    
     bonesMap.some(boneData=> {
       if(boneData.priority < 0) return true;
       this.groups[boneData.id].control(this);
@@ -149,7 +162,7 @@ class PathContainer extends Sprite {
     });
     bonesMap.some(boneData=> {
       if(boneData.priority < 0) return true;
-      this.groups[boneData.id].calcKinematics(this);
+      this.groups[boneData.id].calc(this);
     });
     
     this.actionList.forEach(targetAction=> {

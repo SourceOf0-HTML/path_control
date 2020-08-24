@@ -104,7 +104,19 @@
     }
   },
   
+  "flexiPoint": {
+    "bone5_left_arm": {
+      "dataIndex": 0,
+      "bones": ["bone1_clothes", "bone2_clothes"]
+    },
+    "bone8_right_arm": {
+      "dataIndex": 1,
+      "bones": ["bone1_clothes", "bone2_clothes"]
+    }
+  },
+  
   "flexi": {
+    "bone7_right_arm": ["bone1_clothes", "bone2_clothes"],
     "clothes": ["bone1_clothes", "bone2_clothes"],
     "jacket": ["bone1_clothes", "bone2_clothes"],
     "neck": ["bone3_neck"],

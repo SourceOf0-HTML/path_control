@@ -51,22 +51,6 @@ var BoneLoader = {
       }
     };
     
-    let setFlexiBones =(group, nameList)=> {
-      if(!nameList || !Array.isArray(nameList) || nameList.length == 0) return;
-      PathCtr.loadState("GROUP:" + group.id);
-      
-      group.flexi.length = 0;
-      
-      nameList.forEach(name=> {
-        let bone = pathContainer.getBone(name);
-        if(!!bone) {
-          PathCtr.loadState("  flexi:");
-          group.flexi.push(bone.uid);
-          PathCtr.loadState("    " + name);
-        }
-      });
-    };
-    
     request.onload = function(e) {
       let target = e.target;
       if(target.readyState != 4) return;
@@ -83,14 +67,59 @@ var BoneLoader = {
           setJSONData(bone, ret.bones[id]);
         });
       }
+      
+      if(!!ret.flexiPoint) {
+        Object.keys(ret.flexiPoint).forEach(name=> {
+          let bone = pathContainer.getGroup(name);
+          if(!bone) {
+            console.error("bone is not found : " + name);
+            return;
+          }
+          PathCtr.loadState("FLEXI BONE:" + bone.id);
+          
+          let target = ret.flexiPoint[name];
+          let dataIndex = target.dataIndex;
+          let boneNameList = target.bones;
+          if(!Number.isFinite(dataIndex) || !Array.isArray(boneNameList)) return;
+          if(dataIndex >= 2) return;
+          
+          PathCtr.loadState("  flexiPoint:");
+          PathCtr.loadState("    dataIndex: " + dataIndex);
+          let bones = [];
+          boneNameList.forEach(name=> {
+            let bone = pathContainer.getBone(name);
+            if(!!bone) {
+              bones.push(bone.uid);
+              PathCtr.loadState("    bone: " + name);
+            }
+          });
+          bone.flexiPoint = {
+            dataIndex: dataIndex,
+            bones: bones,
+          };
+        });
+      }
+      
       if(!!ret.flexi) {
-        Object.keys(ret.flexi).forEach(name=>{
+        Object.keys(ret.flexi).forEach(name=> {
           let group = pathContainer.getGroup(name);
           if(!group) {
             console.error("group is not found : " + name);
             return;
           }
-          setFlexiBones(group, ret.flexi[name]);
+          let groupNameList = ret.flexi[name];
+          if(!groupNameList || !Array.isArray(groupNameList) || groupNameList.length == 0) return;
+          PathCtr.loadState("FLEXI GROUP:" + group.id);
+          
+          group.flexi = [];
+          PathCtr.loadState("  flexi:");
+          groupNameList.forEach(name=> {
+            let bone = pathContainer.getBone(name);
+            if(!!bone) {
+              group.flexi.push(bone.uid);
+              PathCtr.loadState("    " + name);
+            }
+          });
         });
       }
       
