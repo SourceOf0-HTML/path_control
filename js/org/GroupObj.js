@@ -19,10 +19,10 @@ class GroupObj extends Sprite {
    * @param {Object} data
    */
   setCustomFunc(data) {
-    if(typeof data.initFuncStr !== "undefined") {
+    if("initFuncStr" in data) {
       this.customInit = new Function("pathContainer", data.initFuncStr);
       this.customInit();
-      this.customInit = undefined;
+      delete this.customInit;
     }
   };
   
@@ -45,7 +45,7 @@ class GroupObj extends Sprite {
     let flexi = flexiIDs.concat(this.flexi);
     let groupMatrix = groupSprite.getMatrix();
     
-    this.paths.forEach(path=>{
+    this.paths.forEach(path=> {
       path.update(frame, actionID, pathContainer, groupMatrix);
     });
     

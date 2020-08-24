@@ -275,11 +275,11 @@ var DebugPath = {
       setString(action.name);
       setUint8(action.id);
       setUint16(action.totalFrames);
-      if(typeof action.smartBoneID === "undefined") {
-        setUint8(0);
-      } else {
+      if("smartBoneID" in action) {
         setUint8(1);
         setUint16(action.smartBoneID);
+      } else {
+        setUint8(0);
       }
     });
     

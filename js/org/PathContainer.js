@@ -121,14 +121,14 @@ class PathContainer extends Sprite {
         }
       });
       
-      if(typeof bone.parentID === "undefined") {
+      if("parentID" in bone) {
+        priority += offset;
+      } else if(childNum == 0) {
         if(childNum == 0) {
           priority += offset * 2;
         } else {
           priority = 0;
         }
-      } else if(childNum == 0) {
-        priority += offset;
       }
       
       ret.priority = priority;
@@ -168,8 +168,9 @@ class PathContainer extends Sprite {
     this.actionList.forEach(targetAction=> {
       if(targetAction.id == action.id) return;
       targetAction.pastFrame = targetAction.currentFrame;
-      if(!targetAction.smartBoneID) return;
-      targetAction.currentFrame = this.groups[targetAction.smartBoneID].getSmartFrame(targetAction.totalFrames);
+      if("smartBoneID" in targetAction) {
+        targetAction.currentFrame = this.groups[targetAction.smartBoneID].getSmartFrame(targetAction.totalFrames);
+      }
     });
     
     this.rootGroups.forEach(id=> {

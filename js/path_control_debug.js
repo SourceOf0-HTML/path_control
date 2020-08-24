@@ -818,10 +818,10 @@ class GroupObj extends Sprite {
    * @param {Object} data
    */
   setCustomFunc(data) {
-    if(typeof data.initFuncStr !== "undefined") {
+    if("initFuncStr" in data) {
       this.customInit = new Function("pathContainer", data.initFuncStr);
       this.customInit();
-      this.customInit = undefined;
+      delete this.customInit;
     }
   };
   
@@ -844,7 +844,7 @@ class GroupObj extends Sprite {
     let flexi = flexiIDs.concat(this.flexi);
     let groupMatrix = groupSprite.getMatrix();
     
-    this.paths.forEach(path=>{
+    this.paths.forEach(path=> {
       path.update(frame, actionID, pathContainer, groupMatrix);
     });
     
@@ -1011,12 +1011,12 @@ class BoneObj extends Sprite {
    * @param {Object} data
    */
   setCustomFunc(data) {
-    if(typeof data.initFuncStr !== "undefined") {
+    if("initFuncStr" in data) {
       this.customInit = new Function("pathContainer", data.initFuncStr);
       this.customInit();
-      this.customInit = undefined;
+      delete this.customInit;
     }
-    if(typeof data.controlFuncStr !== "undefined") {
+    if("controlFuncStr" in data) {
       this.control = new Function("pathContainer", data.controlFuncStr);
     }
   };
@@ -1109,15 +1109,14 @@ class BoneObj extends Sprite {
     };
     
     let boneIDs = [this.uid];
-    let parentID = this.parentID;
     let bone = this;
     let pos = reach(this, pathContainer.mouseX, pathContainer.mouseY);
-    while(typeof parentID !== "undefined") {
+    while("parentID" in bone) {
+      let parentID = bone.parentID;
       bone = pathContainer.groups[parentID];
       pos = reach(bone, pos.x, pos.y);
       if(!bone.feedback) break;
       boneIDs.unshift(parentID);
-      parentID = bone.parentID;
     }
     
     boneIDs.forEach(parentID=> {
@@ -1137,13 +1136,10 @@ class BoneObj extends Sprite {
    * @param {PathContainer} pathContainer
    */
   calcForwardKinematics(pathContainer) {
-    let parentID = this.parentID;
     let currentPos = this.currentState.pos;
-    let bone = this;
-    
-    if(typeof parentID !== "undefined") {
-      let target = pathContainer.groups[parentID];
-      if(bone.isParentPin) {
+    if("parentID" in this) {
+      let target = pathContainer.groups[this.parentID];
+      if(this.isParentPin) {
         let x = target.effectSprite.x - target.effectSprite.anchorX;
         let y = target.effectSprite.y - target.effectSprite.anchorY;
         currentPos[0] += x;
@@ -1153,8 +1149,6 @@ class BoneObj extends Sprite {
       } else {
         target.effectSprite.getMatrix().applyToArray(currentPos);
       }
-      parentID = target.parentID;
-      bone = target;
     }
     this.calcCurrentState();
   };
@@ -1168,8 +1162,7 @@ class BoneObj extends Sprite {
     } else {
       this.calcForwardKinematics(pathContainer);
     }
-    
-    if(!!this.flexi) {
+    if("flexi" in this) {
       this.paths[0].calcFlexi(pathContainer, this.flexi);
       
       let pathDataList = this.paths[0].resultPathList;
@@ -1179,8 +1172,7 @@ class BoneObj extends Sprite {
       this.currentState.pos[3] = pathDataList[1].pos[1];
       this.calcCurrentState();
     }
-    
-    if(!!this.flexiPoint) {
+    if("flexiPoint" in this) {
       let pathDataList = this.paths[0].resultPathList;
       let dataIndex = this.flexiPoint.dataIndex;
       PathObj.calcFlexiPoints(pathContainer, this.flexiPoint.bones, pathDataList[dataIndex].pos, 0, 2);
@@ -1428,14 +1420,14 @@ class PathContainer extends Sprite {
         }
       });
       
-      if(typeof bone.parentID === "undefined") {
+      if("parentID" in bone) {
+        priority += offset;
+      } else if(childNum == 0) {
         if(childNum == 0) {
           priority += offset * 2;
         } else {
           priority = 0;
         }
-      } else if(childNum == 0) {
-        priority += offset;
       }
       
       ret.priority = priority;
@@ -1475,8 +1467,9 @@ class PathContainer extends Sprite {
     this.actionList.forEach(targetAction=> {
       if(targetAction.id == action.id) return;
       targetAction.pastFrame = targetAction.currentFrame;
-      if(!targetAction.smartBoneID) return;
-      targetAction.currentFrame = this.groups[targetAction.smartBoneID].getSmartFrame(targetAction.totalFrames);
+      if("smartBoneID" in targetAction) {
+        targetAction.currentFrame = this.groups[targetAction.smartBoneID].getSmartFrame(targetAction.totalFrames);
+      }
     });
     
     this.rootGroups.forEach(id=> {
@@ -2503,11 +2496,11 @@ var DebugPath = {
       setString(action.name);
       setUint8(action.id);
       setUint16(action.totalFrames);
-      if(typeof action.smartBoneID === "undefined") {
-        setUint8(0);
-      } else {
+      if("smartBoneID" in action) {
         setUint8(1);
         setUint16(action.smartBoneID);
+      } else {
+        setUint8(0);
       }
     });
     
