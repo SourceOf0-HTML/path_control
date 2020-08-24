@@ -2034,11 +2034,6 @@ var BoneLoader = {
         PathCtr.loadState("  strength:" + bone.strength);
       }
       
-      if("isSmartBone" in data && (typeof data.isSmartBone === "boolean")) {
-        bone.isSmartBone = data.isSmartBone;
-        PathCtr.loadState("  isSmartBone:" + bone.isSmartBone);
-      }
-      
       if("smartBase" in data && Number.isFinite(data.smartBase)) {
         bone.smartBase = data.smartBase/180 * Math.PI;
         PathCtr.loadState("  smartBase:" + bone.smartBase);
@@ -2077,6 +2072,9 @@ var BoneLoader = {
           console.error("smart action is not found : " + data.smartAction);
           return;
         }
+        bone.isSmartBone = true;
+        PathCtr.loadState("  isSmartBone:" + bone.isSmartBone);
+        
         action.smartBoneID = bone.uid;
         PathCtr.loadState("  smartAction: " + action.name);
       }

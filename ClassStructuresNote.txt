@@ -43,10 +43,12 @@ BoneObj
   parentID = id;                  // parent bone id
   isParentPin = isParentPin;      // parent bone is pin bone
   feedback = receiveFeedback;     // receive feedback from other bones
+  
   strength = strength;            // scope of influence of bone
   isSmartBone = isSmartBone;      // is smart bone or not
   smartBase = smartBase;          // base angle
   smartMax = smartMax;            // max angle
+  
   effectSprite = <Sprite>;        // actual effect sprite
   defState = { x0, y0, x1, y1, distance, angle }        // default bone state
   currentState = { [x0, y0, x1, y1], distance, angle }  // current bone state

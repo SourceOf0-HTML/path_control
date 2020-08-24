@@ -70,52 +70,45 @@
     },
     
     "bone12_left_leg_S": {
-      "isSmartBone": true,
+      "smartAction": "left_leg",
       "smartBase": 90,
-      "smartMax": 360,
-      "smartAction": "left_leg"
+      "smartMax": 360
     },
     
     "bone13_right_leg_S": {
-      "isSmartBone": true,
+      "smartAction": "right_leg",
       "smartBase": 90,
-      "smartMax": 360,
-      "smartAction": "right_leg"
+      "smartMax": 360
     },
     
     "bone14_left_arm_S": {
-      "isSmartBone": true,
+      "smartAction": "left_arm",
       "smartBase": 90,
-      "smartMax": 90,
-      "smartAction": "left_arm"
+      "smartMax": 90
     },
     
     "bone15_jacket_S": {
-      "isSmartBone": true,
+      "smartAction": "jacket",
       "smartBase": 90,
-      "smartMax": 360,
-      "smartAction": "jacket"
+      "smartMax": 360
     },
     
     "bone16_pupils_S": {
-      "isSmartBone": true,
+      "smartAction": "pupils",
       "smartBase": 0,
-      "smartMax": 180,
-      "smartAction": "pupils"
+      "smartMax": 180
     },
     
     "bone17_eyelids_S": {
-      "isSmartBone": true,
+      "smartAction": "eyelids",
       "smartBase": 90,
-      "smartMax": 90,
-      "smartAction": "eyelids"
+      "smartMax": 90
     },
     
     "bone18_face_S": {
-      "isSmartBone": true,
+      "smartAction": "face",
       "smartBase": 0,
-      "smartMax": 90,
-      "smartAction": "face"
+      "smartMax": 90
     }
   },
   
