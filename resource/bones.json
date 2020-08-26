@@ -1,25 +1,33 @@
 {
   "bones": {
     "bone1_clothes": {
-      "strength": 0.05
+      "strength": 0.05,
+      "maxAngle": -80,
+      "minAngle": -100
     },
     
     "bone2_clothes": {
       "parent": "bone1_clothes",
       "feedback": true,
-      "strength": 0.05
+      "strength": 0.05,
+      "maxAngle": 60,
+      "minAngle": -60
     },
     
     "bone3_neck": {
       "parent": "bone2_clothes",
       "feedback": true,
-      "strength": 0.05
+      "strength": 0.05,
+      "maxAngle": 10,
+      "minAngle": -10
     },
     
     "bone4_head": {
       "parent": "bone3_neck",
       "feedback": true,
-      "strength": 0.1
+      "strength": 0.1,
+      "maxAngle": 20,
+      "minAngle": -20
     },
     
     "bone5_left_arm": {
@@ -48,7 +56,7 @@
       "strength": 0.05,
       "flexiPoint": {
         "dataIndex": 1,
-        "bones": ["bone1_clothes", "bone2_clothes"]
+        "bones": ["bone1_clothes"]
       }
     },
     

@@ -1,5 +1,21 @@
 function loadComplete() {
   document.getElementById("output-btn").disabled = "";
+  PathMain.postMessage({
+    cmd: "set-group-control",
+    name: "bone4_head",
+    initFuncStr: `
+      this.initIK();
+    `,
+    controlFuncStr: `
+      if(!pathContainer.mouseX && !pathContainer.mouseY) {
+        this.posIK.enable = false;
+        return;
+      }
+      this.posIK.enable = true;
+      this.posIK.x = pathContainer.mouseX;
+      this.posIK.y = pathContainer.mouseY;
+    `,
+  });
 }
 
 function svgLoadComplete() {

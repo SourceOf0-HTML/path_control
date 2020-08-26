@@ -9,9 +9,11 @@ var BinaryLoader = {
     isParentPin: 2,
     feedback: 3,
     strength: 4,
-    isSmartBone: 5,
-    smartBase: 6,
-    smartMax: 7,
+    maxAngle: 5,
+    minAngle: 6,
+    isSmartBone: 7,
+    smartBase: 8,
+    smartMax: 9,
   },
   
   /**
@@ -166,6 +168,12 @@ var BinaryLoader = {
               break;
             case BinaryLoader.bonePropList["strength"]:
               ret.strength = getFloat32();
+              break;
+            case BinaryLoader.bonePropList["maxAngle"]:
+              ret.maxAngle = getFloat32() / 180 * Math.PI;
+              break;
+            case BinaryLoader.bonePropList["minAngle"]:
+              ret.minAngle = getFloat32() / 180 * Math.PI;
               break;
             case BinaryLoader.bonePropList["isSmartBone"]:
               ret.isSmartBone = true;

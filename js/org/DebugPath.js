@@ -236,13 +236,15 @@ var DebugPath = {
       if(BoneObj.prototype.isPrototypeOf(group)) {
         setArray(group.childGroups, setUint8, setUint16);
         Object.keys(BinaryLoader.bonePropList).map(propName=> {
-          if(typeof group[propName] === "undefined") return;
+          if(!(propName in group)) return;
           setUint8(BinaryLoader.bonePropList[propName]);
           switch(propName) {
             case "parentID": setUint16(group.parentID); break;
             case "isParentPin": break;
             case "feedback": break;
             case "strength": setFloat32(group.strength); break;
+            case "maxAngle": setFloat32(group.maxAngle / Math.PI * 180); break;
+            case "minAngle": setFloat32(group.minAngle / Math.PI * 180); break;
             case "isSmartBone": break;
             case "smartBase": setFloat32(group.smartBase / Math.PI * 180); break;
             case "smartMax": setFloat32(group.smartMax / Math.PI * 180); break;

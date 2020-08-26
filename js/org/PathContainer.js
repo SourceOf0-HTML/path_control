@@ -107,11 +107,11 @@ class PathContainer extends Sprite {
     
     let bonesMap = this.bones.map((id, i)=> {
       let bone = this.groups[id];
-      let ret = { id: id, priority: -1 };
+      let ret = { id: id, priority: -1, name: bone.id };
       if(!bone.defState) return ret;
       
       let offset = this.groups.length;
-      let priority = 0;
+      let priority = id;
       let childNum = 0;
       this.bones.forEach(targetID=> {
         if(this.groups[targetID].parentID == bone.uid) {
@@ -137,12 +137,23 @@ class PathContainer extends Sprite {
     
     bonesMap.forEach(boneData=> {
       let bone = this.groups[boneData.id];
-      if(!bone.flexiPoint) return;
       let ret = boneData.priority;
-      bone.flexiPoint.bones.forEach(id=> {
-        let targetPri = bonesMap.find(data=> data.id == id).priority;
-        if(ret <= targetPri) ret = targetPri + 1;
-      });
+      if("posIK" in bone && bone.posIK.enable) {
+        let target = bone;
+        while("parentID" in target) {
+          let parentID = target.parentID;
+          let targetData = bonesMap.find(data=> data.id == parentID);
+          targetData.priority = -1;
+          target = this.groups[parentID];
+          if(!target.feedback) break;
+        }
+      }
+      if("flexiPoint" in bone) {
+        bone.flexiPoint.bones.forEach(id=> {
+          let targetPri = bonesMap.find(data=> data.id == id).priority;
+          if(ret <= targetPri) ret = targetPri + 1;
+        });
+      }
       boneData.priority = ret;
     });
     

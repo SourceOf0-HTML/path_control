@@ -85,18 +85,6 @@ class BoneObj extends Sprite {
     return ((angle/this.smartMax * (totalFrames-2))^0) + 1;
   };
   
-  /**
-   * @param {Array} pos
-   */
-  setCurrentPos(pos) {
-    let currentPos = this.currentState.pos;
-    currentPos[0] = pos[0];
-    currentPos[1] = pos[1];
-    currentPos[2] = pos[2];
-    currentPos[3] = pos[3];
-    this.calcCurrentState();
-  };
-  
   calcCurrentState() {
     let currentPos = this.currentState.pos;
     let distX = currentPos[2] - currentPos[0];
@@ -114,6 +102,51 @@ class BoneObj extends Sprite {
   };
   
   /**
+   * @param {Number} angle
+   */
+  rotateCurrentState(angle) {
+    let dist = this.currentState.distance;
+    let currentPos = this.currentState.pos;
+    currentPos[2] = currentPos[0] + Math.cos(angle) * dist;
+    currentPos[3] = currentPos[1] + Math.sin(angle) * dist;
+    this.calcCurrentState();
+  };
+  
+  /**
+   * @param {PathContainer} pathContainer
+   */
+  limitAngle(pathContainer) {
+    this.calcCurrentState();
+    if(!("maxAngle" in this || "minAngle" in this)) return;
+    let parentAngle = ("parentID" in this) ? pathContainer.groups[this.parentID].currentState.angle : 0;
+    
+    let amendAngle =val=> {
+      let PI = Math.PI;
+      let TAU = PI * 2;
+      while(val < -PI) val += TAU;
+      while(val >= PI) val -= TAU;
+      return val;
+    };
+    
+    let angle = this.currentState.angle;
+    let targetAngle = amendAngle(angle - parentAngle);
+    
+    if("maxAngle" in this) {
+      let maxAngle = amendAngle(this.maxAngle);
+      if(targetAngle > maxAngle) {
+        this.rotateCurrentState(maxAngle + parentAngle);
+        return;
+      }
+    }
+    if("minAngle" in this) {
+      let minAngle = amendAngle(this.minAngle);
+      if(targetAngle < minAngle) {
+        this.rotateCurrentState(minAngle + parentAngle);
+      }
+    }
+  };
+  
+  /**
    * @param {PathContainer} pathContainer
    */
   control(pathContainer) {
@@ -125,77 +158,87 @@ class BoneObj extends Sprite {
    */
   preprocessing(pathContainer) {
     if(!this.defState) return;
+    
     let pathDataList = this.paths[0].resultPathList = this.paths[0].getPathDataList(pathContainer.actionList[pathContainer.currentActionID].currentFrame, pathContainer.currentActionID);
     if(pathDataList.length != 2) return;
     
     let data = [pathDataList[0].pos[0], pathDataList[0].pos[1], pathDataList[1].pos[0], pathDataList[1].pos[1]];
     this.getMatrix(data[0], data[1]).applyToArray(data);
-    this.setCurrentPos(data);
+    
+    let currentPos = this.currentState.pos;
+    currentPos[0] = data[0];
+    currentPos[1] = data[1];
+    currentPos[2] = data[2];
+    currentPos[3] = data[3];
+    this.calcCurrentState();
   };
   
   /**
    * @param {PathContainer} pathContainer
    */
   calcInverseKinematics(pathContainer) {
-    let reach =(bone, x1, y1)=> {
+    let reach =(bone, x, y)=> {
+      let currentAngle = bone.currentState.angle;
       let currentPos = bone.currentState.pos;
       let distX = currentPos[2] - currentPos[0];
       let distY = currentPos[3] - currentPos[1];
       let distance = Math.sqrt(distX*distX + distY*distY);
-      let x0 = currentPos[0];
-      let y0 = currentPos[1];
-      let angle = Math.atan2(y1 - y0, x1 - x0);
-      let x = currentPos[2] = x0 + Math.cos(angle) * distance;
-      let y = currentPos[3] = y0 + Math.sin(angle) * distance;
+      bone.rotateCurrentState(Math.atan2(y - currentPos[1], x - currentPos[0]));
       return {
-        x: x1 - (x - x0),
-        y: y1 - (y - y0)
+        x: x - (currentPos[2] - currentPos[0]),
+        y: y - (currentPos[3] - currentPos[1]),
       };
     };
     
     let boneIDs = [this.uid];
     let bone = this;
-    let pos = reach(this, pathContainer.mouseX, pathContainer.mouseY);
     while("parentID" in bone) {
       let parentID = bone.parentID;
       bone = pathContainer.groups[parentID];
-      pos = reach(bone, pos.x, pos.y);
+      boneIDs.push(parentID);
       if(!bone.feedback) break;
-      boneIDs.unshift(parentID);
     }
-    
-    boneIDs.forEach(parentID=> {
-      let target = pathContainer.groups[parentID];
+    let boneNum = boneIDs.length;
+    let pos = reach(this, this.posIK.x, this.posIK.y);
+    for(let i = 1; i < boneNum; ++i) {
+      bone = pathContainer.groups[boneIDs[i]];
+      pos = reach(bone, pos.x, pos.y);
+    }
+    bone.limitAngle(pathContainer);
+    for(let i = boneNum-2; i >= 0; --i) {
+      let target = pathContainer.groups[boneIDs[i]];
       let dx = bone.currentState.pos[2] - target.currentState.pos[0];
       let dy = bone.currentState.pos[3] - target.currentState.pos[1];
       target.currentState.pos[0] += dx;
       target.currentState.pos[1] += dy;
       target.currentState.pos[2] += dx;
       target.currentState.pos[3] += dy;
-      target.calcCurrentState();
+      target.limitAngle(pathContainer);
       bone = target;
-    });
+    }
+    this.limitAngle(pathContainer);
   };
   
   /**
    * @param {PathContainer} pathContainer
    */
   calcForwardKinematics(pathContainer) {
+    if(!("parentID" in this)) return;
+    
     let currentPos = this.currentState.pos;
-    if("parentID" in this) {
-      let target = pathContainer.groups[this.parentID];
-      if(this.isParentPin) {
-        let x = target.effectSprite.x - target.effectSprite.anchorX;
-        let y = target.effectSprite.y - target.effectSprite.anchorY;
-        currentPos[0] += x;
-        currentPos[1] += y;
-        currentPos[2] += x;
-        currentPos[3] += y;
-      } else {
-        target.effectSprite.getMatrix().applyToArray(currentPos);
-      }
+    let target = pathContainer.groups[this.parentID];
+    if(this.isParentPin) {
+      let x = target.effectSprite.x - target.effectSprite.anchorX;
+      let y = target.effectSprite.y - target.effectSprite.anchorY;
+      currentPos[0] += x;
+      currentPos[1] += y;
+      currentPos[2] += x;
+      currentPos[3] += y;
+      this.calcCurrentState();
+      return;
     }
-    this.calcCurrentState();
+    target.effectSprite.getMatrix().applyToArray(currentPos);
+    this.limitAngle(pathContainer);
   };
   
   /**

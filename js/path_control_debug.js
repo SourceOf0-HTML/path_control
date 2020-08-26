@@ -1050,18 +1050,6 @@ class BoneObj extends Sprite {
     return ((angle/this.smartMax * (totalFrames-2))^0) + 1;
   };
   
-  /**
-   * @param {Array} pos
-   */
-  setCurrentPos(pos) {
-    let currentPos = this.currentState.pos;
-    currentPos[0] = pos[0];
-    currentPos[1] = pos[1];
-    currentPos[2] = pos[2];
-    currentPos[3] = pos[3];
-    this.calcCurrentState();
-  };
-  
   calcCurrentState() {
     let currentPos = this.currentState.pos;
     let distX = currentPos[2] - currentPos[0];
@@ -1079,6 +1067,51 @@ class BoneObj extends Sprite {
   };
   
   /**
+   * @param {Number} angle
+   */
+  rotateCurrentState(angle) {
+    let dist = this.currentState.distance;
+    let currentPos = this.currentState.pos;
+    currentPos[2] = currentPos[0] + Math.cos(angle) * dist;
+    currentPos[3] = currentPos[1] + Math.sin(angle) * dist;
+    this.calcCurrentState();
+  };
+  
+  /**
+   * @param {PathContainer} pathContainer
+   */
+  limitAngle(pathContainer) {
+    this.calcCurrentState();
+    if(!("maxAngle" in this || "minAngle" in this)) return;
+    let parentAngle = ("parentID" in this) ? pathContainer.groups[this.parentID].currentState.angle : 0;
+    
+    let amendAngle =val=> {
+      let PI = Math.PI;
+      let TAU = PI * 2;
+      while(val < -PI) val += TAU;
+      while(val >= PI) val -= TAU;
+      return val;
+    };
+    
+    let angle = this.currentState.angle;
+    let targetAngle = amendAngle(angle - parentAngle);
+    
+    if("maxAngle" in this) {
+      let maxAngle = amendAngle(this.maxAngle);
+      if(targetAngle > maxAngle) {
+        this.rotateCurrentState(maxAngle + parentAngle);
+        return;
+      }
+    }
+    if("minAngle" in this) {
+      let minAngle = amendAngle(this.minAngle);
+      if(targetAngle < minAngle) {
+        this.rotateCurrentState(minAngle + parentAngle);
+      }
+    }
+  };
+  
+  /**
    * @param {PathContainer} pathContainer
    */
   control(pathContainer) {
@@ -1090,77 +1123,87 @@ class BoneObj extends Sprite {
    */
   preprocessing(pathContainer) {
     if(!this.defState) return;
+    
     let pathDataList = this.paths[0].resultPathList = this.paths[0].getPathDataList(pathContainer.actionList[pathContainer.currentActionID].currentFrame, pathContainer.currentActionID);
     if(pathDataList.length != 2) return;
     
     let data = [pathDataList[0].pos[0], pathDataList[0].pos[1], pathDataList[1].pos[0], pathDataList[1].pos[1]];
     this.getMatrix(data[0], data[1]).applyToArray(data);
-    this.setCurrentPos(data);
+    
+    let currentPos = this.currentState.pos;
+    currentPos[0] = data[0];
+    currentPos[1] = data[1];
+    currentPos[2] = data[2];
+    currentPos[3] = data[3];
+    this.calcCurrentState();
   };
   
   /**
    * @param {PathContainer} pathContainer
    */
   calcInverseKinematics(pathContainer) {
-    let reach =(bone, x1, y1)=> {
+    let reach =(bone, x, y)=> {
+      let currentAngle = bone.currentState.angle;
       let currentPos = bone.currentState.pos;
       let distX = currentPos[2] - currentPos[0];
       let distY = currentPos[3] - currentPos[1];
       let distance = Math.sqrt(distX*distX + distY*distY);
-      let x0 = currentPos[0];
-      let y0 = currentPos[1];
-      let angle = Math.atan2(y1 - y0, x1 - x0);
-      let x = currentPos[2] = x0 + Math.cos(angle) * distance;
-      let y = currentPos[3] = y0 + Math.sin(angle) * distance;
+      bone.rotateCurrentState(Math.atan2(y - currentPos[1], x - currentPos[0]));
       return {
-        x: x1 - (x - x0),
-        y: y1 - (y - y0)
+        x: x - (currentPos[2] - currentPos[0]),
+        y: y - (currentPos[3] - currentPos[1]),
       };
     };
     
     let boneIDs = [this.uid];
     let bone = this;
-    let pos = reach(this, pathContainer.mouseX, pathContainer.mouseY);
     while("parentID" in bone) {
       let parentID = bone.parentID;
       bone = pathContainer.groups[parentID];
-      pos = reach(bone, pos.x, pos.y);
+      boneIDs.push(parentID);
       if(!bone.feedback) break;
-      boneIDs.unshift(parentID);
     }
-    
-    boneIDs.forEach(parentID=> {
-      let target = pathContainer.groups[parentID];
+    let boneNum = boneIDs.length;
+    let pos = reach(this, this.posIK.x, this.posIK.y);
+    for(let i = 1; i < boneNum; ++i) {
+      bone = pathContainer.groups[boneIDs[i]];
+      pos = reach(bone, pos.x, pos.y);
+    }
+    bone.limitAngle(pathContainer);
+    for(let i = boneNum-2; i >= 0; --i) {
+      let target = pathContainer.groups[boneIDs[i]];
       let dx = bone.currentState.pos[2] - target.currentState.pos[0];
       let dy = bone.currentState.pos[3] - target.currentState.pos[1];
       target.currentState.pos[0] += dx;
       target.currentState.pos[1] += dy;
       target.currentState.pos[2] += dx;
       target.currentState.pos[3] += dy;
-      target.calcCurrentState();
+      target.limitAngle(pathContainer);
       bone = target;
-    });
+    }
+    this.limitAngle(pathContainer);
   };
   
   /**
    * @param {PathContainer} pathContainer
    */
   calcForwardKinematics(pathContainer) {
+    if(!("parentID" in this)) return;
+    
     let currentPos = this.currentState.pos;
-    if("parentID" in this) {
-      let target = pathContainer.groups[this.parentID];
-      if(this.isParentPin) {
-        let x = target.effectSprite.x - target.effectSprite.anchorX;
-        let y = target.effectSprite.y - target.effectSprite.anchorY;
-        currentPos[0] += x;
-        currentPos[1] += y;
-        currentPos[2] += x;
-        currentPos[3] += y;
-      } else {
-        target.effectSprite.getMatrix().applyToArray(currentPos);
-      }
+    let target = pathContainer.groups[this.parentID];
+    if(this.isParentPin) {
+      let x = target.effectSprite.x - target.effectSprite.anchorX;
+      let y = target.effectSprite.y - target.effectSprite.anchorY;
+      currentPos[0] += x;
+      currentPos[1] += y;
+      currentPos[2] += x;
+      currentPos[3] += y;
+      this.calcCurrentState();
+      return;
     }
-    this.calcCurrentState();
+    target.effectSprite.getMatrix().applyToArray(currentPos);
+    this.limitAngle(pathContainer);
   };
   
   /**
@@ -1416,11 +1459,11 @@ class PathContainer extends Sprite {
     
     let bonesMap = this.bones.map((id, i)=> {
       let bone = this.groups[id];
-      let ret = { id: id, priority: -1 };
+      let ret = { id: id, priority: -1, name: bone.id };
       if(!bone.defState) return ret;
       
       let offset = this.groups.length;
-      let priority = 0;
+      let priority = id;
       let childNum = 0;
       this.bones.forEach(targetID=> {
         if(this.groups[targetID].parentID == bone.uid) {
@@ -1446,12 +1489,23 @@ class PathContainer extends Sprite {
     
     bonesMap.forEach(boneData=> {
       let bone = this.groups[boneData.id];
-      if(!bone.flexiPoint) return;
       let ret = boneData.priority;
-      bone.flexiPoint.bones.forEach(id=> {
-        let targetPri = bonesMap.find(data=> data.id == id).priority;
-        if(ret <= targetPri) ret = targetPri + 1;
-      });
+      if("posIK" in bone && bone.posIK.enable) {
+        let target = bone;
+        while("parentID" in target) {
+          let parentID = target.parentID;
+          let targetData = bonesMap.find(data=> data.id == parentID);
+          targetData.priority = -1;
+          target = this.groups[parentID];
+          if(!target.feedback) break;
+        }
+      }
+      if("flexiPoint" in bone) {
+        bone.flexiPoint.bones.forEach(id=> {
+          let targetPri = bonesMap.find(data=> data.id == id).priority;
+          if(ret <= targetPri) ret = targetPri + 1;
+        });
+      }
       boneData.priority = ret;
     });
     
@@ -1519,9 +1573,11 @@ var BinaryLoader = {
     isParentPin: 2,
     feedback: 3,
     strength: 4,
-    isSmartBone: 5,
-    smartBase: 6,
-    smartMax: 7,
+    maxAngle: 5,
+    minAngle: 6,
+    isSmartBone: 7,
+    smartBase: 8,
+    smartMax: 9,
   },
   
   /**
@@ -1676,6 +1732,12 @@ var BinaryLoader = {
               break;
             case BinaryLoader.bonePropList["strength"]:
               ret.strength = getFloat32();
+              break;
+            case BinaryLoader.bonePropList["maxAngle"]:
+              ret.maxAngle = getFloat32() / 180 * Math.PI;
+              break;
+            case BinaryLoader.bonePropList["minAngle"]:
+              ret.minAngle = getFloat32() / 180 * Math.PI;
               break;
             case BinaryLoader.bonePropList["isSmartBone"]:
               ret.isSmartBone = true;
@@ -2043,6 +2105,16 @@ var BoneLoader = {
       if("strength" in data && Number.isFinite(data.strength)) {
         bone.strength = data.strength;
         PathCtr.loadState("  strength: " + bone.strength);
+      }
+      
+      if("maxAngle" in data && Number.isFinite(data.maxAngle)) {
+        bone.maxAngle = data.maxAngle/180 * Math.PI;
+        PathCtr.loadState("  maxAngle: " + bone.maxAngle);
+      }
+      
+      if("minAngle" in data && Number.isFinite(data.minAngle)) {
+        bone.minAngle = data.minAngle/180 * Math.PI;
+        PathCtr.loadState("  minAngle: " + bone.minAngle);
       }
       
       
@@ -2467,13 +2539,15 @@ var DebugPath = {
       if(BoneObj.prototype.isPrototypeOf(group)) {
         setArray(group.childGroups, setUint8, setUint16);
         Object.keys(BinaryLoader.bonePropList).map(propName=> {
-          if(typeof group[propName] === "undefined") return;
+          if(!(propName in group)) return;
           setUint8(BinaryLoader.bonePropList[propName]);
           switch(propName) {
             case "parentID": setUint16(group.parentID); break;
             case "isParentPin": break;
             case "feedback": break;
             case "strength": setFloat32(group.strength); break;
+            case "maxAngle": setFloat32(group.maxAngle / Math.PI * 180); break;
+            case "minAngle": setFloat32(group.minAngle / Math.PI * 180); break;
             case "isSmartBone": break;
             case "smartBase": setFloat32(group.smartBase / Math.PI * 180); break;
             case "smartMax": setFloat32(group.smartMax / Math.PI * 180); break;

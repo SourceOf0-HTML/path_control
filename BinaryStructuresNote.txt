@@ -45,9 +45,11 @@ GroupObj
   2: isParentPin: true
   3: feedback: true
   4: strength: Float32
-  5: isSmartBone: true
-  6: smartBase: Float32(Degree measure)
-  7: smartMax: Float32(Degree measure)
+  5: maxAngle: Float32(Degree measure)
+  6: minAngle: Float32(Degree measure)
+  7: isSmartBone: true
+  8: smartBase: Float32(Degree measure)
+  9: smartMax: Float32(Degree measure)
  flexiPoint
    length: Uint8
    groupID: Uint16

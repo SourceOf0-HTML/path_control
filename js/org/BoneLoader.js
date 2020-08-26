@@ -35,6 +35,16 @@ var BoneLoader = {
         PathCtr.loadState("  strength: " + bone.strength);
       }
       
+      if("maxAngle" in data && Number.isFinite(data.maxAngle)) {
+        bone.maxAngle = data.maxAngle/180 * Math.PI;
+        PathCtr.loadState("  maxAngle: " + bone.maxAngle);
+      }
+      
+      if("minAngle" in data && Number.isFinite(data.minAngle)) {
+        bone.minAngle = data.minAngle/180 * Math.PI;
+        PathCtr.loadState("  minAngle: " + bone.minAngle);
+      }
+      
       
       if("smartBase" in data && Number.isFinite(data.smartBase)) {
         bone.smartBase = data.smartBase/180 * Math.PI;
