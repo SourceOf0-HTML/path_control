@@ -1158,16 +1158,19 @@ class BoneObj extends Sprite {
     let boneIDs = [this.uid];
     let bone = this;
     while("parentID" in bone) {
+      if(!bone.feedback) break;
       let parentID = bone.parentID;
       bone = pathContainer.groups[parentID];
       boneIDs.push(parentID);
-      if(!bone.feedback) break;
     }
     let boneNum = boneIDs.length;
     let pos = reach(this, this.posIK.x, this.posIK.y);
     for(let i = 1; i < boneNum; ++i) {
       bone = pathContainer.groups[boneIDs[i]];
       pos = reach(bone, pos.x, pos.y);
+    }
+    if("parentID" in bone) {
+      pathContainer.groups[bone.parentID].effectSprite.getMatrix().applyToArray(bone.currentState.pos);
     }
     bone.limitAngle(pathContainer);
     for(let i = boneNum-2; i >= 0; --i) {
@@ -1468,19 +1471,17 @@ class PathContainer extends Sprite {
       this.bones.forEach(targetID=> {
         if(this.groups[targetID].parentID == bone.uid) {
           childNum += 1;
-        } else {
-          priority += 1;
         }
       });
       
       if("parentID" in bone) {
-        priority += offset;
-      } else if(childNum == 0) {
         if(childNum == 0) {
           priority += offset * 2;
         } else {
-          priority = 0;
+          priority += offset;
         }
+      } else if(childNum == 0) {
+        priority += offset * 3;
       }
       
       ret.priority = priority;
@@ -1499,6 +1500,7 @@ class PathContainer extends Sprite {
           target = this.groups[parentID];
           if(!target.feedback) break;
         }
+        ret = 0;
       }
       if("flexiPoint" in bone) {
         bone.flexiPoint.bones.forEach(id=> {
@@ -1508,14 +1510,13 @@ class PathContainer extends Sprite {
       }
       boneData.priority = ret;
     });
-    
     bonesMap.sort((a, b)=> {
+      if(a.priority < 0) return 1;
       if(b.priority < 0) return -1;
       if(a.priority > b.priority) return 1;
       if(a.priority < b.priority) return -1;
       return 0;
     });
-    
     bonesMap.some(boneData=> {
       if(boneData.priority < 0) return true;
       this.groups[boneData.id].control(this);

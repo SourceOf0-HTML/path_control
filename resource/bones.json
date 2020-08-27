@@ -33,6 +33,7 @@
     "bone5_left_arm": {
       "parent": "bone2_clothes",
       "strength": 0.05,
+      "feedback": true,
       "flexiPoint": {
         "dataIndex": 0,
         "bones": ["bone1_clothes", "bone2_clothes"]

@@ -116,19 +116,17 @@ class PathContainer extends Sprite {
       this.bones.forEach(targetID=> {
         if(this.groups[targetID].parentID == bone.uid) {
           childNum += 1;
-        } else {
-          priority += 1;
         }
       });
       
       if("parentID" in bone) {
-        priority += offset;
-      } else if(childNum == 0) {
         if(childNum == 0) {
           priority += offset * 2;
         } else {
-          priority = 0;
+          priority += offset;
         }
+      } else if(childNum == 0) {
+        priority += offset * 3;
       }
       
       ret.priority = priority;
@@ -147,6 +145,7 @@ class PathContainer extends Sprite {
           target = this.groups[parentID];
           if(!target.feedback) break;
         }
+        ret = bone.posIK.priority;
       }
       if("flexiPoint" in bone) {
         bone.flexiPoint.bones.forEach(id=> {
@@ -156,14 +155,13 @@ class PathContainer extends Sprite {
       }
       boneData.priority = ret;
     });
-    
     bonesMap.sort((a, b)=> {
+      if(a.priority < 0) return 1;
       if(b.priority < 0) return -1;
       if(a.priority > b.priority) return 1;
       if(a.priority < b.priority) return -1;
       return 0;
     });
-    
     bonesMap.some(boneData=> {
       if(boneData.priority < 0) return true;
       this.groups[boneData.id].control(this);

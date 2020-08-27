@@ -43,11 +43,13 @@ class BoneObj extends Sprite {
   };
   
   /**
+   * @param {Integer} pri
    * @param {Number} x
    * @param {Number} y
    */
-  initIK(x = 0, y = 0) {
+  initIK(pri = 0, x = 0, y = 0) {
     this.posIK = {
+      priority: pri,
       enable: false,
       x: x,
       y: y,
@@ -193,16 +195,19 @@ class BoneObj extends Sprite {
     let boneIDs = [this.uid];
     let bone = this;
     while("parentID" in bone) {
+      if(!bone.feedback) break;
       let parentID = bone.parentID;
       bone = pathContainer.groups[parentID];
       boneIDs.push(parentID);
-      if(!bone.feedback) break;
     }
     let boneNum = boneIDs.length;
     let pos = reach(this, this.posIK.x, this.posIK.y);
     for(let i = 1; i < boneNum; ++i) {
       bone = pathContainer.groups[boneIDs[i]];
       pos = reach(bone, pos.x, pos.y);
+    }
+    if("parentID" in bone) {
+      pathContainer.groups[bone.parentID].effectSprite.getMatrix().applyToArray(bone.currentState.pos);
     }
     bone.limitAngle(pathContainer);
     for(let i = boneNum-2; i >= 0; --i) {
