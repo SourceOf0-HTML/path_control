@@ -21,7 +21,7 @@ function loadComplete() {
     cmd: "set-group-control",
     name: "bone4_head",
     initFuncStr: `
-      this.initIK();
+      this.initIK(1);
     `,
     controlFuncStr: `
       if(!pathContainer.mouseX && !pathContainer.mouseY) {

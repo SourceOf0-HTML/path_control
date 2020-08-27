@@ -1008,11 +1008,13 @@ class BoneObj extends Sprite {
   };
   
   /**
+   * @param {Integer} pri
    * @param {Number} x
    * @param {Number} y
    */
-  initIK(x = 0, y = 0) {
+  initIK(pri = 0, x = 0, y = 0) {
     this.posIK = {
+      priority: pri,
       enable: false,
       x: x,
       y: y,
@@ -1500,7 +1502,7 @@ class PathContainer extends Sprite {
           target = this.groups[parentID];
           if(!target.feedback) break;
         }
-        ret = 0;
+        ret = bone.posIK.priority;
       }
       if("flexiPoint" in bone) {
         bone.flexiPoint.bones.forEach(id=> {
