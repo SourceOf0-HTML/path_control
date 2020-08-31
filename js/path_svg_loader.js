@@ -98,7 +98,7 @@ var SVGLoader = {
     
     let pathDataList = this.makePathDataList(pathDOM.getAttribute("d"));
     let pathDiffList = [];
-    pathDataList.forEach(d=>pathDiffList.push((!d.pos)? undefined : d.pos.slice().fill(0)));
+    pathDataList.forEach(d=>pathDiffList.push((!d.pos)? undefined : d.pos.concat().fill(0)));
     
     PathMain.postMessage({
       cmd: "new-path",

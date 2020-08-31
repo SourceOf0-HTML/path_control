@@ -57,7 +57,7 @@
       "strength": 0.05,
       "flexiPoint": {
         "dataIndex": 1,
-        "bones": ["bone1_clothes"]
+        "bones": ["bone10_right_leg"]
       }
     },
     

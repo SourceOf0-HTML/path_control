@@ -2,7 +2,7 @@ function loadComplete() {
   document.getElementById("output-btn").disabled = "";
   PathMain.postMessage({
     cmd: "set-group-control",
-    name: "bone4_head",
+    name: "bone6_left_arm",
     initFuncStr: `
       this.initIK();
     `,

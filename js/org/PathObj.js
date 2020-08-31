@@ -13,12 +13,12 @@ class PathObj {
   
   addAction(pathDataList, fillStyle, lineWidth, strokeStyle, frame, actionID) {
     if(!pathDataList) {
-      pathDataList = this.defPathList.slice();
+      pathDataList = this.defPathList.concat();
     } else if(this.defPathList.length != pathDataList.length) {
       console.error("The number of paths does not match.");
       console.log(this.defPathList);
       console.log(pathDataList);
-      pathDataList = this.defPathList.slice();
+      pathDataList = this.defPathList.concat();
     }
     
     let pathDiffList = [];

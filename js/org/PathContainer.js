@@ -105,12 +105,16 @@ class PathContainer extends Sprite {
     
     this.currentActionID = action.id;
     
+    this.bones.forEach(id=> {
+      this.groups[id].control(this);
+    });
+    
+    let offset = this.groups.length;
     let bonesMap = this.bones.map((id, i)=> {
       let bone = this.groups[id];
       let ret = { id: id, priority: -1, name: bone.id };
       if(!bone.defState) return ret;
       
-      let offset = this.groups.length;
       let priority = id;
       let childNum = 0;
       this.bones.forEach(targetID=> {
@@ -135,24 +139,23 @@ class PathContainer extends Sprite {
     
     bonesMap.forEach(boneData=> {
       let bone = this.groups[boneData.id];
+      if(!("posIK" in bone) || !bone.posIK.enable) return;
+      boneData.priority = bone.posIK.priority;
+      while("parentID" in bone) {
+        let targetData = bonesMap.find(data=> data.id == bone.parentID);
+        targetData.priority = 0;
+        bone = this.groups[bone.parentID];
+        if(!bone.feedback) break;
+      }
+    });
+    bonesMap.forEach(boneData=> {
+      let bone = this.groups[boneData.id];
+      if(!("flexiPoint" in bone)) return;
       let ret = boneData.priority;
-      if("posIK" in bone && bone.posIK.enable) {
-        let target = bone;
-        while("parentID" in target) {
-          let parentID = target.parentID;
-          let targetData = bonesMap.find(data=> data.id == parentID);
-          targetData.priority = -1;
-          target = this.groups[parentID];
-          if(!target.feedback) break;
-        }
-        ret = bone.posIK.priority;
-      }
-      if("flexiPoint" in bone) {
-        bone.flexiPoint.bones.forEach(id=> {
-          let targetPri = bonesMap.find(data=> data.id == id).priority;
-          if(ret <= targetPri) ret = targetPri + 1;
-        });
-      }
+      bone.flexiPoint.bones.forEach(id=> {
+        let targetPri = bonesMap.find(data=> data.id == id).priority;
+        if(ret <= targetPri) ret = targetPri + 1;
+      });
       boneData.priority = ret;
     });
     bonesMap.sort((a, b)=> {
@@ -161,10 +164,6 @@ class PathContainer extends Sprite {
       if(a.priority > b.priority) return 1;
       if(a.priority < b.priority) return -1;
       return 0;
-    });
-    bonesMap.some(boneData=> {
-      if(boneData.priority < 0) return true;
-      this.groups[boneData.id].control(this);
     });
     this.groups.forEach(group=> {
       group.preprocessing(this);
