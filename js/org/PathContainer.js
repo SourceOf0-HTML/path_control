@@ -115,7 +115,7 @@ class PathContainer extends Sprite {
       let ret = { id: id, priority: -1, name: bone.id };
       if(!bone.defState) return ret;
       
-      let priority = id;
+      let priority = id + offset * 2;
       let childNum = 0;
       this.bones.forEach(targetID=> {
         if(this.groups[targetID].parentID == bone.uid) {
@@ -140,24 +140,15 @@ class PathContainer extends Sprite {
     bonesMap.forEach(boneData=> {
       let bone = this.groups[boneData.id];
       if(!("posIK" in bone) || !bone.posIK.enable) return;
-      boneData.priority = bone.posIK.priority;
+      let pri = boneData.priority = bone.uid + offset;
       while("parentID" in bone) {
         let targetData = bonesMap.find(data=> data.id == bone.parentID);
-        targetData.priority = 0;
+        targetData.priority = --pri;
         bone = this.groups[bone.parentID];
         if(!bone.feedback) break;
       }
     });
-    bonesMap.forEach(boneData=> {
-      let bone = this.groups[boneData.id];
-      if(!("flexiPoint" in bone)) return;
-      let ret = boneData.priority;
-      bone.flexiPoint.bones.forEach(id=> {
-        let targetPri = bonesMap.find(data=> data.id == id).priority;
-        if(ret <= targetPri) ret = targetPri + 1;
-      });
-      boneData.priority = ret;
-    });
+    
     bonesMap.sort((a, b)=> {
       if(a.priority < 0) return 1;
       if(b.priority < 0) return -1;
@@ -165,6 +156,7 @@ class PathContainer extends Sprite {
       if(a.priority < b.priority) return -1;
       return 0;
     });
+    
     this.groups.forEach(group=> {
       group.preprocessing(this);
     });

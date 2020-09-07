@@ -18,8 +18,8 @@
       "parent": "bone2_clothes",
       "feedback": true,
       "strength": 0.05,
-      "maxAngle": 10,
-      "minAngle": -10
+      "maxAngle": 20,
+      "minAngle": -20
     },
     
     "bone4_head": {
@@ -64,13 +64,21 @@
     "bone9_left_leg": {
       "parent": "bone1_clothes",
       "isParentPin": true,
-      "strength": 0.05
+      "strength": 0.05,
+      "flexiPoint": {
+        "dataIndex": 0,
+        "bones": ["bone1_clothes", "bone2_clothes"]
+      }
     },
     
     "bone10_right_leg": {
       "parent": "bone1_clothes",
       "isParentPin": true,
-      "strength": 0.05
+      "strength": 0.05,
+      "flexiPoint": {
+        "dataIndex": 0,
+        "bones": ["bone1_clothes", "bone2_clothes"]
+      }
     },
     
     "bone11_hair": {

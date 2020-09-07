@@ -19,9 +19,10 @@ function loadComplete() {
   */
   PathMain.postMessage({
     cmd: "set-group-control",
+    //name: "bone6_left_arm",
     name: "bone4_head",
     initFuncStr: `
-      this.initIK(1);
+      this.initIK();
     `,
     controlFuncStr: `
       if(!pathContainer.mouseX && !pathContainer.mouseY) {

@@ -43,13 +43,11 @@ class BoneObj extends Sprite {
   };
   
   /**
-   * @param {Integer} pri
    * @param {Number} x
    * @param {Number} y
    */
-  initIK(pri = 0, x = 0, y = 0) {
+  initIK(x = 0, y = 0) {
     this.posIK = {
-      priority: pri,
       enable: false,
       x: x,
       y: y,
@@ -87,12 +85,34 @@ class BoneObj extends Sprite {
     return ((angle/this.smartMax * (totalFrames-2))^0) + 1;
   };
   
-  calcCurrentState() {
+  /**
+   * @param {PathContainer} pathContainer
+   */
+  calcCurrentState(pathContainer) {
     let currentPos = this.currentState.pos;
+    if("flexi" in this) {
+      this.paths[0].calcFlexi(pathContainer, this.flexi);
+      let pathDataList = this.paths[0].resultPathList;
+      currentPos[0] = pathDataList[0].pos[0];
+      currentPos[1] = pathDataList[0].pos[1];
+      currentPos[2] = pathDataList[1].pos[0];
+      currentPos[3] = pathDataList[1].pos[1];
+    }
+    if("flexiPoint" in this) {
+      let dataIndex = this.flexiPoint.dataIndex;
+      let resultPos = this.paths[0].resultPathList[dataIndex].pos.concat();
+      PathObj.calcFlexiPoints(pathContainer, this.flexiPoint.bones, resultPos, 0, 2);
+      let tx = resultPos[0] - currentPos[dataIndex * 2 + 0];
+      let ty = resultPos[1] - currentPos[dataIndex * 2 + 1];
+      currentPos[0] += tx;
+      currentPos[1] += ty;
+      currentPos[2] += tx;
+      currentPos[3] += ty;
+    }
     let distX = currentPos[2] - currentPos[0];
     let distY = currentPos[3] - currentPos[1];
-    let dist = this.currentState.distance = Math.sqrt(distX*distX + distY*distY);
     let angle = this.currentState.angle = Math.atan2(distY, distX);
+    let dist = this.currentState.distance = Math.sqrt(distX*distX + distY*distY);
     
     let sprite = this.effectSprite;
     sprite.x = currentPos[0];
@@ -104,14 +124,15 @@ class BoneObj extends Sprite {
   };
   
   /**
+   * @param {PathContainer} pathContainer
    * @param {Number} angle
    */
-  rotateCurrentState(angle) {
+  rotateCurrentState(pathContainer, angle) {
     let dist = this.currentState.distance;
     let currentPos = this.currentState.pos;
     currentPos[2] = currentPos[0] + Math.cos(angle) * dist;
     currentPos[3] = currentPos[1] + Math.sin(angle) * dist;
-    this.calcCurrentState();
+    this.calcCurrentState(pathContainer);
   };
   
   /**
@@ -176,90 +197,107 @@ class BoneObj extends Sprite {
     currentPos[1] = data[1];
     currentPos[2] = data[2];
     currentPos[3] = data[3];
-    this.calcCurrentState();
+    this.calcCurrentState(pathContainer);
   };
   
   /**
    * @param {PathContainer} pathContainer
    */
   calcInverseKinematics(pathContainer) {
-    let reach =(currentPos, x, y, targetBone)=> {
-      let distX = currentPos[2] - currentPos[0];
-      let distY = currentPos[3] - currentPos[1];
+    let reach =(tempState, x, y, targetBone)=> {
+      let tempPos = tempState.pos;
+      let distX = tempPos[2] - tempPos[0];
+      let distY = tempPos[3] - tempPos[1];
+      let angle = Math.atan2(distY, distX);
       let dist = Math.sqrt(distX*distX + distY*distY);
-      let angle = currentPos[5] = Math.atan2(y - currentPos[1], x - currentPos[0]);
-      currentPos[2] = currentPos[0] + Math.cos(angle) * dist;
-      currentPos[3] = currentPos[1] + Math.sin(angle) * dist;
+      let orgAngle = Math.atan2(y - tempPos[1], x - tempPos[0]);
+      let distAngle = angle - targetBone.currentState.angle;
+      let amdAngle = targetBone.limitAngle(pathContainer, orgAngle - distAngle);
+      
+      targetBone.rotateCurrentState(pathContainer, amdAngle);
+      
+      let resultAngle = amdAngle + distAngle;
+      let amdX = tempPos[2] = tempPos[0] + Math.cos(resultAngle) * dist;
+      let amdY = tempPos[3] = tempPos[1] + Math.sin(resultAngle) * dist;
+      tempState.resultAngle = resultAngle - distAngle;
+      
       return {
-        x: x - (currentPos[2] - currentPos[0]),
-        y: y - (currentPos[3] - currentPos[1]),
+        x: x - (tempPos[2] - tempPos[0]),
+        y: y - (tempPos[3] - tempPos[1]),
+        amdX: amdX,
+        amdY: amdY,
       };
     };
     
+    let amendAngle =(index, level = 0)=> {
+      let resultState = reach(tempList[0], this.posIK.x, this.posIK.y, pathContainer.groups[boneIDs[0]]);
+      for(let i = 1; i < index; ++i) {
+        resultState = reach(tempList[i], resultState.x, resultState.y, pathContainer.groups[boneIDs[i]]);
+        let dx = resultState.amdX - tempList[i-1].pos[0];
+        let dy = resultState.amdY - tempList[i-1].pos[1];
+        
+        for(let j = 0; j < i; ++j) {
+          let temp = tempList[j];
+          temp.pos[0] += dx;
+          temp.pos[1] += dy;
+          temp.pos[2] += dx;
+          temp.pos[3] += dy;
+        }
+        amendAngle(i, level+1);
+      }
+    };
+    
     let boneIDs = [this.uid];
-    let distPosList = [[
-      this.currentState.pos[0],
-      this.currentState.pos[1],
-      this.currentState.pos[2],
-      this.currentState.pos[3],
-      this.currentState.angle,
-    ]];
+    let tempList = [{
+      pos: this.currentState.pos.concat(),
+      defPos: this.currentState.pos.concat(),
+    }];
     let bone = this;
     while("parentID" in bone) {
       if(!bone.feedback) break;
       let parentID = bone.parentID;
       let target = pathContainer.groups[parentID];
-      let x0 = target.currentState.pos[0];
-      let y0 = target.currentState.pos[1];
-      let x1 = bone.currentState.pos[0];
-      let y1 = bone.currentState.pos[1];
-      let angle = Math.atan2(y1 - y0, x1 - x0);
-      distPosList.push([
-        x0,
-        y0,
-        x1,
-        y1,
-        angle,
-      ]);
+      tempList.push({
+        pos: [
+          target.currentState.pos[0],
+          target.currentState.pos[1],
+          bone.currentState.pos[0],
+          bone.currentState.pos[1]
+        ],
+        defPos: target.currentState.pos.concat(),
+      });
       boneIDs.push(parentID);
       bone = target;
     }
     
     let boneNum = boneIDs.length;
-    let pos = {x: this.posIK.x, y: this.posIK.y};
-    for(let i = 0; i < boneNum; ++i) {
-      pos = reach(distPosList[i], pos.x, pos.y, pathContainer.groups[boneIDs[i]]);
-    }
-    
+    amendAngle(boneNum);
     for(let i = boneNum-2; i >= 0; --i) {
-      let distPos = distPosList[i];
-      let dx = distPosList[i+1][2] - distPos[0];
-      let dy = distPosList[i+1][3] - distPos[1];
-      distPos[0] += dx;
-      distPos[1] += dy;
-      distPos[2] += dx;
-      distPos[3] += dy;
+      let temp = tempList[i];
+      let dx = tempList[i+1].pos[2] - temp.pos[0];
+      let dy = tempList[i+1].pos[3] - temp.pos[1];
+      temp.pos[0] += dx;
+      temp.pos[1] += dy;
+      temp.pos[2] += dx;
+      temp.pos[3] += dy;
     }
     
-    if("parentID" in bone) {
-      let distPos = distPosList[boneNum-1];
-      let angle = distPos[4];
-      pathContainer.groups[bone.parentID].effectSprite.getMatrix().applyToArray(distPos);
-      distPos[4] = angle;
-    }
-    
-    for(let i = 0; i < boneNum; ++i) {
+    let diffX = 0;
+    let diffY = 0;
+    for(let i = boneNum-1; i >= 0; --i) {
       let target = pathContainer.groups[boneIDs[i]];
-      let distPos = distPosList[i];
-      let dx = distPos[0] - target.currentState.pos[0];
-      let dy = distPos[1] - target.currentState.pos[1];
+      let currentPos = target.currentState.pos;
+      let temp = tempList[i];
+      let dx = temp.pos[0] - temp.defPos[0] + diffX;
+      let dy = temp.pos[1] - temp.defPos[1] + diffY;
       
-      target.currentState.pos[0] += dx;
-      target.currentState.pos[1] += dy;
-      target.currentState.pos[2] += dx;
-      target.currentState.pos[3] += dy;
-      
-      target.rotateCurrentState(target.currentState.angle - distPos[4] + distPos[5]);
+      let oldX = currentPos[0] = temp.defPos[0] + dx;
+      let oldY = currentPos[1] = temp.defPos[1] + dy;
+      currentPos[2] = temp.defPos[2] + dx;
+      currentPos[3] = temp.defPos[3] + dy;
+      target.rotateCurrentState(pathContainer, temp.resultAngle);
+      diffX += currentPos[0] - oldX;
+      diffY += currentPos[1] - oldY;
     }
   };
   
@@ -278,11 +316,11 @@ class BoneObj extends Sprite {
       currentPos[1] += y;
       currentPos[2] += x;
       currentPos[3] += y;
-      this.calcCurrentState();
+      this.calcCurrentState(pathContainer);
       return;
     }
     target.effectSprite.getMatrix().applyToArray(currentPos);
-    this.rotateCurrentState(this.limitAngle(pathContainer));
+    this.calcCurrentState(pathContainer);
   };
   
   /**
@@ -292,27 +330,6 @@ class BoneObj extends Sprite {
     this.calcForwardKinematics(pathContainer);
     if("posIK" in this && this.posIK.enable) {
       this.calcInverseKinematics(pathContainer);
-    }
-    if("flexi" in this) {
-      this.paths[0].calcFlexi(pathContainer, this.flexi);
-      let pathDataList = this.paths[0].resultPathList;
-      this.currentState.pos[0] = pathDataList[0].pos[0];
-      this.currentState.pos[1] = pathDataList[0].pos[1];
-      this.currentState.pos[2] = pathDataList[1].pos[0];
-      this.currentState.pos[3] = pathDataList[1].pos[1];
-      this.calcCurrentState();
-    }
-    if("flexiPoint" in this) {
-      let pathDataList = this.paths[0].resultPathList;
-      let dataIndex = this.flexiPoint.dataIndex;
-      PathObj.calcFlexiPoints(pathContainer, this.flexiPoint.bones, pathDataList[dataIndex].pos, 0, 2);
-      let tx = pathDataList[dataIndex].pos[0] - this.currentState.pos[dataIndex * 2 + 0];
-      let ty = pathDataList[dataIndex].pos[1] - this.currentState.pos[dataIndex * 2 + 1];
-      this.currentState.pos[0] += tx;
-      this.currentState.pos[1] += ty;
-      this.currentState.pos[2] += tx;
-      this.currentState.pos[3] += ty;
-      this.calcCurrentState();
     }
   };
   
