@@ -105,8 +105,11 @@ class PathContainer extends Sprite {
     
     this.currentActionID = action.id;
     
-    this.bones.forEach(id=> {
-      this.groups[id].control(this);
+    this.groups.forEach(group=> {
+      group.preprocessing(this);
+    });
+    this.groups.forEach(group=> {
+      group.control(this);
     });
     
     let offset = this.groups.length;
@@ -157,9 +160,6 @@ class PathContainer extends Sprite {
       return 0;
     });
     
-    this.groups.forEach(group=> {
-      group.preprocessing(this);
-    });
     bonesMap.some(boneData=> {
       if(boneData.priority < 0) return true;
       this.groups[boneData.id].calc(this);

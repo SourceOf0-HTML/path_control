@@ -34,6 +34,20 @@ function loadComplete() {
       this.posIK.y = pathContainer.mouseY;
     `,
   });
+  PathMain.postMessage({
+    cmd: "set-group-control",
+    name: "main_bone",
+    controlFuncStr: `
+      let childGroups = this.childGroups.result = this.childGroups.result.concat();
+      let armUID = pathContainer.getGroup("left_arm").uid;
+      let jacketIndex = childGroups.indexOf(pathContainer.getGroup("jacket").uid);
+      let armIndex = childGroups.indexOf(armUID);
+      if(jacketIndex > armIndex) {
+        childGroups.splice(armIndex, 1);
+        childGroups.push(armUID);
+      }
+    `,
+  });
 }
 
 PathMain.init("../resource/path_data.bin", loadComplete, true);

@@ -823,6 +823,16 @@ class GroupObj extends Sprite {
       this.customInit();
       delete this.customInit;
     }
+    if("controlFuncStr" in data) {
+      this.control = new Function("pathContainer", data.controlFuncStr);
+    }
+  };
+  
+  /**
+   * @param {PathContainer} pathContainer
+   */
+  control(pathContainer) {
+    // do nothing.
   };
   
   /**
@@ -830,6 +840,9 @@ class GroupObj extends Sprite {
    */
   preprocessing(pathContainer) {
     this.reset();
+    
+    let actionID = pathContainer.currentActionID;
+    this.childGroups.update(pathContainer, actionID, pathContainer.actionList[actionID].currentFrame);
   };
   
   /**
@@ -847,8 +860,6 @@ class GroupObj extends Sprite {
     this.paths.forEach(path=> {
       path.update(frame, actionID, pathContainer, groupMatrix);
     });
-    
-    let childGroups = this.childGroups.update(pathContainer, actionID, frame);
     
     this.childGroups.result.forEach(childGroup=> {
       pathContainer.groups[childGroup].update(pathContainer, groupSprite, flexi);
@@ -1516,8 +1527,11 @@ class PathContainer extends Sprite {
     
     this.currentActionID = action.id;
     
-    this.bones.forEach(id=> {
-      this.groups[id].control(this);
+    this.groups.forEach(group=> {
+      group.preprocessing(this);
+    });
+    this.groups.forEach(group=> {
+      group.control(this);
     });
     
     let offset = this.groups.length;
@@ -1568,9 +1582,6 @@ class PathContainer extends Sprite {
       return 0;
     });
     
-    this.groups.forEach(group=> {
-      group.preprocessing(this);
-    });
     bonesMap.some(boneData=> {
       if(boneData.priority < 0) return true;
       this.groups[boneData.id].calc(this);

@@ -24,6 +24,16 @@ class GroupObj extends Sprite {
       this.customInit();
       delete this.customInit;
     }
+    if("controlFuncStr" in data) {
+      this.control = new Function("pathContainer", data.controlFuncStr);
+    }
+  };
+  
+  /**
+   * @param {PathContainer} pathContainer
+   */
+  control(pathContainer) {
+    // do nothing.
   };
   
   /**
@@ -31,6 +41,9 @@ class GroupObj extends Sprite {
    */
   preprocessing(pathContainer) {
     this.reset();
+    
+    let actionID = pathContainer.currentActionID;
+    this.childGroups.update(pathContainer, actionID, pathContainer.actionList[actionID].currentFrame);
   };
   
   /**
@@ -48,8 +61,6 @@ class GroupObj extends Sprite {
     this.paths.forEach(path=> {
       path.update(frame, actionID, pathContainer, groupMatrix);
     });
-    
-    let childGroups = this.childGroups.update(pathContainer, actionID, frame);
     
     this.childGroups.result.forEach(childGroup=> {
       pathContainer.groups[childGroup].update(pathContainer, groupSprite, flexi);
