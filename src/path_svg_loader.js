@@ -565,11 +565,17 @@ var SVGLoader = {
       console.error("action kind \"" + this.FILE_KIND_BASE + "\" is missing in fileInfoList");
       return;
     }
+    fileInfoList.forEach(info=> {
+      info[3] = new URL(info[3], window.location.href).href;
+    });
     
     this.groupNameToIDList = {};
     this.masksList = {};
     
-    this.loadWorker = new Worker("js/path_load_svg_worker.js");
+    let currentPath = document.currentScript.src;
+    let filePath = currentPath.substring(0, currentPath.lastIndexOf("/")) + "/path_control/path_load_svg_worker.js";
+    
+    this.loadWorker = new Worker(filePath);
     this.loadWorker.addEventListener("message", function(e) {
       let data = e.data;
       switch(data.cmd) {

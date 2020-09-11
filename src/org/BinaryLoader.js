@@ -254,12 +254,15 @@ var BinaryLoader = {
       console.error("filePath not found");
       return;
     }
-    
     let request = new XMLHttpRequest();
-    request.onload = function(e) {
+    request.onreadystatechange = function(e) {
       let target = e.target;
       if(target.readyState != 4) return;
-      if(target.status != 200 && target.status != 0) return;
+      if((target.status != 200 && target.status != 0) || !target.response) {
+        console.error("failed to read file: " + target.responseURL);
+        console.error(target.statusText);
+        return;
+      }
       
       let buffer = request.response;
       let pathContainer = BinaryLoader.init(buffer);
@@ -269,6 +272,7 @@ var BinaryLoader = {
         completeFunc();
       }
     };
+    
     request.open("GET", filePath, true);
     request.responseType = "arraybuffer";
     request.send();

@@ -50,4 +50,4 @@ function loadComplete() {
   });
 }
 
-PathMain.init("../resource/path_data.bin", loadComplete, true);
+PathMain.init("./resource/path_data.bin", loadComplete, true);

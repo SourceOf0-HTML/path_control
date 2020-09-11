@@ -34,14 +34,14 @@ var PathWorker = {
           return false;
           
         case "load-bin":
-          BinaryLoader.load(PathWorker.isWorker? data.path : data.path.slice(1), ()=>{
+          BinaryLoader.load(data.path, ()=>{
             PathCtr.loadComplete();
             PathWorker.postMessage({cmd: "main-init-complete"});
           });
           return false;
           
         case "load-bone":
-          BoneLoader.load(PathWorker.isWorker? data.path : data.path.slice(1), PathCtr.pathContainer);
+          BoneLoader.load(data.path, PathCtr.pathContainer);
           return false;
           
           

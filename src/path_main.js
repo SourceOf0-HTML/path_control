@@ -147,7 +147,8 @@ var PathMain = {
    */
   loadBone: function(path, completeFunc) {
     PathMain.completeFunc = completeFunc;
-    PathMain.postMessage({cmd: "load-bone", path: path});
+    //console.log(new URL(path, window.location.href).href);
+    PathMain.postMessage({cmd: "load-bone", path: new URL(path, window.location.href).href});
   },
   
   /**
@@ -162,14 +163,19 @@ var PathMain = {
       return;
     }
     
-    PathMain.path = path;
+    if(!!path) {
+      PathMain.path = new URL(path, window.location.href).href;
+    }
+    
     PathMain.completeFunc = completeFunc;
     
     let fileType = PathMain.isUseMin? ".min.js": ".js";
     if(isDebug) {
       fileType = "_debug" + fileType;
     }
-    let filePath = "js/path_control" + fileType;
+    
+    let currentPath = document.currentScript.src;
+    let filePath = currentPath.substring(0, currentPath.lastIndexOf("/")) + "/path_control/path_control" + fileType;
     
     let canvas = PathMain.canvas = document.createElement("canvas");
     canvas.className = "main-canvas";

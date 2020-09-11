@@ -12,10 +12,14 @@ addEventListener("message", function(e) {
     
     let loadFrame = 1;
     let request = new XMLHttpRequest();
-    let loadSVG = request.onload = function(e) {
+    let loadSVG = request.onreadystatechange = function(e) {
       let target = e.target;
       if(target.readyState != 4) return;
-      if(target.status != 200 && target.status != 0) return;
+      if((target.status != 200 && target.status != 0) || target.responseText == "") {
+        console.error("failed to read file: " + target.responseURL);
+        console.error(target.statusText);
+        return;
+      }
       
       postMessage({
         cmd: "new-svg",
@@ -27,6 +31,7 @@ addEventListener("message", function(e) {
       delete request;
       if(loadFrame <= totalFrames) {
         request = new XMLHttpRequest();
+        //console.log(filePath + getFrameNum(loadFrame));
         request.open("GET", filePath + getFrameNum(loadFrame++), true);
         request.onreadystatechange = loadSVG;
         request.send();
@@ -50,6 +55,7 @@ addEventListener("message", function(e) {
         close();
       }
     };
+    //console.log(filePath + getFrameNum(loadFrame));
     request.open("GET", filePath + getFrameNum(loadFrame++), true);
     request.send();
   };
