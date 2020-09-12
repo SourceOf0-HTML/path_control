@@ -2499,7 +2499,7 @@ var DebugPath = {
       if(str == "transparent") {
         setUint8(0);  // A
       } else {
-        let colorArr = str.match(/(\d+), (\d+), (\d+)/);
+        let colorArr = str.match(/(\\d+), (\\d+), (\\d+)/);
         setUint8(1);  // A
         setUint8(colorArr[1]);  // R
         setUint8(colorArr[2]);  // G
