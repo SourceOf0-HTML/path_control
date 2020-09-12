@@ -169,13 +169,9 @@ var PathMain = {
     
     PathMain.completeFunc = completeFunc;
     
-    let fileType = PathMain.isUseMin? ".min.js": ".js";
-    if(isDebug) {
-      fileType = "_debug" + fileType;
-    }
-    
     let currentPath = document.currentScript.src;
-    let filePath = currentPath.substring(0, currentPath.lastIndexOf("/")) + "/path_control/path_control" + fileType;
+    let blob = new Blob([path_control], {type: "text/javascript"});
+    let filePath = window.URL.createObjectURL(blob);
     
     let canvas = PathMain.canvas = document.createElement("canvas");
     canvas.className = "main-canvas";

@@ -573,7 +573,8 @@ var SVGLoader = {
     this.masksList = {};
     
     let currentPath = document.currentScript.src;
-    let filePath = currentPath.substring(0, currentPath.lastIndexOf("/")) + "/path_control/path_load_svg_worker.js";
+    let blob = new Blob([path_load_svg_worker], {type: "text/javascript"});
+    let filePath = window.URL.createObjectURL(blob);
     
     this.loadWorker = new Worker(filePath);
     this.loadWorker.addEventListener("message", function(e) {
