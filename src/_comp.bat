@@ -22,6 +22,7 @@ set DIR_PATH=..\js\path_control\
 
 set BIN_FILE=%DIR_PATH%path_control.js
 del %BIN_FILE%
+type LICENSE.txt >> %BIN_FILE%
 echo let path_control = ` >> %BIN_FILE%
 type %CORE_SRC% >> %BIN_FILE%
 echo ` >> %BIN_FILE%
@@ -29,6 +30,7 @@ type path_main.js >> %BIN_FILE%
 
 set BIN_DEBUG_FILE=%DIR_PATH%path_control_debug.js
 del %BIN_DEBUG_FILE%
+type LICENSE.txt >> %BIN_DEBUG_FILE%
 echo let path_control=` >> %BIN_DEBUG_FILE%
 type %DEBUG_SRC% >> %BIN_DEBUG_FILE%
 echo ` >> %BIN_DEBUG_FILE%
@@ -36,6 +38,7 @@ type path_main.js >> %BIN_DEBUG_FILE%
 
 set SVG_FILE=%DIR_PATH%path_control_svg.js
 del %SVG_FILE%
+type LICENSE.txt >> %SVG_FILE%
 echo let path_control = ` >> %SVG_FILE%
 type %DEBUG_SRC% >> %SVG_FILE%
 echo ` >> %SVG_FILE%
