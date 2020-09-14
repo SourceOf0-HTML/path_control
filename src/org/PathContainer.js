@@ -78,15 +78,6 @@ class PathContainer extends Sprite {
   };
   
   /**
-   * @param {Number} x - reference mouse x
-   * @param {Number} y - reference mouse y
-   */
-  setMouse(x, y) {
-    this.mouseX = x / this.pathRatio;
-    this.mouseY = y / this.pathRatio;
-  }
-  
-  /**
    * @param {Integer} frame
    * @param {String} actionName
    */

@@ -72,25 +72,47 @@ var PathMain = {
       });
     });
     
-    window.addEventListener("mousemove", function(e) {
+    document.addEventListener("mousemove", function(e) {
       PathMain.postMessage({
-        cmd: "move-mouse", 
+        cmd: "mouse-move", 
         x: e.clientX,
         y: e.clientY,
       });
       e.preventDefault();
     }, { passive: false });
     
-    window.addEventListener("touchmove", function(e) {
+    document.addEventListener("mouseenter", function(e) {
       PathMain.postMessage({
-        cmd: "move-mouse", 
-        x: e.touches[0].pageX,
-        y: e.touches[0].pageY,
+        cmd: "mouse-enter", 
       });
       e.preventDefault();
     }, { passive: false });
     
-    window.addEventListener("keyup", function(e) {
+    document.addEventListener("mouseleave", function(e) {
+      PathMain.postMessage({
+        cmd: "mouse-leave", 
+      });
+      e.preventDefault();
+    }, { passive: false });
+    
+    document.addEventListener("touchmove", function(e) {
+      let touches = [];
+      for(let i = 0; i < e.touches.length; ++i) {
+        let touch = e.touches[i];
+        touches.push({
+          identifier: touch.identifier,
+          pageX: touch.pageX,
+          pageY: touch.pageY,
+        });
+      }
+      PathMain.postMessage({
+        cmd: "touch-move", 
+        touches: touches,
+      });
+      e.preventDefault();
+    }, { passive: false });
+    
+    document.addEventListener("keyup", function(e) {
       PathMain.postMessage({
         cmd: "keyup", 
         code: e.code,

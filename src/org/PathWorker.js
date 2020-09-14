@@ -58,10 +58,20 @@ var PathWorker = {
           }
           return false;
           
-        case "move-mouse":
-          if(!!PathCtr.pathContainer) {
-            PathCtr.pathContainer.setMouse(data.x, data.y);
-          }
+        case "mouse-move":
+          InputInfo.setMousePos(data.x, data.y);
+          return false;
+          
+        case "mouse-enter":
+          InputInfo.isValidPointer = true;
+          return false;
+          
+        case "mouse-leave":
+          InputInfo.isValidPointer = false;
+          return false;
+          
+        case "touch-move":
+          InputInfo.setTouch(data.touches);
           return false;
           
         case "keyup":

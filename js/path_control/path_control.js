@@ -10,6 +10,81 @@
 let path_control = ` 
 
 /**
+ * InputInfo
+ * Singleton
+ */
+var InputInfo = {
+  
+  /* -- mouse info -- */
+  isMouseDownLeft: false,
+  isMouseDownMiddle: false,
+  isMouseDownRight: false,
+  isMouseDownBack: false,
+  isMouseDownForward: false,
+  mouseX: 0,
+  mouseY: 0,
+  
+  /* -- touch info -- */
+  touches: [],
+  
+  /* -- common pointer info -- */
+  isValidPointer: false,
+  pointerX: 0,
+  pointerY: 0,
+  
+  
+  /**
+   * @param {Number} x - reference mouse x
+   * @param {Number} y - reference mouse y
+   */
+  setMousePos: function(x, y) {
+    this.pointerX = this.mouseX = x;
+    this.pointerY = this.mouseY = y;
+  },
+  
+  /**
+   * @param {Number} mouseButton - kind of mouse button
+   * @param {Boolean} isDown - is mouse down
+   */
+  setMouseState: function(mouseButton, isDown) {
+    switch(mouseButton) {
+      case 0:
+        this.isMouseDownLeft = isDown;
+        break;
+      case 1:
+        this.isMouseDownMiddle = isDown;
+        break;
+      case 2:
+        this.isMouseDownRight = isDown;
+        break;
+      case 3:
+        this.isMouseDownBack = isDown;
+        break;
+      case 4:
+        this.isMouseDownForward = isDown;
+        break;
+        
+      default:
+        break;
+    }
+  },
+  
+  /**
+   * @param {Number} touches - touches info
+   */
+  setTouch: function(touches) {
+    this.touches = touches;
+    if(this.touches.length == 0) {
+      this.isValidPointer = false;
+      return;
+    }
+    this.isValidPointer = true;
+    this.pointerX = this.touches[0].pageX;
+    this.pointerY = this.touches[0].pageY;
+  },
+};
+
+/**
  * PathCtr
  * Singleton
  */
@@ -1470,15 +1545,6 @@ class PathContainer extends Sprite {
   };
   
   /**
-   * @param {Number} x - reference mouse x
-   * @param {Number} y - reference mouse y
-   */
-  setMouse(x, y) {
-    this.mouseX = x / this.pathRatio;
-    this.mouseY = y / this.pathRatio;
-  }
-  
-  /**
    * @param {Integer} frame
    * @param {String} actionName
    */
@@ -1931,10 +1997,20 @@ var PathWorker = {
           }
           return false;
           
-        case "move-mouse":
-          if(!!PathCtr.pathContainer) {
-            PathCtr.pathContainer.setMouse(data.x, data.y);
-          }
+        case "mouse-move":
+          InputInfo.setMousePos(data.x, data.y);
+          return false;
+          
+        case "mouse-enter":
+          InputInfo.isValidPointer = true;
+          return false;
+          
+        case "mouse-leave":
+          InputInfo.isValidPointer = false;
+          return false;
+          
+        case "touch-move":
+          InputInfo.setTouch(data.touches);
           return false;
           
         case "keyup":
@@ -2170,25 +2246,47 @@ var PathMain = {
       });
     });
     
-    window.addEventListener("mousemove", function(e) {
+    document.addEventListener("mousemove", function(e) {
       PathMain.postMessage({
-        cmd: "move-mouse", 
+        cmd: "mouse-move", 
         x: e.clientX,
         y: e.clientY,
       });
       e.preventDefault();
     }, { passive: false });
     
-    window.addEventListener("touchmove", function(e) {
+    document.addEventListener("mouseenter", function(e) {
       PathMain.postMessage({
-        cmd: "move-mouse", 
-        x: e.touches[0].pageX,
-        y: e.touches[0].pageY,
+        cmd: "mouse-enter", 
       });
       e.preventDefault();
     }, { passive: false });
     
-    window.addEventListener("keyup", function(e) {
+    document.addEventListener("mouseleave", function(e) {
+      PathMain.postMessage({
+        cmd: "mouse-leave", 
+      });
+      e.preventDefault();
+    }, { passive: false });
+    
+    document.addEventListener("touchmove", function(e) {
+      let touches = [];
+      for(let i = 0; i < e.touches.length; ++i) {
+        let touch = e.touches[i];
+        touches.push({
+          identifier: touch.identifier,
+          pageX: touch.pageX,
+          pageY: touch.pageY,
+        });
+      }
+      PathMain.postMessage({
+        cmd: "touch-move", 
+        touches: touches,
+      });
+      e.preventDefault();
+    }, { passive: false });
+    
+    document.addEventListener("keyup", function(e) {
       PathMain.postMessage({
         cmd: "keyup", 
         code: e.code,

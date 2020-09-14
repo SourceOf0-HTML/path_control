@@ -14,13 +14,11 @@ function control(pathContainer) {
   //hair.rotation = hair.mRotation += 0.01;
   
   let leftArm = pathContainer.getGroup("bone6_left_arm");
-  if(!pathContainer.mouseX && !pathContainer.mouseY) {
-    leftArm.posIK.enable = false;
-    return;
+  if(InputInfo.isValidPointer) {
+    leftArm.posIK.enable = true;
+    leftArm.posIK.x = InputInfo.pointerX / pathContainer.pathRatio;
+    leftArm.posIK.y = InputInfo.pointerY / pathContainer.pathRatio;
   }
-  leftArm.posIK.enable = true;
-  leftArm.posIK.x = pathContainer.mouseX;
-  leftArm.posIK.y = pathContainer.mouseY;
   
   let mainBone = pathContainer.getGroup("main_bone");
   let childGroups = mainBone.childGroups.result = mainBone.childGroups.result.concat();

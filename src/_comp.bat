@@ -1,5 +1,6 @@
 set CORE_SRC=temp\core_source.js
 del %CORE_SRC%
+type org\InputInfo.js >> %CORE_SRC%
 type org\PathCtr.js >> %CORE_SRC%
 type org\Matrix.js >> %CORE_SRC%
 type org\Sprite.js >> %CORE_SRC%
