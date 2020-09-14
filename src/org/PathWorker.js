@@ -21,7 +21,7 @@ var PathWorker = {
   init: function() {
     PathWorker.instance.addEventListener("message", function(e) {
       let data = !e.data? e.detail : e.data;
-      switch (data.cmd) {
+      switch(data.cmd) {
         case "init":
           PathCtr.loadState("init");
           PathCtr.defaultBoneName = data.defaultBoneName;
@@ -70,15 +70,8 @@ var PathWorker = {
           }
           return false;
           
-        case "set-group-control":
-          ((group)=> {
-            if(typeof group === "undefined") {
-              console.error(data.name + " is not found.");
-              return;
-            }
-            group.setCustomFunc(data);
-            PathCtr.loadState("set group control: " + group.id);
-          })(PathCtr.pathContainer.getGroup(data.name));
+        case "set-control":
+          importScripts(data.path);
           return false;
           
           

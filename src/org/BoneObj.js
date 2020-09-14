@@ -54,19 +54,6 @@ class BoneObj extends Sprite {
     };
   };
   
-  /**
-   * @param {Object} data
-   */
-  setCustomFunc(data) {
-    if("initFuncStr" in data) {
-      this.customInit = new Function("pathContainer", data.initFuncStr);
-      this.customInit();
-      delete this.customInit;
-    }
-    if("controlFuncStr" in data) {
-      this.control = new Function("pathContainer", data.controlFuncStr);
-    }
-  };
   
   /**
    * @param {Integer} totalFrames - action total frames
@@ -171,13 +158,6 @@ class BoneObj extends Sprite {
       }
     }
     return angle;
-  };
-  
-  /**
-   * @param {PathContainer} pathContainer
-   */
-  control(pathContainer) {
-    // do nothing.
   };
   
   /**

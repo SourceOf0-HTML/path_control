@@ -1,0 +1,34 @@
+function setup(pathContainer) {
+  PathCtr.actionName = "walk";
+  PathCtr.frameNumber = 100;
+  
+  //let hair = pathContainer.getGroup("bone11_hair");
+  //hair.mRotation = 0;
+  
+  let leftArm = pathContainer.getGroup("bone6_left_arm");
+  leftArm.initIK();
+}
+
+function control(pathContainer) {
+  //let hair = pathContainer.getGroup("bone11_hair");
+  //hair.rotation = hair.mRotation += 0.01;
+  
+  let leftArm = pathContainer.getGroup("bone6_left_arm");
+  if(!pathContainer.mouseX && !pathContainer.mouseY) {
+    leftArm.posIK.enable = false;
+    return;
+  }
+  leftArm.posIK.enable = true;
+  leftArm.posIK.x = pathContainer.mouseX;
+  leftArm.posIK.y = pathContainer.mouseY;
+  
+  let mainBone = pathContainer.getGroup("main_bone");
+  let childGroups = mainBone.childGroups.result = mainBone.childGroups.result.concat();
+  let armUID = pathContainer.getGroup("left_arm").uid;
+  let jacketIndex = childGroups.indexOf(pathContainer.getGroup("jacket").uid);
+  let armIndex = childGroups.indexOf(armUID);
+  if(jacketIndex > armIndex) {
+    childGroups.splice(armIndex, 1);
+    childGroups.push(armUID);
+  }
+}

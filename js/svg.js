@@ -17,4 +17,4 @@ SVGLoader.init([
   [SVGLoader.FILE_KIND_SMRT, 200, "right_leg", "./resource/right_leg/right_leg_"],
   [SVGLoader.FILE_KIND_SMRT, 200, "left_leg", "./resource/left_leg/left_leg_"],
 /**/
-], loadComplete, true);
+], loadComplete, "./js/walk.js", true);

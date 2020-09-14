@@ -154,9 +154,10 @@ var PathMain = {
   /**
    * @param {String} path - file path info
    * @param {Function} completeFunc - callback when loading complete
+   * @param {String} jsPath - file path to webworker
    * @param {Boolean} isDebug - use debug mode when true
    */
-  init: function(path, completeFunc, isDebug) {
+  init: function(path, completeFunc = null, jsPath = null, isDebug = false) {
     let container = document.getElementById("path-container");
     if(!container) {
       console.error("CanvasContainer is not found.");
@@ -187,12 +188,25 @@ var PathMain = {
     if(PathMain.useWorker) {
       PathMain.worker = new Worker(filePath);
       PathMain.initWorker();
+      if(!!jsPath) {
+        PathMain.postMessage({
+          cmd: "set-control",
+          path: new URL(jsPath, window.location.href).href,
+        });
+      }
     } else {
       console.log("this browser is not supported");
       PathMain.worker = window;
-      let script = document.createElement("script");
-      script.src = filePath;
-      document.body.appendChild(script);
+      
+      let mainScript = document.createElement("script");
+      mainScript.src = filePath;
+      document.body.appendChild(mainScript);
+      
+      if(!!jsPath) {
+        let subScript = document.createElement("script");
+        subScript.src = jsPath;
+        document.body.appendChild(subScript);
+      }
     }
   },
 };

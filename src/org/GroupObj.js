@@ -16,27 +16,6 @@ class GroupObj extends Sprite {
   };
   
   /**
-   * @param {Object} data
-   */
-  setCustomFunc(data) {
-    if("initFuncStr" in data) {
-      this.customInit = new Function("pathContainer", data.initFuncStr);
-      this.customInit();
-      delete this.customInit;
-    }
-    if("controlFuncStr" in data) {
-      this.control = new Function("pathContainer", data.controlFuncStr);
-    }
-  };
-  
-  /**
-   * @param {PathContainer} pathContainer
-   */
-  control(pathContainer) {
-    // do nothing.
-  };
-  
-  /**
    * @param {PathContainer} pathContainer
    */
   preprocessing(pathContainer) {

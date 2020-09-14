@@ -72,6 +72,7 @@ var PathCtr = {
     if(typeof DebugPath !== "undefined") {
       DebugPath.init(PathCtr.pathContainer);
     }
+    setup(PathCtr.pathContainer);
     PathCtr.update();
   },
   
@@ -815,27 +816,6 @@ class GroupObj extends Sprite {
   };
   
   /**
-   * @param {Object} data
-   */
-  setCustomFunc(data) {
-    if("initFuncStr" in data) {
-      this.customInit = new Function("pathContainer", data.initFuncStr);
-      this.customInit();
-      delete this.customInit;
-    }
-    if("controlFuncStr" in data) {
-      this.control = new Function("pathContainer", data.controlFuncStr);
-    }
-  };
-  
-  /**
-   * @param {PathContainer} pathContainer
-   */
-  control(pathContainer) {
-    // do nothing.
-  };
-  
-  /**
    * @param {PathContainer} pathContainer
    */
   preprocessing(pathContainer) {
@@ -1030,19 +1010,6 @@ class BoneObj extends Sprite {
     };
   };
   
-  /**
-   * @param {Object} data
-   */
-  setCustomFunc(data) {
-    if("initFuncStr" in data) {
-      this.customInit = new Function("pathContainer", data.initFuncStr);
-      this.customInit();
-      delete this.customInit;
-    }
-    if("controlFuncStr" in data) {
-      this.control = new Function("pathContainer", data.controlFuncStr);
-    }
-  };
   
   /**
    * @param {Integer} totalFrames - action total frames
@@ -1147,13 +1114,6 @@ class BoneObj extends Sprite {
       }
     }
     return angle;
-  };
-  
-  /**
-   * @param {PathContainer} pathContainer
-   */
-  control(pathContainer) {
-    // do nothing.
   };
   
   /**
@@ -1530,9 +1490,8 @@ class PathContainer extends Sprite {
     this.groups.forEach(group=> {
       group.preprocessing(this);
     });
-    this.groups.forEach(group=> {
-      group.control(this);
-    });
+    
+    control(this);
     
     let offset = this.groups.length;
     let bonesMap = this.bones.map((id, i)=> {
@@ -1925,7 +1884,7 @@ var PathWorker = {
   init: function() {
     PathWorker.instance.addEventListener("message", function(e) {
       let data = !e.data? e.detail : e.data;
-      switch (data.cmd) {
+      switch(data.cmd) {
         case "init":
           PathCtr.loadState("init");
           PathCtr.defaultBoneName = data.defaultBoneName;
@@ -1974,15 +1933,8 @@ var PathWorker = {
           }
           return false;
           
-        case "set-group-control":
-          ((group)=> {
-            if(typeof group === "undefined") {
-              console.error(data.name + " is not found.");
-              return;
-            }
-            group.setCustomFunc(data);
-            PathCtr.loadState("set group control: " + group.id);
-          })(PathCtr.pathContainer.getGroup(data.name));
+        case "set-control":
+          importScripts(data.path);
           return false;
           
           

@@ -72,6 +72,7 @@ var PathCtr = {
     if(typeof DebugPath !== "undefined") {
       DebugPath.init(PathCtr.pathContainer);
     }
+    setup(PathCtr.pathContainer);
     PathCtr.update();
   },
   
