@@ -98,7 +98,6 @@ var PathCtr = {
   defaultCanvasContainerID: "path-container",  // default canvas container element name
   defaultActionName: "base",
   initTarget: null,  // instance to be initialized
-  binDataPosRange: 20000, // correction value of coordinates when saving to binary data
   
   pathContainer: null,
   canvas: null,
@@ -1664,6 +1663,8 @@ var BinaryLoader = {
     smartMax: 9,
   },
   
+  binDataPosRange: 20000, // correction value of coordinates when saving to binary data
+  
   /**
    * @param {ArrayBuffer} buffer
    * @return {PathContainer}
@@ -1682,7 +1683,7 @@ var BinaryLoader = {
     let getUint16 =()=>{let ret = dv.getUint16(sumLength); sumLength += 2; return ret};
     let getUint32 =()=>{let ret = dv.getUint32(sumLength); sumLength += 4; return ret};
     let getFloat32=()=>{let ret = dv.getFloat32(sumLength); sumLength += 4; return ret};
-    let getPos    =()=>{let ret = dv.getInt16(sumLength)/PathCtr.binDataPosRange; sumLength += 2; return ret};
+    let getPos    =()=>{let ret = dv.getInt16(sumLength)/BinaryLoader.binDataPosRange; sumLength += 2; return ret};
     let getString=()=>{
       let num = getUint8();
       let ret = "";
@@ -2508,7 +2509,7 @@ var DebugPath = {
     let setUint16 =val=> {dv.setUint16(sumLength, val); sumLength += 2};
     let setUint32 =val=> {dv.setUint32(sumLength, val); sumLength += 4};
     let setFloat32=val=> {dv.setFloat32(sumLength, val); sumLength += 4};
-    let setPos    =val=> {dv.setInt16(sumLength, val*PathCtr.binDataPosRange); sumLength += 2};
+    let setPos    =val=> {dv.setInt16(sumLength, val*BinaryLoader.binDataPosRange); sumLength += 2};
     let setString =str=> {
       setUint8(str.length);
       [].map.call(str, c=>setUint16(c.charCodeAt(0)));

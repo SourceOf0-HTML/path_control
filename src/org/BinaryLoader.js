@@ -16,6 +16,8 @@ var BinaryLoader = {
     smartMax: 9,
   },
   
+  binDataPosRange: 20000, // correction value of coordinates when saving to binary data
+  
   /**
    * @param {ArrayBuffer} buffer
    * @return {PathContainer}
@@ -34,7 +36,7 @@ var BinaryLoader = {
     let getUint16 =()=>{let ret = dv.getUint16(sumLength); sumLength += 2; return ret};
     let getUint32 =()=>{let ret = dv.getUint32(sumLength); sumLength += 4; return ret};
     let getFloat32=()=>{let ret = dv.getFloat32(sumLength); sumLength += 4; return ret};
-    let getPos    =()=>{let ret = dv.getInt16(sumLength)/PathCtr.binDataPosRange; sumLength += 2; return ret};
+    let getPos    =()=>{let ret = dv.getInt16(sumLength)/BinaryLoader.binDataPosRange; sumLength += 2; return ret};
     let getString=()=>{
       let num = getUint8();
       let ret = "";

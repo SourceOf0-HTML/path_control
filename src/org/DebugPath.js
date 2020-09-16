@@ -114,7 +114,7 @@ var DebugPath = {
     let setUint16 =val=> {dv.setUint16(sumLength, val); sumLength += 2};
     let setUint32 =val=> {dv.setUint32(sumLength, val); sumLength += 4};
     let setFloat32=val=> {dv.setFloat32(sumLength, val); sumLength += 4};
-    let setPos    =val=> {dv.setInt16(sumLength, val*PathCtr.binDataPosRange); sumLength += 2};
+    let setPos    =val=> {dv.setInt16(sumLength, val*BinaryLoader.binDataPosRange); sumLength += 2};
     let setString =str=> {
       setUint8(str.length);
       [].map.call(str, c=>setUint16(c.charCodeAt(0)));

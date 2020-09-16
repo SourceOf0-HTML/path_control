@@ -23,7 +23,6 @@ var PathCtr = {
   defaultCanvasContainerID: "path-container",  // default canvas container element name
   defaultActionName: "base",
   initTarget: null,  // instance to be initialized
-  binDataPosRange: 20000, // correction value of coordinates when saving to binary data
   
   pathContainer: null,
   canvas: null,
