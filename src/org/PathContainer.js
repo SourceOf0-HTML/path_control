@@ -13,7 +13,9 @@ class PathContainer extends Sprite {
     this.groups = [];             // list of groups
     this.bones = [];              // list of bone ID
     this.actionList = [];         // action info list
-    this.currentActionID = -1;    // current action ID
+    
+    this.currentActionID = 0;     // current action ID
+    this.currentFrame = 0;        // current frame number of action
   };
   
   /**
@@ -42,6 +44,23 @@ class PathContainer extends Sprite {
    */
   getAction(actionName) {
     return this.actionList.find(data=>data.name == actionName);
+  };
+  
+  /**
+   * @param {String} actionName
+   * @param {Integer} frame
+   */
+  setAction(actionName, frame) {
+    let action = this.actionList.find(data=>data.name == actionName);
+    if(!action) {
+      console.error("target action is not found: " + actionName);
+      return;
+    }
+    this.currentActionID = action.id;
+    
+    if(typeof frame !== "undefined" && frame >= 0) {
+      this.currentFrame = frame % action.totalFrames;
+    }
   };
   
   /**
@@ -77,24 +96,19 @@ class PathContainer extends Sprite {
     }
   };
   
-  /**
-   * @param {Integer} frame
-   * @param {String} actionName
-   */
-  update(frame, actionName = PathCtr.defaultActionName) {
+  step() {
+    let action = this.actionList[this.currentActionID];
+    this.currentFrame = this.currentFrame % action.totalFrames + 1;
+  }
+  
+  update() {
     if(!this.visible || !this.rootGroups) {
       return;
     }
     
-    let action = this.getAction(actionName);
-    if(!action) {
-      console.error("target action is not found: " + actionName);
-      return;
-    }
+    let action = this.actionList[this.currentActionID];
     action.pastFrame = action.currentFrame;
-    action.currentFrame = frame;
-    
-    this.currentActionID = action.id;
+    action.currentFrame = this.currentFrame;
     
     this.groups.forEach(group=> {
       group.preprocessing(this);

@@ -52,10 +52,7 @@ var PathWorker = {
           return false;
           
         case "change-action":
-          PathCtr.actionName = data.name;
-          if(typeof data.frame !== "undefined" && data.frame >= 0) {
-            PathCtr.frameNumber = data.frame;
-          }
+          PathCtr.pathContainer.setAction(data.name, data.frame);
           return false;
           
         case "mouse-move":

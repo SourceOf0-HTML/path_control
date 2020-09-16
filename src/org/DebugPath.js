@@ -37,7 +37,7 @@ var DebugPath = {
   keyUp: function(pathContainer, code) {
     let setAction =name=> {
       console.log(name);
-      PathCtr.actionName = name;
+      pathContainer.setAction(name);
     };
     switch(code) {
       case "Space":
@@ -48,12 +48,12 @@ var DebugPath = {
         this.isStep = true;
         break;
       case "ArrowDown":
-        this.actionIndex = (this.actionIndex + 1) % PathCtr.pathContainer.actionList.length;
-        setAction(PathCtr.pathContainer.actionList[this.actionIndex].name);
+        this.actionIndex = (this.actionIndex + 1) % pathContainer.actionList.length;
+        setAction(pathContainer.actionList[this.actionIndex].name);
         break;
       case "ArrowUp":
-        if(--this.actionIndex < 0) this.actionIndex = PathCtr.pathContainer.actionList.length - 1;
-        setAction(PathCtr.pathContainer.actionList[this.actionIndex].name);
+        if(--this.actionIndex < 0) this.actionIndex = pathContainer.actionList.length - 1;
+        setAction(pathContainer.actionList[this.actionIndex].name);
         break;
       case "KeyD":
         PathCtr.isOutputDebugPrint = !PathCtr.isOutputDebugPrint;

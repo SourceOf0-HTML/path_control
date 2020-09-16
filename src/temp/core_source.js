@@ -107,8 +107,6 @@ var PathCtr = {
   viewWidth: 0,
   viewHeight: 0,
   
-  actionName: "base",
-  frameNumber: 0,
   fixFrameTime: 1 / 24,
   prevTimestamp: 0,
   average: 0,
@@ -138,23 +136,28 @@ var PathCtr = {
   },
   
   loadComplete: function() {
-    PathCtr.pathContainer = PathCtr.initTarget;
-    PathCtr.pathContainer.context = PathWorker.isWorker? PathCtr.context:PathCtr.subContext;
+    let pathContainer = PathCtr.pathContainer = PathCtr.initTarget;
+    pathContainer.context = PathWorker.isWorker? PathCtr.context:PathCtr.subContext;
     PathCtr.setSize(PathCtr.viewWidth, PathCtr.viewHeight);
     PathCtr.initTarget = null;
-    PathCtr.loadState(PathCtr.pathContainer);
+    PathCtr.loadState(pathContainer);
     if(typeof DebugPath !== "undefined") {
-      DebugPath.init(PathCtr.pathContainer);
+      DebugPath.init(pathContainer);
     }
-    setup(PathCtr.pathContainer);
+    setup(pathContainer);
     PathCtr.update();
   },
   
   draw: function(timestamp) {
+    let pathContainer = PathCtr.pathContainer;
+    
     if(typeof DebugPath !== "undefined" && DebugPath.isStop) {
       if(!DebugPath.isStep) return;
       DebugPath.isStep = false;
-      console.log("STEP: " + PathCtr.actionName + " - " + PathCtr.frameNumber);
+      if(!!pathContainer) {
+        let action = pathContainer.actionList[pathContainer.currentActionID];
+        console.log("STEP: " + action.name + " - " + action.currentFrame);
+      }
     }
     
     if(typeof timestamp === "undefined") return;
@@ -163,31 +166,22 @@ var PathCtr = {
     PathCtr.average = (PathCtr.average + elapsed) / 2;
     //PathCtr.debugPrint((PathCtr.average * 100000)^0);
     
-    if(!PathCtr.pathContainer) return;
+    if(!pathContainer) return;
     
     let frameTime = 1 / 24;
-    let totalFrames = 1;
-    let action = PathCtr.pathContainer.getAction(PathCtr.actionName);
-    if(!!action) {
-      totalFrames = action.totalFrames;
-    } else {
-      PathCtr.actionName = "base";
-      action = PathCtr.pathContainer.getAction(PathCtr.actionName);
-      if(!!action) totalFrames = action.totalFrames;
-    }
     
     if(PathWorker.isWorker) {
       PathCtr.context.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
-      PathCtr.pathContainer.draw();
+      pathContainer.draw();
       if(timestamp - PathCtr.prevTimestamp < frameTime*500) return;
     } else {
       PathCtr.subContext.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
-      PathCtr.pathContainer.draw();
+      pathContainer.draw();
       PathCtr.context.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
       PathCtr.context.putImageData(PathCtr.subContext.getImageData(0, 0, PathCtr.viewWidth, PathCtr.viewHeight), 0, 0);
     }
     
-    PathCtr.frameNumber = PathCtr.frameNumber % totalFrames + 1;
+    pathContainer.step();
     
     PathCtr.prevTimestamp = timestamp;
     if(PathCtr.average > frameTime * 2) {
@@ -200,7 +194,7 @@ var PathCtr = {
       PathCtr.fixFrameTime = (frameTime + PathCtr.fixFrameTime) / 2;
     }
     
-    PathCtr.pathContainer.update(PathCtr.frameNumber, PathCtr.actionName);
+    pathContainer.update();
   },
   
   update: function() {
@@ -1469,7 +1463,9 @@ class PathContainer extends Sprite {
     this.groups = [];             // list of groups
     this.bones = [];              // list of bone ID
     this.actionList = [];         // action info list
-    this.currentActionID = -1;    // current action ID
+    
+    this.currentActionID = 0;     // current action ID
+    this.currentFrame = 0;        // current frame number of action
   };
   
   /**
@@ -1498,6 +1494,23 @@ class PathContainer extends Sprite {
    */
   getAction(actionName) {
     return this.actionList.find(data=>data.name == actionName);
+  };
+  
+  /**
+   * @param {String} actionName
+   * @param {Integer} frame
+   */
+  setAction(actionName, frame) {
+    let action = this.actionList.find(data=>data.name == actionName);
+    if(!action) {
+      console.error("target action is not found: " + actionName);
+      return;
+    }
+    this.currentActionID = action.id;
+    
+    if(typeof frame !== "undefined" && frame >= 0) {
+      this.currentFrame = frame % action.totalFrames;
+    }
   };
   
   /**
@@ -1533,24 +1546,19 @@ class PathContainer extends Sprite {
     }
   };
   
-  /**
-   * @param {Integer} frame
-   * @param {String} actionName
-   */
-  update(frame, actionName = PathCtr.defaultActionName) {
+  step() {
+    let action = this.actionList[this.currentActionID];
+    this.currentFrame = this.currentFrame % action.totalFrames + 1;
+  }
+  
+  update() {
     if(!this.visible || !this.rootGroups) {
       return;
     }
     
-    let action = this.getAction(actionName);
-    if(!action) {
-      console.error("target action is not found: " + actionName);
-      return;
-    }
+    let action = this.actionList[this.currentActionID];
     action.pastFrame = action.currentFrame;
-    action.currentFrame = frame;
-    
-    this.currentActionID = action.id;
+    action.currentFrame = this.currentFrame;
     
     this.groups.forEach(group=> {
       group.preprocessing(this);
@@ -1982,10 +1990,7 @@ var PathWorker = {
           return false;
           
         case "change-action":
-          PathCtr.actionName = data.name;
-          if(typeof data.frame !== "undefined" && data.frame >= 0) {
-            PathCtr.frameNumber = data.frame;
-          }
+          PathCtr.pathContainer.setAction(data.name, data.frame);
           return false;
           
         case "mouse-move":

@@ -10,6 +10,7 @@ PathContainer
   masks = { maskName: groupID };         // list of mask name and group ID
   bones = [ groupID, ... ];              // list of bone ID
   currentActionID = currentActionID;     // current action ID
+  currentFrame = currentFrame;           // current frame number of action
   actionList = [                         // action info list
     {
       name : actionName,
