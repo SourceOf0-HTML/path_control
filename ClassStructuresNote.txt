@@ -44,11 +44,13 @@ BoneObj
   parentID = id;                  // parent bone id
   isParentPin = isParentPin;      // parent bone is pin bone
   feedback = receiveFeedback;     // receive feedback from other bones
+  angleMin = angleMin;            // min angle
+  angleMax = angleMax;            // max angle
   
   strength = strength;            // scope of influence of bone
   isSmartBone = isSmartBone;      // is smart bone or not
-  smartBase = smartBase;          // base angle
-  smartMax = smartMax;            // max angle
+  smartBase = smartBase;          // base angle of smartbone
+  smartMax = smartMax;            // max angle of smartbone
   posIK = {                       // data for inverse kinematics
     enable: enable,
     x: x,
