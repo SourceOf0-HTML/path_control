@@ -114,7 +114,7 @@ class PathContainer extends Sprite {
       group.preprocessing(this);
     });
     
-    control(this);
+    if(typeof control !== "undefined") control(this);
     
     let offset = this.groups.length;
     let bonesMap = this.bones.map((id, i)=> {

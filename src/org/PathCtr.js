@@ -24,7 +24,7 @@ var PathCtr = {
   defaultActionName: "base",
   initTarget: null,  // instance to be initialized
   
-  pathContainer: null,
+  pathContainers: [],
   canvas: null,
   subCanvas: null,
   context: null,
@@ -56,33 +56,34 @@ var PathCtr = {
   setSize: function(viewWidth, viewHeight) {
     PathCtr.canvas.width = PathCtr.subCanvas.width = PathCtr.viewWidth = viewWidth;
     PathCtr.canvas.height = PathCtr.subCanvas.height = PathCtr.viewHeight = viewHeight;
-    if(!!PathCtr.pathContainer) PathCtr.pathContainer.setSize(viewWidth, viewHeight);
+    PathCtr.pathContainers.forEach(pathContainer=> {
+      pathContainer.setSize(viewWidth, viewHeight);
+    });
     PathCtr.update();
   },
   
   loadComplete: function() {
-    let pathContainer = PathCtr.pathContainer = PathCtr.initTarget;
-    pathContainer.context = PathWorker.isWorker? PathCtr.context:PathCtr.subContext;
+    let pathContainer = PathCtr.initTarget;
+    PathCtr.pathContainers.push(pathContainer);
+    pathContainer.context = PathWorker.isWorker? PathCtr.context : PathCtr.subContext;
     PathCtr.setSize(PathCtr.viewWidth, PathCtr.viewHeight);
     PathCtr.initTarget = null;
     PathCtr.loadState(pathContainer);
     if(typeof DebugPath !== "undefined") {
       DebugPath.init(pathContainer);
     }
-    setup(pathContainer);
+    if(typeof setup !== "undefined") setup(pathContainer);
     PathCtr.update();
   },
   
   draw: function(timestamp) {
-    let pathContainer = PathCtr.pathContainer;
-    
     if(typeof DebugPath !== "undefined" && DebugPath.isStop) {
       if(!DebugPath.isStep) return;
       DebugPath.isStep = false;
-      if(!!pathContainer) {
+      PathCtr.pathContainers.forEach(pathContainer=> {
         let action = pathContainer.actionList[pathContainer.currentActionID];
         console.log("STEP: " + action.name + " - " + action.currentFrame);
-      }
+      });
     }
     
     if(typeof timestamp === "undefined") return;
@@ -91,22 +92,22 @@ var PathCtr = {
     PathCtr.average = (PathCtr.average + elapsed) / 2;
     //PathCtr.debugPrint((PathCtr.average * 100000)^0);
     
-    if(!pathContainer) return;
+    if(PathCtr.pathContainers.length <= 0) return;
     
     let frameTime = 1 / 24;
     
     if(PathWorker.isWorker) {
       PathCtr.context.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
-      pathContainer.draw();
+      PathCtr.pathContainers.forEach(pathContainer=> pathContainer.draw());
       if(timestamp - PathCtr.prevTimestamp < frameTime*500) return;
     } else {
       PathCtr.subContext.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
-      pathContainer.draw();
+      PathCtr.pathContainers.forEach(pathContainer=> pathContainer.draw());
       PathCtr.context.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
       PathCtr.context.putImageData(PathCtr.subContext.getImageData(0, 0, PathCtr.viewWidth, PathCtr.viewHeight), 0, 0);
     }
     
-    pathContainer.step();
+    PathCtr.pathContainers.forEach(pathContainer=> pathContainer.step());
     
     PathCtr.prevTimestamp = timestamp;
     if(PathCtr.average > frameTime * 2) {
@@ -119,7 +120,7 @@ var PathCtr = {
       PathCtr.fixFrameTime = (frameTime + PathCtr.fixFrameTime) / 2;
     }
     
-    pathContainer.update();
+    PathCtr.pathContainers.forEach(pathContainer=> pathContainer.update());
   },
   
   update: function() {

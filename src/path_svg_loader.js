@@ -557,7 +557,7 @@ var SVGLoader = {
    * @param {String} jsPath - file path to webworker
    * @param {Boolean} isDebug - use debug mode when true
    */
-  init: function(fileInfoList, completeFunc = null, jsPath = null, isDebug = false) {
+  load: function(fileInfoList, completeFunc = null, jsPath = null, isDebug = false) {
     if(!fileInfoList || !Array.isArray(fileInfoList) || !Array.isArray(fileInfoList[0])) {
       console.error("fileInfoList format is woring");
       console.log(fileInfoList);
@@ -574,7 +574,6 @@ var SVGLoader = {
     this.groupNameToIDList = {};
     this.masksList = {};
     
-    let currentPath = document.currentScript.src;
     let blob = new Blob([path_load_svg_worker], {type: "text/javascript"});
     let filePath = window.URL.createObjectURL(blob);
     
@@ -603,7 +602,7 @@ var SVGLoader = {
       }
     });
     
-    PathMain.init(null, completeFunc, jsPath, isDebug);
+    PathMain.load(null, completeFunc, jsPath, isDebug);
     this.loadWorker.postMessage({cmd: "load", fileInfoList: fileInfoList});
   },
 };

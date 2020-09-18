@@ -109,7 +109,7 @@ var PathCtr = {
   defaultActionName: "base",
   initTarget: null,  // instance to be initialized
   
-  pathContainer: null,
+  pathContainers: [],
   canvas: null,
   subCanvas: null,
   context: null,
@@ -141,33 +141,34 @@ var PathCtr = {
   setSize: function(viewWidth, viewHeight) {
     PathCtr.canvas.width = PathCtr.subCanvas.width = PathCtr.viewWidth = viewWidth;
     PathCtr.canvas.height = PathCtr.subCanvas.height = PathCtr.viewHeight = viewHeight;
-    if(!!PathCtr.pathContainer) PathCtr.pathContainer.setSize(viewWidth, viewHeight);
+    PathCtr.pathContainers.forEach(pathContainer=> {
+      pathContainer.setSize(viewWidth, viewHeight);
+    });
     PathCtr.update();
   },
   
   loadComplete: function() {
-    let pathContainer = PathCtr.pathContainer = PathCtr.initTarget;
-    pathContainer.context = PathWorker.isWorker? PathCtr.context:PathCtr.subContext;
+    let pathContainer = PathCtr.initTarget;
+    PathCtr.pathContainers.push(pathContainer);
+    pathContainer.context = PathWorker.isWorker? PathCtr.context : PathCtr.subContext;
     PathCtr.setSize(PathCtr.viewWidth, PathCtr.viewHeight);
     PathCtr.initTarget = null;
     PathCtr.loadState(pathContainer);
     if(typeof DebugPath !== "undefined") {
       DebugPath.init(pathContainer);
     }
-    setup(pathContainer);
+    if(typeof setup !== "undefined") setup(pathContainer);
     PathCtr.update();
   },
   
   draw: function(timestamp) {
-    let pathContainer = PathCtr.pathContainer;
-    
     if(typeof DebugPath !== "undefined" && DebugPath.isStop) {
       if(!DebugPath.isStep) return;
       DebugPath.isStep = false;
-      if(!!pathContainer) {
+      PathCtr.pathContainers.forEach(pathContainer=> {
         let action = pathContainer.actionList[pathContainer.currentActionID];
         console.log("STEP: " + action.name + " - " + action.currentFrame);
-      }
+      });
     }
     
     if(typeof timestamp === "undefined") return;
@@ -176,22 +177,22 @@ var PathCtr = {
     PathCtr.average = (PathCtr.average + elapsed) / 2;
     //PathCtr.debugPrint((PathCtr.average * 100000)^0);
     
-    if(!pathContainer) return;
+    if(PathCtr.pathContainers.length <= 0) return;
     
     let frameTime = 1 / 24;
     
     if(PathWorker.isWorker) {
       PathCtr.context.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
-      pathContainer.draw();
+      PathCtr.pathContainers.forEach(pathContainer=> pathContainer.draw());
       if(timestamp - PathCtr.prevTimestamp < frameTime*500) return;
     } else {
       PathCtr.subContext.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
-      pathContainer.draw();
+      PathCtr.pathContainers.forEach(pathContainer=> pathContainer.draw());
       PathCtr.context.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
       PathCtr.context.putImageData(PathCtr.subContext.getImageData(0, 0, PathCtr.viewWidth, PathCtr.viewHeight), 0, 0);
     }
     
-    pathContainer.step();
+    PathCtr.pathContainers.forEach(pathContainer=> pathContainer.step());
     
     PathCtr.prevTimestamp = timestamp;
     if(PathCtr.average > frameTime * 2) {
@@ -204,7 +205,7 @@ var PathCtr = {
       PathCtr.fixFrameTime = (frameTime + PathCtr.fixFrameTime) / 2;
     }
     
-    pathContainer.update();
+    PathCtr.pathContainers.forEach(pathContainer=> pathContainer.update());
   },
   
   update: function() {
@@ -1574,7 +1575,7 @@ class PathContainer extends Sprite {
       group.preprocessing(this);
     });
     
-    control(this);
+    if(typeof control !== "undefined") control(this);
     
     let offset = this.groups.length;
     let bonesMap = this.bones.map((id, i)=> {
@@ -1989,7 +1990,7 @@ var PathWorker = {
           return false;
           
         case "load-bone":
-          BoneLoader.load(data.path, PathCtr.pathContainer);
+          BoneLoader.load(data.path, PathCtr.pathContainers[PathCtr.pathContainers.length-1]);
           return false;
           
           
@@ -2000,7 +2001,7 @@ var PathWorker = {
           return false;
           
         case "change-action":
-          PathCtr.pathContainer.setAction(data.name, data.frame);
+          PathCtr.pathContainers[0].setAction(data.name, data.frame);
           return false;
           
         case "mouse-move":
@@ -2021,7 +2022,7 @@ var PathWorker = {
           
         case "keyup":
           if(typeof DebugPath !== "undefined") {
-            DebugPath.keyUp(PathCtr.pathContainer, data.code);
+            DebugPath.keyUp(PathCtr.pathContainers[0], data.code);
           }
           return false;
           
@@ -2033,11 +2034,11 @@ var PathWorker = {
           /* ---- output ---- */
           
         case "output-path-container":
-          DebugPath.outputJSON(PathCtr.pathContainer);
+          DebugPath.outputJSON(PathCtr.pathContainers[0]);
           return false;
           
         case "output-bin":
-          DebugPath.outputBin(PathCtr.pathContainer);
+          DebugPath.outputBin(PathCtr.pathContainers[0]);
           return false;
           
           
@@ -2704,7 +2705,7 @@ var DebugPath = {
    */
   outputBin: function(pathContainer) {
     if(!pathContainer) return;
-    let data = this.toBin(PathCtr.pathContainer);
+    let data = this.toBin(pathContainer);
     postMessage({
       cmd: "main-download",
       type: "octet/stream",
@@ -2807,7 +2808,6 @@ var PathMain = {
   worker: null,
   useWorker: false,
   
-  path: null,
   canvas: null,
   subCanvas: null,
   completeFunc: null,
@@ -2839,7 +2839,7 @@ var PathMain = {
       switch(data.cmd) {
         case "main-init-complete":
         case "main-bone-load-complete":
-          PathMain.completeFunc();
+          if(!!PathMain.completeFunc) PathMain.completeFunc();
           return false;
           
         case "main-confirm":
@@ -2931,10 +2931,6 @@ var PathMain = {
       subCanvas: targetSubCanvas,
       defaultBoneName: PathMain.defaultBoneName,
     }, [ targetCanvas, targetSubCanvas ]);
-    
-    if(!!PathMain.path) {
-      PathMain.postMessage({cmd: "load-bin", path: PathMain.path});
-    }
   },
   
   /**
@@ -2970,28 +2966,12 @@ var PathMain = {
     PathMain.postMessage({cmd: "load-bone", path: new URL(path, window.location.href).href});
   },
   
-  /**
-   * @param {String} path - file path info
-   * @param {Function} completeFunc - callback when loading complete
-   * @param {String} jsPath - file path to webworker
-   * @param {Boolean} isDebug - use debug mode when true
-   */
-  init: function(path, completeFunc = null, jsPath = null, isDebug = false) {
+  init: function() {
     let container = document.getElementById("path-container");
     if(!container) {
       console.error("CanvasContainer is not found.");
       return;
     }
-    
-    if(!!path) {
-      PathMain.path = new URL(path, window.location.href).href;
-    }
-    
-    PathMain.completeFunc = completeFunc;
-    
-    let currentPath = document.currentScript.src;
-    let blob = new Blob([path_control], {type: "text/javascript"});
-    let filePath = window.URL.createObjectURL(blob);
     
     let canvas = PathMain.canvas = document.createElement("canvas");
     canvas.className = "main-canvas";
@@ -3004,15 +2984,11 @@ var PathMain = {
     
     PathMain.useWorker = !!Worker && !!canvas.transferControlToOffscreen;
     
+    let blob = new Blob([path_control], {type: "text/javascript"});
+    let filePath = window.URL.createObjectURL(blob);
     if(PathMain.useWorker) {
       PathMain.worker = new Worker(filePath);
       PathMain.initWorker();
-      if(!!jsPath) {
-        PathMain.postMessage({
-          cmd: "set-control",
-          path: new URL(jsPath, window.location.href).href,
-        });
-      }
     } else {
       console.log("this browser is not supported");
       PathMain.worker = window;
@@ -3020,12 +2996,36 @@ var PathMain = {
       let mainScript = document.createElement("script");
       mainScript.src = filePath;
       document.body.appendChild(mainScript);
-      
-      if(!!jsPath) {
+    }
+  },
+  
+  /**
+   * @param {String} path - file path info
+   * @param {Function} completeFunc - callback when loading complete
+   * @param {String} jsPath - file path to webworker
+   * @param {Boolean} isDebug - use debug mode when true
+   */
+  load: function(path, completeFunc = null, jsPath = null, isDebug = false) {
+    PathMain.completeFunc = completeFunc;
+    
+    if(!!jsPath) {
+      if(PathMain.useWorker) {
+        PathMain.postMessage({
+          cmd: "set-control",
+          path: new URL(jsPath, window.location.href).href,
+        });
+      } else {
         let subScript = document.createElement("script");
         subScript.src = jsPath;
         document.body.appendChild(subScript);
       }
+    }
+    
+    if(!!path) {
+      PathMain.postMessage({
+        cmd: "load-bin",
+        path: new URL(path, window.location.href).href
+      });
     }
   },
 };
@@ -3588,7 +3588,7 @@ var SVGLoader = {
    * @param {String} jsPath - file path to webworker
    * @param {Boolean} isDebug - use debug mode when true
    */
-  init: function(fileInfoList, completeFunc = null, jsPath = null, isDebug = false) {
+  load: function(fileInfoList, completeFunc = null, jsPath = null, isDebug = false) {
     if(!fileInfoList || !Array.isArray(fileInfoList) || !Array.isArray(fileInfoList[0])) {
       console.error("fileInfoList format is woring");
       console.log(fileInfoList);
@@ -3605,7 +3605,6 @@ var SVGLoader = {
     this.groupNameToIDList = {};
     this.masksList = {};
     
-    let currentPath = document.currentScript.src;
     let blob = new Blob([path_load_svg_worker], {type: "text/javascript"});
     let filePath = window.URL.createObjectURL(blob);
     
@@ -3634,7 +3633,7 @@ var SVGLoader = {
       }
     });
     
-    PathMain.init(null, completeFunc, jsPath, isDebug);
+    PathMain.load(null, completeFunc, jsPath, isDebug);
     this.loadWorker.postMessage({cmd: "load", fileInfoList: fileInfoList});
   },
 };

@@ -294,7 +294,7 @@ var DebugPath = {
    */
   outputBin: function(pathContainer) {
     if(!pathContainer) return;
-    let data = this.toBin(PathCtr.pathContainer);
+    let data = this.toBin(pathContainer);
     postMessage({
       cmd: "main-download",
       type: "octet/stream",

@@ -10,7 +10,6 @@ var PathMain = {
   worker: null,
   useWorker: false,
   
-  path: null,
   canvas: null,
   subCanvas: null,
   completeFunc: null,
@@ -42,7 +41,7 @@ var PathMain = {
       switch(data.cmd) {
         case "main-init-complete":
         case "main-bone-load-complete":
-          PathMain.completeFunc();
+          if(!!PathMain.completeFunc) PathMain.completeFunc();
           return false;
           
         case "main-confirm":
@@ -134,10 +133,6 @@ var PathMain = {
       subCanvas: targetSubCanvas,
       defaultBoneName: PathMain.defaultBoneName,
     }, [ targetCanvas, targetSubCanvas ]);
-    
-    if(!!PathMain.path) {
-      PathMain.postMessage({cmd: "load-bin", path: PathMain.path});
-    }
   },
   
   /**
@@ -173,28 +168,12 @@ var PathMain = {
     PathMain.postMessage({cmd: "load-bone", path: new URL(path, window.location.href).href});
   },
   
-  /**
-   * @param {String} path - file path info
-   * @param {Function} completeFunc - callback when loading complete
-   * @param {String} jsPath - file path to webworker
-   * @param {Boolean} isDebug - use debug mode when true
-   */
-  init: function(path, completeFunc = null, jsPath = null, isDebug = false) {
+  init: function() {
     let container = document.getElementById("path-container");
     if(!container) {
       console.error("CanvasContainer is not found.");
       return;
     }
-    
-    if(!!path) {
-      PathMain.path = new URL(path, window.location.href).href;
-    }
-    
-    PathMain.completeFunc = completeFunc;
-    
-    let currentPath = document.currentScript.src;
-    let blob = new Blob([path_control], {type: "text/javascript"});
-    let filePath = window.URL.createObjectURL(blob);
     
     let canvas = PathMain.canvas = document.createElement("canvas");
     canvas.className = "main-canvas";
@@ -207,15 +186,11 @@ var PathMain = {
     
     PathMain.useWorker = !!Worker && !!canvas.transferControlToOffscreen;
     
+    let blob = new Blob([path_control], {type: "text/javascript"});
+    let filePath = window.URL.createObjectURL(blob);
     if(PathMain.useWorker) {
       PathMain.worker = new Worker(filePath);
       PathMain.initWorker();
-      if(!!jsPath) {
-        PathMain.postMessage({
-          cmd: "set-control",
-          path: new URL(jsPath, window.location.href).href,
-        });
-      }
     } else {
       console.log("this browser is not supported");
       PathMain.worker = window;
@@ -223,12 +198,36 @@ var PathMain = {
       let mainScript = document.createElement("script");
       mainScript.src = filePath;
       document.body.appendChild(mainScript);
-      
-      if(!!jsPath) {
+    }
+  },
+  
+  /**
+   * @param {String} path - file path info
+   * @param {Function} completeFunc - callback when loading complete
+   * @param {String} jsPath - file path to webworker
+   * @param {Boolean} isDebug - use debug mode when true
+   */
+  load: function(path, completeFunc = null, jsPath = null, isDebug = false) {
+    PathMain.completeFunc = completeFunc;
+    
+    if(!!jsPath) {
+      if(PathMain.useWorker) {
+        PathMain.postMessage({
+          cmd: "set-control",
+          path: new URL(jsPath, window.location.href).href,
+        });
+      } else {
         let subScript = document.createElement("script");
         subScript.src = jsPath;
         document.body.appendChild(subScript);
       }
+    }
+    
+    if(!!path) {
+      PathMain.postMessage({
+        cmd: "load-bin",
+        path: new URL(path, window.location.href).href
+      });
     }
   },
 };

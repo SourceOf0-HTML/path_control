@@ -41,7 +41,7 @@ var PathWorker = {
           return false;
           
         case "load-bone":
-          BoneLoader.load(data.path, PathCtr.pathContainer);
+          BoneLoader.load(data.path, PathCtr.pathContainers[PathCtr.pathContainers.length-1]);
           return false;
           
           
@@ -52,7 +52,7 @@ var PathWorker = {
           return false;
           
         case "change-action":
-          PathCtr.pathContainer.setAction(data.name, data.frame);
+          PathCtr.pathContainers[0].setAction(data.name, data.frame);
           return false;
           
         case "mouse-move":
@@ -73,7 +73,7 @@ var PathWorker = {
           
         case "keyup":
           if(typeof DebugPath !== "undefined") {
-            DebugPath.keyUp(PathCtr.pathContainer, data.code);
+            DebugPath.keyUp(PathCtr.pathContainers[0], data.code);
           }
           return false;
           
@@ -85,11 +85,11 @@ var PathWorker = {
           /* ---- output ---- */
           
         case "output-path-container":
-          DebugPath.outputJSON(PathCtr.pathContainer);
+          DebugPath.outputJSON(PathCtr.pathContainers[0]);
           return false;
           
         case "output-bin":
-          DebugPath.outputBin(PathCtr.pathContainer);
+          DebugPath.outputBin(PathCtr.pathContainers[0]);
           return false;
           
           
