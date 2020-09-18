@@ -1,4 +1,3 @@
-console.log(PathCtr.pathContainers);
 function setup(pathContainer) {
   if(pathContainer.name != "walk") return;
   pathContainer.setAction("walk", 100);

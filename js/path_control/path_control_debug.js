@@ -2887,7 +2887,10 @@ var PathMain = {
     PathMain.postMessage({cmd: "load-bone", path: new URL(path, window.location.href).href});
   },
   
-  init: function() {
+  /**
+   * @param {String} jsPath - file path to webworker
+   */
+  init: function(jsPath = null) {
     let container = document.getElementById("path-container");
     if(!container) {
       console.error("CanvasContainer is not found.");
@@ -2909,10 +2912,22 @@ var PathMain = {
     let filePath = window.URL.createObjectURL(blob);
     if(PathMain.useWorker) {
       PathMain.worker = new Worker(filePath);
+      if(!!jsPath) {
+        PathMain.postMessage({
+          cmd: "set-control",
+          path: new URL(jsPath, window.location.href).href,
+        });
+      }
       PathMain.initWorker();
     } else {
       console.log("this browser is not supported");
       PathMain.worker = window;
+      
+      if(!!jsPath) {
+        let subScript = document.createElement("script");
+        subScript.src = jsPath;
+        document.body.appendChild(subScript);
+      }
       
       let mainScript = document.createElement("script");
       mainScript.src = filePath;
@@ -2923,24 +2938,10 @@ var PathMain = {
   /**
    * @param {String} path - file path info
    * @param {Function} completeFunc - callback when loading complete
-   * @param {String} jsPath - file path to webworker
    * @param {Boolean} isDebug - use debug mode when true
    */
-  load: function(path, completeFunc = null, jsPath = null, isDebug = false) {
+  load: function(path, completeFunc = null, isDebug = false) {
     PathMain.completeFunc = completeFunc;
-    
-    if(!!jsPath) {
-      if(PathMain.useWorker) {
-        PathMain.postMessage({
-          cmd: "set-control",
-          path: new URL(jsPath, window.location.href).href,
-        });
-      } else {
-        let subScript = document.createElement("script");
-        subScript.src = jsPath;
-        document.body.appendChild(subScript);
-      }
-    }
     
     if(!!path) {
       PathMain.postMessage({

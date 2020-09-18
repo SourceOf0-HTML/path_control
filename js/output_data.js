@@ -18,15 +18,15 @@ function loadWalk() {
     [SVGLoader.FILE_KIND_SMRT, 100, "jacket", "./resource/jacket/jacket_"],
     [SVGLoader.FILE_KIND_SMRT, 200, "right_leg", "./resource/right_leg/right_leg_"],
     [SVGLoader.FILE_KIND_SMRT, 200, "left_leg", "./resource/left_leg/left_leg_"],
-  ], svgLoadComplete, "./js/walk.js", true);
+  ], svgLoadComplete, true);
 }
 
-PathMain.init();
+PathMain.init("./js/walk.js");
 loadWalk();
 /*
 SVGLoader.load("test", [
   [SVGLoader.FILE_KIND_BASE, 1120, "base", "./resource/base_single/original_single_"],
-], loadNext, null, true);
+], loadNext, true);
 */
 
 function output_data() {

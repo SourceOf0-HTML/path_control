@@ -1,5 +1,5 @@
 function loadComplete() {
-  PathMain.load("./resource/path_data.bin", null, null, true);
+  PathMain.load("./resource/path_data.bin", null, true);
 }
-PathMain.init();
-PathMain.load("./resource/path_data_.bin", loadComplete, "./js/walk.js", true);
+PathMain.init("./js/walk.js");
+PathMain.load("./resource/path_data_.bin", loadComplete, true);
