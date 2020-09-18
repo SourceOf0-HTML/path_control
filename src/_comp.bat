@@ -18,6 +18,10 @@ type %CORE_SRC% >> %DEBUG_SRC%
 type org\BoneLoader.js >> %DEBUG_SRC%
 type org\DebugPath.js >> %DEBUG_SRC%
 
+set SVG_SRC=temp\svg_source.js
+del %SVG_SRC%
+type path_load_svg_worker.js >> %SVG_SRC%
+
 
 set DIR_PATH=..\js\path_control\
 
@@ -44,7 +48,7 @@ echo let path_control = ` >> %SVG_FILE%
 type %DEBUG_SRC% >> %SVG_FILE%
 echo ` >> %SVG_FILE%
 echo let path_load_svg_worker = ` >> %SVG_FILE%
-type path_load_svg_worker.js >> %SVG_FILE%
+type %SVG_SRC% >> %SVG_FILE%
 echo ` >> %SVG_FILE%
 type path_main.js >> %SVG_FILE%
 type path_svg_loader.js >> %SVG_FILE%
