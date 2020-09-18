@@ -1461,8 +1461,9 @@ class BoneObj extends Sprite {
 
 
 class PathContainer extends Sprite {
-  constructor(width, height) {
+  constructor(name, width, height) {
     super();
+    this.name = name;             // paths name
     this.visible = true;          // display when true
     this.originalWidth = width;   // original svg width
     this.originalHeight = height; // original svg height
@@ -1882,7 +1883,7 @@ var BinaryLoader = {
     
     // --acquisition processing--
     
-    let pathContainer = PathCtr.initTarget = new PathContainer(getUint16(), getUint16());
+    let pathContainer = PathCtr.initTarget = new PathContainer(getString(), getUint16(), getUint16());
     
     let actionListNum = getUint8();
     if(actionListNum > 0) {
@@ -2046,7 +2047,7 @@ var PathWorker = {
           
         case "create-path-container":
           PathCtr.loadState("init path container");
-          PathCtr.initTarget = new PathContainer(data.width, data.height);
+          PathCtr.initTarget = new PathContainer(data.name, data.width, data.height);
           return false;
           
         case "add-action":
@@ -2671,6 +2672,7 @@ var DebugPath = {
     
     // -- storage processing --
     
+    setString(pathContainer.name);
     setUint16(pathContainer.originalWidth);
     setUint16(pathContainer.originalHeight);
     
@@ -3498,6 +3500,7 @@ var SVGLoader = {
     
     PathMain.postMessage({
       cmd: "create-path-container",
+      name: this.name,
       width: this.width,
       height: this.height,
     });
@@ -3583,12 +3586,13 @@ var SVGLoader = {
   },
   
   /**
+   * @param {String} name
    * @param {Array} fileInfoList - [ [ kind, totalFrames, actionName, filePath ], ... ]
    * @param {Function} completeFunc - callback when loading complete
    * @param {String} jsPath - file path to webworker
    * @param {Boolean} isDebug - use debug mode when true
    */
-  load: function(fileInfoList, completeFunc = null, jsPath = null, isDebug = false) {
+  load: function(name, fileInfoList, completeFunc = null, jsPath = null, isDebug = false) {
     if(!fileInfoList || !Array.isArray(fileInfoList) || !Array.isArray(fileInfoList[0])) {
       console.error("fileInfoList format is woring");
       console.log(fileInfoList);
@@ -3602,6 +3606,7 @@ var SVGLoader = {
       info[3] = new URL(info[3], window.location.href).href;
     });
     
+    this.name = name;
     this.groupNameToIDList = {};
     this.masksList = {};
     
@@ -3618,7 +3623,6 @@ var SVGLoader = {
           break;
           
         case "load-add":
-          //console.log(data.actionName + " - " + data.totalFrames);
           SVGLoader.loadFromDOM(data.kind, data.actionName, data.totalFrames);
           break;
           

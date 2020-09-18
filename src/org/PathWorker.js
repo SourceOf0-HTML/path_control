@@ -97,7 +97,7 @@ var PathWorker = {
           
         case "create-path-container":
           PathCtr.loadState("init path container");
-          PathCtr.initTarget = new PathContainer(data.width, data.height);
+          PathCtr.initTarget = new PathContainer(data.name, data.width, data.height);
           return false;
           
         case "add-action":

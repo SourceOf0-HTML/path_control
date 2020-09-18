@@ -216,7 +216,7 @@ var BinaryLoader = {
     
     // --acquisition processing--
     
-    let pathContainer = PathCtr.initTarget = new PathContainer(getUint16(), getUint16());
+    let pathContainer = PathCtr.initTarget = new PathContainer(getString(), getUint16(), getUint16());
     
     let actionListNum = getUint8();
     if(actionListNum > 0) {

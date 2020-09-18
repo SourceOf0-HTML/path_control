@@ -1,4 +1,6 @@
+console.log(PathCtr.pathContainers);
 function setup(pathContainer) {
+  if(pathContainer.name != "walk") return;
   pathContainer.setAction("walk", 100);
   
   //let hair = pathContainer.getGroup("bone11_hair");
@@ -9,6 +11,8 @@ function setup(pathContainer) {
 }
 
 function control(pathContainer) {
+  if(pathContainer.name != "walk") return;
+  
   //let hair = pathContainer.getGroup("bone11_hair");
   //hair.rotation = hair.mRotation += 0.01;
   

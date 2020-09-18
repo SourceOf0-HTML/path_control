@@ -1,5 +1,8 @@
 
 PathContainer
+ name
+   length: Uint8
+   String: Uint16Array
  originalWidth : Uint16
  originalHeight: Uint16
  actionList

@@ -1,7 +1,8 @@
 
 class PathContainer extends Sprite {
-  constructor(width, height) {
+  constructor(name, width, height) {
     super();
+    this.name = name;             // paths name
     this.visible = true;          // display when true
     this.originalWidth = width;   // original svg width
     this.originalHeight = height; // original svg height

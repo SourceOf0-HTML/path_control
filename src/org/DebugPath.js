@@ -260,6 +260,7 @@ var DebugPath = {
     
     // -- storage processing --
     
+    setString(pathContainer.name);
     setUint16(pathContainer.originalWidth);
     setUint16(pathContainer.originalHeight);
     

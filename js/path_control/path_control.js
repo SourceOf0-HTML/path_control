@@ -1461,8 +1461,9 @@ class BoneObj extends Sprite {
 
 
 class PathContainer extends Sprite {
-  constructor(width, height) {
+  constructor(name, width, height) {
     super();
+    this.name = name;             // paths name
     this.visible = true;          // display when true
     this.originalWidth = width;   // original svg width
     this.originalHeight = height; // original svg height
@@ -1882,7 +1883,7 @@ var BinaryLoader = {
     
     // --acquisition processing--
     
-    let pathContainer = PathCtr.initTarget = new PathContainer(getUint16(), getUint16());
+    let pathContainer = PathCtr.initTarget = new PathContainer(getString(), getUint16(), getUint16());
     
     let actionListNum = getUint8();
     if(actionListNum > 0) {
@@ -2046,7 +2047,7 @@ var PathWorker = {
           
         case "create-path-container":
           PathCtr.loadState("init path container");
-          PathCtr.initTarget = new PathContainer(data.width, data.height);
+          PathCtr.initTarget = new PathContainer(data.name, data.width, data.height);
           return false;
           
         case "add-action":
