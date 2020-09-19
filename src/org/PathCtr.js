@@ -64,7 +64,11 @@ var PathCtr = {
   
   loadComplete: function() {
     let pathContainer = PathCtr.initTarget;
-    PathCtr.pathContainers.push(pathContainer);
+    if(pathContainer.index != null) {
+      PathCtr.pathContainers[pathContainer.index] = pathContainer;
+    } else {
+      PathCtr.pathContainers.push(pathContainer);
+    }
     pathContainer.context = PathWorker.isWorker? PathCtr.context : PathCtr.subContext;
     PathCtr.setSize(PathCtr.viewWidth, PathCtr.viewHeight);
     PathCtr.initTarget = null;

@@ -1,6 +1,7 @@
 
 PathContainer
   name = name;                           // paths name
+  index = index;                         // layer index
   originalWidth = originalWidth;         // original svg width
   originalHeight = originalHeight;       // original svg height
   displayWidth = displayWidth;           // display width

@@ -34,7 +34,7 @@ var PathWorker = {
           return false;
           
         case "load-bin":
-          BinaryLoader.load(data.path, ()=>{
+          BinaryLoader.load(data.path, data.index, ()=>{
             PathCtr.loadComplete();
             PathWorker.postMessage({cmd: "main-init-complete"});
           });
@@ -98,6 +98,7 @@ var PathWorker = {
         case "create-path-container":
           PathCtr.loadState("init path container");
           PathCtr.initTarget = new PathContainer(data.name, data.width, data.height);
+          PathCtr.initTarget.index = data.index;
           return false;
           
         case "add-action":

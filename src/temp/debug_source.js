@@ -139,7 +139,11 @@ var PathCtr = {
   
   loadComplete: function() {
     let pathContainer = PathCtr.initTarget;
-    PathCtr.pathContainers.push(pathContainer);
+    if(pathContainer.index != null) {
+      PathCtr.pathContainers[pathContainer.index] = pathContainer;
+    } else {
+      PathCtr.pathContainers.push(pathContainer);
+    }
     pathContainer.context = PathWorker.isWorker? PathCtr.context : PathCtr.subContext;
     PathCtr.setSize(PathCtr.viewWidth, PathCtr.viewHeight);
     PathCtr.initTarget = null;
@@ -1454,6 +1458,7 @@ class PathContainer extends Sprite {
   constructor(name, width, height) {
     super();
     this.name = name;             // paths name
+    this.index = null;            // layer index
     this.visible = true;          // display when true
     this.originalWidth = width;   // original svg width
     this.originalHeight = height; // original svg height
@@ -1906,9 +1911,10 @@ var BinaryLoader = {
   
   /**
    * @param {String} filePath - binary file path
+   * @param {Integer} index - paths layer index
    * @param {Function} completeFunc - callback when loading complete
    */
-  load: function(filePath, completeFunc = null) {
+  load: function(filePath, index, completeFunc = null) {
     if(!filePath) {
       console.error("filePath not found");
       return;
@@ -1925,6 +1931,8 @@ var BinaryLoader = {
       
       let buffer = request.response;
       let pathContainer = BinaryLoader.init(buffer);
+      pathContainer.index = index;
+      
       PathCtr.loadState("loading completed");
       
       if(!!completeFunc) {
@@ -1974,7 +1982,7 @@ var PathWorker = {
           return false;
           
         case "load-bin":
-          BinaryLoader.load(data.path, ()=>{
+          BinaryLoader.load(data.path, data.index, ()=>{
             PathCtr.loadComplete();
             PathWorker.postMessage({cmd: "main-init-complete"});
           });
@@ -2038,6 +2046,7 @@ var PathWorker = {
         case "create-path-container":
           PathCtr.loadState("init path container");
           PathCtr.initTarget = new PathContainer(data.name, data.width, data.height);
+          PathCtr.initTarget.index = data.index;
           return false;
           
         case "add-action":

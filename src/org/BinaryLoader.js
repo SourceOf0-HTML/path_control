@@ -249,9 +249,10 @@ var BinaryLoader = {
   
   /**
    * @param {String} filePath - binary file path
+   * @param {Integer} index - paths layer index
    * @param {Function} completeFunc - callback when loading complete
    */
-  load: function(filePath, completeFunc = null) {
+  load: function(filePath, index, completeFunc = null) {
     if(!filePath) {
       console.error("filePath not found");
       return;
@@ -268,6 +269,8 @@ var BinaryLoader = {
       
       let buffer = request.response;
       let pathContainer = BinaryLoader.init(buffer);
+      pathContainer.index = index;
+      
       PathCtr.loadState("loading completed");
       
       if(!!completeFunc) {

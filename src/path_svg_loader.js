@@ -468,6 +468,7 @@ var SVGLoader = {
     PathMain.postMessage({
       cmd: "create-path-container",
       name: this.name,
+      index: this.index,
       width: this.width,
       height: this.height,
     });
@@ -554,12 +555,13 @@ var SVGLoader = {
   
   /**
    * @param {String} name
+   * @param {Integer} index - paths layer index
    * @param {Array} fileInfoList - [ [ kind, totalFrames, actionName, filePath ], ... ]
    * @param {Function} completeFunc - callback when loading complete
    * @param {String} jsPath - file path to webworker
    * @param {Boolean} isDebug - use debug mode when true
    */
-  load: function(name, fileInfoList, completeFunc = null, jsPath = null, isDebug = false) {
+  load: function(name, index, fileInfoList, completeFunc = null, jsPath = null, isDebug = false) {
     if(!fileInfoList || !Array.isArray(fileInfoList) || !Array.isArray(fileInfoList[0])) {
       console.error("fileInfoList format is woring");
       console.log(fileInfoList);
@@ -574,6 +576,7 @@ var SVGLoader = {
     });
     
     this.name = name;
+    this.index = index;
     this.groupNameToIDList = {};
     this.masksList = {};
     
@@ -604,7 +607,10 @@ var SVGLoader = {
       }
     });
     
-    PathMain.load(null, completeFunc, jsPath, isDebug);
-    this.loadWorker.postMessage({cmd: "load", fileInfoList: fileInfoList});
+    PathMain.completeLoadFunc = completeFunc;
+    this.loadWorker.postMessage({
+      cmd: "load",
+      fileInfoList: fileInfoList
+    });
   },
 };

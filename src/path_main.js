@@ -12,7 +12,8 @@ var PathMain = {
   
   canvas: null,
   subCanvas: null,
-  completeFunc: null,
+  completeInitFunc: null,
+  completeLoadFunc: null,
   
   /**
    * @param {Object} obj
@@ -41,7 +42,10 @@ var PathMain = {
       switch(data.cmd) {
         case "main-init-complete":
         case "main-bone-load-complete":
-          if(!!PathMain.completeFunc) PathMain.completeFunc();
+          if(!!PathMain.completeLoadFunc) {
+            PathMain.completeLoadFunc();
+            PathMain.completeLoadFunc = null;
+          }
           return false;
           
         case "main-confirm":
@@ -133,6 +137,11 @@ var PathMain = {
       subCanvas: targetSubCanvas,
       defaultBoneName: PathMain.defaultBoneName,
     }, [ targetCanvas, targetSubCanvas ]);
+    
+    if(!!PathMain.completeInitFunc) {
+      PathMain.completeInitFunc();
+      PathMain.completeInitFunc = null;
+    }
   },
   
   /**
@@ -163,15 +172,16 @@ var PathMain = {
    * @param {Function} completeFunc - callback when loading complete
    */
   loadBone: function(path, completeFunc) {
-    PathMain.completeFunc = completeFunc;
+    PathMain.completeLoadFunc = completeFunc;
     //console.log(new URL(path, window.location.href).href);
     PathMain.postMessage({cmd: "load-bone", path: new URL(path, window.location.href).href});
   },
   
   /**
    * @param {String} jsPath - file path to webworker
+   * @param {Function} completeFunc - callback when initialization is complete
    */
-  init: function(jsPath = null) {
+  init: function(jsPath = null, completeFunc = null) {
     let container = document.getElementById("path-container");
     if(!container) {
       console.error("CanvasContainer is not found.");
@@ -187,6 +197,7 @@ var PathMain = {
     subCanvas.setAttribute("style", "display:none;");
     container.appendChild(subCanvas);
     
+    PathMain.completeInitFunc = completeFunc;
     PathMain.useWorker = !!Worker && !!canvas.transferControlToOffscreen;
     
     let blob = new Blob([path_control], {type: "text/javascript"});
@@ -218,17 +229,16 @@ var PathMain = {
   
   /**
    * @param {String} path - file path info
+   * @param {Integer} index - paths layer index
    * @param {Function} completeFunc - callback when loading complete
    * @param {Boolean} isDebug - use debug mode when true
    */
-  load: function(path, completeFunc = null, isDebug = false) {
-    PathMain.completeFunc = completeFunc;
-    
-    if(!!path) {
-      PathMain.postMessage({
-        cmd: "load-bin",
-        path: new URL(path, window.location.href).href
-      });
-    }
+  load: function(path, index, completeFunc = null, isDebug = false) {
+    PathMain.completeLoadFunc = completeFunc;
+    PathMain.postMessage({
+      cmd: "load-bin",
+      index: index,
+      path: new URL(path, window.location.href).href,
+    });
   },
 };

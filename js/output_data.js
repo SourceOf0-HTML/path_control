@@ -8,7 +8,7 @@ function svgLoadComplete() {
 }
 
 function loadWalk() {
-  SVGLoader.load("walk", [
+  SVGLoader.load("walk", 0, [
     [SVGLoader.FILE_KIND_BASE,   1, "base", "./resource/base/base_"],
     [SVGLoader.FILE_KIND_BONE, 260, "walk", "./resource/walk/walk_"],
     [SVGLoader.FILE_KIND_SMRT,  50, "face", "./resource/face/face_"],
@@ -21,13 +21,7 @@ function loadWalk() {
   ], svgLoadComplete, true);
 }
 
-PathMain.init("./js/walk.js");
-loadWalk();
-/*
-SVGLoader.load("test", [
-  [SVGLoader.FILE_KIND_BASE, 1120, "base", "./resource/base_single/original_single_"],
-], loadNext, true);
-*/
+PathMain.init("./js/walk.js", loadWalk);
 
 function output_data() {
   PathMain.outputBin();
