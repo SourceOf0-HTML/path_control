@@ -112,10 +112,11 @@ Pathname.glob(source_dir.join("**/*")) do |source_path|
         clipCount -= 1
         if clipDataArr[clipCount] != line then
           # 同じではないので退避していたデータと比較済み部分を出力
-          str  = clipDataArr.reverse.join
+          str  = "<g id=\"#{clipID}\">\n"
+          str += clipDataArr.reverse.join
+          str += "</g>\n"
           str += "</mask>\n"
-          str += clipDataArr.slice(clipCount, clipDataArr.length - clipCount).reverse.join
-          line = line + str
+          line = str + line
           clipCount = 0
           
         elsif clipCount == 0 then

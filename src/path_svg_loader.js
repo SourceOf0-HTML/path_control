@@ -300,7 +300,10 @@ var SVGLoader = {
           }
           break;
         case "mask":
-          // do nothing.
+          Array.prototype.slice.call(child.children).forEach(c=>{
+            if(c.tagName != "g") return;
+            this.makeGroup(c);
+          });
           break;
         case "clipPath":
           // TODO
@@ -415,6 +418,8 @@ var SVGLoader = {
         maskChildren.forEach(child=>{
           if( child.tagName == "use" ) {
             this.masksList[maskID] = this.groupNameToIDList[child.getAttribute("xlink:href").slice(1)];
+          } else if( child.tagName == "g" ) {
+            this.masksList[maskID] = this.groupNameToIDList[child.getAttribute("id")];
           } else {
             console.error("unknown mask data");
             console.log(child);
@@ -486,6 +491,8 @@ var SVGLoader = {
       Array.prototype.slice.call(mask.children).forEach(child=>{
         if( child.tagName == "use" ) {
           this.masksList[mask.getAttribute("id")] = this.groupNameToIDList[child.getAttribute("xlink:href").slice(1)];
+        } else if( child.tagName == "g" ) {
+          this.masksList[mask.getAttribute("id")] = this.groupNameToIDList[child.getAttribute("id")];
         } else {
           console.error("unknown mask data");
           console.log(child);
