@@ -346,59 +346,65 @@
 <path class="path-16" d="M349.140,468.252C351.657,469.411,364.108,466.760,366.091,468.744C369.697,472.007,365.500,478.977,360.984,480.559C351.020,483.547,326.049,474.422,330.556,465.760C333.837,459.616,341.110,464.478,349.140,468.252Z"/>
 </g>
 <g id="bone">
-<g id="bone1_clothes">
-<path class="path-23" d="M243.544,391.682C243.545,391.676,255.270,333.864,255.271,333.858C255.271,333.864,254.614,392.849,254.614,392.855C254.613,392.855,243.545,391.682,243.544,391.682"/>
+<g id="bone_B20">
+<path class="path-23" d="M240.760,139.348C238.595,127.568,236.429,115.788,234.264,104.008"/>
 </g>
-<g id="bone2_clothes">
-<path class="path-23" d="M248.416,333.124C248.416,333.117,254.951,260.886,254.952,260.878C254.953,260.886,262.184,333.050,262.185,333.057C262.183,333.057,248.417,333.124,248.416,333.124"/>
+<g id="bone_顔">
+<path class="path-23" d="M552.381,338.786C572.477,325.699,592.574,312.612,612.670,299.526"/>
 </g>
-<g id="bone3_neck">
-<path class="path-23" d="M258.376,259.785C258.376,259.781,255.216,218.201,255.215,218.197C255.215,218.201,251.779,259.760,251.779,259.764C251.780,259.764,258.375,259.785,258.376,259.785"/>
+<g id="bone_瞼">
+<path class="path-23" d="M496.479,337.308C494.427,313.785,492.375,290.263,490.323,266.740"/>
 </g>
-<g id="bone4_head">
-<path class="path-23" d="M249.332,219.262C249.331,219.254,241.157,141.619,241.156,141.611C241.158,141.619,261.583,216.963,261.585,216.971C261.583,216.971,249.333,219.262,249.332,219.262"/>
+<g id="bone_目">
+<path class="path-23" d="M436.410,337.308C450.560,318.405,464.710,299.503,478.860,280.600"/>
 </g>
-<g id="bone5_left_arm">
-<path class="path-23" d="M318.461,265.128C318.463,265.137,339.735,355.124,339.737,355.133C339.734,355.125,303.478,270.062,303.474,270.054C303.476,270.053,318.459,265.129,318.461,265.128"/>
+<g id="bone_服">
+<path class="path-23" d="M604.616,215.385C626.277,224.783,647.938,234.182,669.599,243.580"/>
 </g>
-<g id="bone6_left_arm">
-<path class="path-23" d="M334.545,356.188C334.547,356.195,349.880,418.059,349.882,418.065C349.881,418.059,344.852,354.521,344.852,354.515C344.851,354.515,334.546,356.188,334.545,356.188"/>
+<g id="bone_左足">
+<path class="path-23" d="M436.410,216.411C456.232,229.242,476.053,242.074,495.874,254.906"/>
 </g>
-<g id="bone7_right_arm">
-<path class="path-23" d="M188.957,270.917C188.954,270.928,158.037,382.212,158.034,382.223C158.039,382.213,206.127,277.201,206.131,277.190C206.130,277.190,188.959,270.917,188.957,270.917"/>
+<g id="bone_左腕">
+<path class="path-23" d="M551.282,215.385C528.927,207.785,506.572,200.184,484.216,192.584"/>
 </g>
-<g id="bone8_right_arm">
-<path class="path-23" d="M162.969,378.080C162.971,378.085,183.249,434.048,183.251,434.053C183.248,434.048,152.142,383.300,152.139,383.295C152.140,383.295,162.968,378.080,162.969,378.080"/>
+<g id="bone_右足">
+<path class="path-23" d="M495.897,216.411C476.395,229.722,456.893,243.033,437.391,256.344"/>
 </g>
-<g id="bone9_left_leg">
-<path class="path-23" d="M281.619,391.521C281.620,391.531,285.914,493.106,285.914,493.116C285.912,493.106,263.427,393.959,263.425,393.949C263.427,393.948,281.617,391.521,281.619,391.521"/>
+<g id="bone_B18">
+<path class="path-23" d="M226.453,392.385C218.276,423.734,210.099,455.083,201.922,486.432"/>
 </g>
-<g id="bone10_right_leg">
-<path class="path-23" d="M219.279,389.836C219.277,389.846,200.693,491.924,200.691,491.934C200.695,491.924,234.282,393.755,234.285,393.746C234.284,393.745,219.280,389.837,219.279,389.836"/>
+<g id="bone_B17">
+<path class="path-23" d="M272.608,392.385C276.856,425.489,281.104,458.592,285.353,491.696"/>
 </g>
-<g id="bone11_hair">
-<path class="path-23" d="M252.476,162.423C252.478,162.431,266.431,241.392,266.433,241.400C266.430,241.392,238.261,166.318,238.259,166.311C238.260,166.311,252.475,162.423,252.476,162.423"/>
+<g id="bone_B16">
+<path class="path-23" d="M245.393,164.547C252.216,188.556,259.039,212.565,265.862,236.574"/>
 </g>
-<g id="bone12_left_leg_S">
-<path class="path-23" d="M432.919,221.232C432.925,221.236,496.689,255.411,496.695,255.414C496.689,255.410,439.408,211.223,439.402,211.219C439.401,211.220,432.920,221.231,432.919,221.232"/>
+<g id="bone_B14">
+<path class="path-23" d="M157.950,380.513C166.116,397.819,174.282,415.126,182.448,432.432"/>
 </g>
-<g id="bone13_right_leg_S">
-<path class="path-23" d="M492.958,211.580C492.952,211.585,436.765,257.155,436.759,257.160C436.766,257.156,499.677,221.436,499.683,221.433C499.682,221.432,492.959,211.581,492.958,211.580"/>
+<g id="bone_B13">
+<path class="path-23" d="M197.521,273.923C184.331,309.453,171.141,344.983,157.950,380.513"/>
 </g>
-<g id="bone14_left_arm_S">
-<path class="path-23" d="M553.842,209.732C553.835,209.730,483.655,192.169,483.648,192.167C483.654,192.170,549.996,221.023,550.002,221.026C550.003,221.025,553.842,209.733,553.842,209.732"/>
+<g id="bone_B11">
+<path class="path-23" d="M339.704,355.025C343.123,376.769,346.542,398.513,349.961,420.257"/>
 </g>
-<g id="bone15_jacket_S">
-<path class="path-23" d="M601.676,220.645C601.682,220.647,670.197,243.874,670.203,243.876C670.197,243.873,606.430,209.705,606.424,209.701C606.423,209.703,601.676,220.644,601.676,220.645"/>
+<g id="bone_B9">
+<path class="path-23" d="M311.041,267.005C320.596,296.345,330.150,325.685,339.704,355.025"/>
 </g>
-<g id="bone16_pupils_S">
-<path class="path-23" d="M441.041,340.837C441.045,340.831,479.476,279.539,479.480,279.533C479.475,279.538,431.496,333.683,431.491,333.688C431.492,333.689,441.040,340.836,441.041,340.837"/>
+<g id="bone_B5">
+<path class="path-23" d="M255.242,218.120C250.414,191.863,245.587,165.605,240.760,139.348"/>
 </g>
-<g id="bone17_eyelids_S">
-<path class="path-23" d="M502.291,336.852C502.290,336.844,490.084,265.537,490.082,265.530C490.083,265.538,490.407,337.881,490.407,337.888C490.408,337.888,502.290,336.852,502.291,336.852"/>
+<g id="bone_B4">
+<path class="path-23" d="M254.956,260.220C255.051,246.187,255.146,232.154,255.242,218.120"/>
 </g>
-<g id="bone18_face_S">
-<path class="path-23" d="M555.103,343.705C555.109,343.701,612.271,299.360,612.277,299.356C612.271,299.359,548.600,333.706,548.593,333.709C548.594,333.710,555.102,343.704,555.103,343.705"/>
+<g id="bone_B3">
+<path class="path-23" d="M255.290,333.221C255.178,308.887,255.067,284.554,254.956,260.220"/>
+</g>
+<g id="bone_B2">
+<path class="path-23" d="M249.017,392.385C251.108,372.664,253.199,352.942,255.290,333.221"/>
+</g>
+<g id="bone_B1">
+<path class="path-23" d="M249.017,392.385C260.994,392.385,272.971,392.385,284.948,392.385"/>
 </g>
 </g>
 <g id="jacket">
@@ -468,9 +474,29 @@
 .path-20{fill:#d89f4a;fill-rule:evenodd;stroke:none;}
 .path-21{fill:none;stroke:#fafd5b;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
 .path-22{fill:#fafd5b;fill-rule:evenodd;stroke:none;}
-.path-23{fill:none;stroke:#00ff42;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;}
-.path-24{fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
-.path-25{fill:none;stroke:#ececec;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
-.path-26{fill:#ececec;fill-rule:evenodd;stroke:none;}
+.path-23{fill:none;stroke:#00ff00;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;}
+.path-24{fill:none;stroke:#fafafa;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
+.path-25{fill:#fafafa;fill-rule:evenodd;stroke:none;}
+.path-26{fill:none;stroke:#ececec;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
+.path-27{fill:#ececec;fill-rule:evenodd;stroke:none;}
+.path-28{fill:none;stroke:#d7d7d7;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
+.path-29{fill:#d7d7d7;fill-rule:evenodd;stroke:none;}
+.path-30{fill:none;stroke:#bdbdbd;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
+.path-31{fill:#bdbdbd;fill-rule:evenodd;stroke:none;}
+.path-32{fill:none;stroke:#9f9f9f;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
+.path-33{fill:#9f9f9f;fill-rule:evenodd;stroke:none;}
+.path-34{fill:none;stroke:#808080;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
+.path-35{fill:#808080;fill-rule:evenodd;stroke:none;}
+.path-36{fill:none;stroke:#606060;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
+.path-37{fill:#606060;fill-rule:evenodd;stroke:none;}
+.path-38{fill:none;stroke:#424242;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
+.path-39{fill:#424242;fill-rule:evenodd;stroke:none;}
+.path-40{fill:none;stroke:#282828;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
+.path-41{fill:#282828;fill-rule:evenodd;stroke:none;}
+.path-42{fill:none;stroke:#131313;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
+.path-43{fill:#131313;fill-rule:evenodd;stroke:none;}
+.path-44{fill:none;stroke:#050505;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
+.path-45{fill:#050505;fill-rule:evenodd;stroke:none;}
+.path-46{fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
 </style>
 </svg>

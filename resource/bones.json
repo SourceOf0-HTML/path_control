@@ -1,145 +1,115 @@
 {
-  "bones": {
-    "bone1_clothes": {
-      "strength": 0.05,
-      "maxAngle": -80,
-      "minAngle": -100
+  "bones" : {
+    "bone_B9" : {
+      "parent" : "bone_B3",
+      "strength" : 0.022718200087547
     },
-    
-    "bone2_clothes": {
-      "parent": "bone1_clothes",
-      "feedback": true,
-      "strength": 0.05,
-      "maxAngle": 60,
-      "minAngle": -60
+    "bone_B1" : {
+      "strength" : 0.020719499886036,
+      "isPin" : "true"
     },
-    
-    "bone3_neck": {
-      "parent": "bone2_clothes",
-      "feedback": true,
-      "strength": 0.05,
-      "maxAngle": 20,
-      "minAngle": -20
+    "bone_B13" : {
+      "parent" : "bone_B3",
+      "strength" : 0.027381700277328
     },
-    
-    "bone4_head": {
-      "parent": "bone3_neck",
-      "feedback": true,
-      "strength": 0.1,
-      "maxAngle": 20,
-      "minAngle": -20
+    "bone_左足" : {
+      "strength" : 0.0027155000716448,
+      "smartAction" : "左足",
+      "smartMax" : 360,
+      "smartBase" : 90
     },
-    
-    "bone5_left_arm": {
-      "parent": "bone2_clothes",
-      "strength": 0.05,
-      "feedback": true,
-      "flexiPoint": {
-        "dataIndex": 0,
-        "bones": ["bone1_clothes", "bone2_clothes"]
-      }
+    "bone_B3" : {
+      "parent" : "bone_B2",
+      "strength" : 0.072684800624847
     },
-    
-    "bone6_left_arm": {
-      "parent": "bone5_left_arm",
-      "feedback": true,
-      "strength": 0.05
+    "bone_B2" : {
+      "parent" : "bone_B1",
+      "strength" : 0.04736829996109
     },
-    
-    "bone7_right_arm": {
-      "parent": "bone2_clothes",
-      "strength": 0.05
+    "bone_B5" : {
+      "strength" : 0.083344399929047,
+      "minAngle" : 45,
+      "parent" : "bone_B4",
+      "maxAngle" : 5
     },
-    
-    "bone8_right_arm": {
-      "parent": "bone7_right_arm",
-      "feedback": true,
-      "strength": 0.05,
-      "flexiPoint": {
-        "dataIndex": 1,
-        "bones": ["bone10_right_leg"]
-      }
+    "bone_左腕" : {
+      "strength" : 0.0027155000716448,
+      "smartAction" : "左腕",
+      "smartMax" : 90,
+      "smartBase" : 90
     },
-    
-    "bone9_left_leg": {
-      "parent": "bone1_clothes",
-      "isParentPin": true,
-      "strength": 0.05,
-      "flexiPoint": {
-        "dataIndex": 0,
-        "bones": ["bone1_clothes", "bone2_clothes"]
-      }
+    "bone_瞼" : {
+      "strength" : 0.0027155000716448,
+      "smartAction" : "瞼",
+      "smartMax" : 90,
+      "smartBase" : 90
     },
-    
-    "bone10_right_leg": {
-      "parent": "bone1_clothes",
-      "isParentPin": true,
-      "strength": 0.05,
-      "flexiPoint": {
-        "dataIndex": 0,
-        "bones": ["bone1_clothes", "bone2_clothes"]
-      }
+    "bone_服" : {
+      "strength" : 0.0027155000716448,
+      "smartAction" : "服",
+      "smartMax" : 90,
+      "smartBase" : 90
     },
-    
-    "bone11_hair": {
-      "parent": "bone4_head",
-      "strength": 0.05
+    "bone_右足" : {
+      "strength" : 0.0027155000716448,
+      "smartAction" : "右足",
+      "smartMax" : 360,
+      "smartBase" : 90
     },
-    
-    "bone12_left_leg_S": {
-      "smartAction": "left_leg",
-      "smartBase": 90,
-      "smartMax": 360
+    "bone_B18" : {
+      "parent" : "bone_B1",
+      "strength" : 0.00065449997782707
     },
-    
-    "bone13_right_leg_S": {
-      "smartAction": "right_leg",
-      "smartBase": 90,
-      "smartMax": 360
+    "bone_顔" : {
+      "strength" : 0.0027155000716448,
+      "smartAction" : "顔",
+      "smartMax" : 180,
+      "smartBase" : 0
     },
-    
-    "bone14_left_arm_S": {
-      "smartAction": "left_arm",
-      "smartBase": 90,
-      "smartMax": 90
+    "bone_B17" : {
+      "parent" : "bone_B1",
+      "strength" : 0.00065449997782707
     },
-    
-    "bone15_jacket_S": {
-      "smartAction": "jacket",
-      "smartBase": 90,
-      "smartMax": 360
+    "bone_B20" : {
+      "strength" : 0.1,
+      "parent" : "bone_B5",
+      "isPin" : "true"
     },
-    
-    "bone16_pupils_S": {
-      "smartAction": "pupils",
-      "smartBase": 0,
-      "smartMax": 180
+    "bone_B11" : {
+      "parent" : "bone_B9",
+      "strength" : 0.032711398601532
     },
-    
-    "bone17_eyelids_S": {
-      "smartAction": "eyelids",
-      "smartBase": 90,
-      "smartMax": 90
+    "bone_B16" : {
+      "parent" : "bone_B20",
+      "strength" : 0.014656899869442
     },
-    
-    "bone18_face_S": {
-      "smartAction": "face",
-      "smartBase": 0,
-      "smartMax": 90
+    "bone_B14" : {
+      "parent" : "bone_B13",
+      "strength" : 0.036042600870132
+    },
+    "bone_目" : {
+      "strength" : 0.0027155000716448,
+      "smartAction" : "目",
+      "smartMax" : 180,
+      "smartBase" : 0
+    },
+    "bone_B4" : {
+      "strength" : 0.022051900625229,
+      "minAngle" : 25,
+      "parent" : "bone_B3",
+      "maxAngle" : 0
     }
   },
-  
-  "flexi": {
-    "bone7_right_arm": ["bone1_clothes", "bone2_clothes"],
-    "clothes": ["bone1_clothes", "bone2_clothes"],
-    "jacket": ["bone1_clothes", "bone2_clothes"],
-    "neck": ["bone3_neck"],
-    "layer_head": ["bone4_head"],
-    "hat_brim": ["bone4_head"],
-    "left_arm": ["bone5_left_arm", "bone6_left_arm"],
-    "right_arm": ["bone7_right_arm", "bone8_right_arm"],
-    "layer_left_leg": ["bone9_left_leg"],
-    "layer_right_leg": ["bone10_right_leg"],
-    "hair": ["bone11_hair"]
+  "flexi" : {
+    "right_arm" : ["bone_B13", "bone_B14"],
+    "left_arm" : ["bone_B9", "bone_B11"],
+    "layer_left_leg" : ["bone_B17"],
+    "jacket" : ["bone_B2", "bone_B3"],
+    "hat_brim" : ["bone_B5"],
+    "layer_head" : ["bone_B5"],
+    "neck" : ["bone_B4"],
+    "hair" : ["bone_B16"],
+    "layer_right_leg" : ["bone_B18"],
+    "clothes" : ["bone_B2", "bone_B3"]
   }
 }
