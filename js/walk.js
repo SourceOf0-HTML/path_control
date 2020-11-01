@@ -5,8 +5,8 @@ function setup(pathContainer) {
   //let hair = pathContainer.getGroup("bone11_hair");
   //hair.mRotation = 0;
   
-  let leftArm = pathContainer.getGroup("bone6_left_arm");
-  leftArm.initIK();
+  //let leftArm = pathContainer.getGroup("bone_B11");
+  //leftArm.initIK();
 }
 
 function control(pathContainer) {
@@ -14,8 +14,8 @@ function control(pathContainer) {
   
   //let hair = pathContainer.getGroup("bone11_hair");
   //hair.rotation = hair.mRotation += 0.01;
-  
-  let leftArm = pathContainer.getGroup("bone6_left_arm");
+  /*
+  let leftArm = pathContainer.getGroup("bone_B11");
   if(InputInfo.isValidPointer) {
     leftArm.posIK.enable = true;
     leftArm.posIK.x = InputInfo.pointerX / pathContainer.pathRatio;
@@ -31,4 +31,5 @@ function control(pathContainer) {
     childGroups.splice(armIndex, 1);
     childGroups.push(armUID);
   }
+  */
 }

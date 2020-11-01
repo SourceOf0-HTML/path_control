@@ -45,7 +45,7 @@ GroupObj
  kind: 
   0: none
   1: parentID: getUint16
-  2: isParentPin: true
+  2: isPin: true
   3: feedback: true
   4: strength: Float32
   5: maxAngle: Float32(Degree measure)

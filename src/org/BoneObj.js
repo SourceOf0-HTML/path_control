@@ -16,29 +16,40 @@ class BoneObj extends Sprite {
   };
   
   /**
+   * @param {Number} x0
+   * @param {Number} y0
+   * @param {Number} x1
+   * @param {Number} y1
+   */
+  static getDistAndAngle(name, x0, y0, x1, y1) {
+    let distX = x1 - x0;
+    let distY = y1 - y0;
+    if(distX == 0 && distY == 0) {
+      return {
+        x0, y0, x1, y1,
+        distance: 0,
+        angle: 0,
+      };
+    }
+    return {
+      x0, y0, x1, y1,
+      distance: Math.sqrt(distX*distX + distY*distY),
+      angle: Math.atan2(distY, distX),
+    };
+  };
+  
+  /**
    * @param {BoneObj} bone - target bone
    * @param {Array} paths - path data array
    */
   static setPath(bone, path) {
     let pathDataList = path.getPathDataList();
-    let x0 = pathDataList[0].pos[0];
-    let y0 = pathDataList[0].pos[1];
-    let x1 = pathDataList[1].pos[0];
-    let y1 = pathDataList[1].pos[1];
-    let distX = x1 - x0;
-    let distY = y1 - y0;
-    let distance = Math.sqrt(distX*distX + distY*distY);
-    let angle = Math.atan2(distY, distX);
-    bone.defState = {  // default bone state
-      x0, y0,
-      x1, y1,
-      distance,
-      angle,
-    };
+    let state = BoneObj.getDistAndAngle(bone.id + ":setPath", pathDataList[0].pos[0], pathDataList[0].pos[1], pathDataList[1].pos[0], pathDataList[1].pos[1]);
+    bone.defState = state;  // default bone state
     bone.currentState = {  // current bone state
-      pos: [x0, y0, x1, y1],
-      distance,
-      angle,
+      pos: [state.x0, state.y0, state.x1, state.y1],
+      distance: state.distance,
+      angle: state.angle,
     };
   };
   
@@ -96,19 +107,23 @@ class BoneObj extends Sprite {
       currentPos[2] += tx;
       currentPos[3] += ty;
     }
-    let distX = currentPos[2] - currentPos[0];
-    let distY = currentPos[3] - currentPos[1];
-    let angle = this.currentState.angle = Math.atan2(distY, distX);
-    let dist = this.currentState.distance = Math.sqrt(distX*distX + distY*distY);
+    let state = BoneObj.getDistAndAngle(this.id + ":calcCurrentState", currentPos[0], currentPos[1], currentPos[2], currentPos[3]);
+    this.currentState.distance = state.distance;
+    this.currentState.angle = state.angle;
     
     let sprite = this.effectSprite;
     sprite.x = currentPos[0];
     sprite.y = currentPos[1];
     sprite.anchorX = this.defState.x0;
     sprite.anchorY = this.defState.y0;
-    sprite.scaleY = dist / this.defState.distance;
-    sprite.rotation = angle - this.defState.angle;
-  };
+    if(this.isPin) {
+      sprite.scaleY = 1;
+    } else {
+      sprite.scaleY = state.distance / this.defState.distance;
+      if(isNaN(sprite.scaleY)) sprite.scaleY = 1;
+    }
+    sprite.rotation = state.angle - this.defState.angle;
+ };
   
   /**
    * @param {PathContainer} pathContainer
@@ -131,6 +146,7 @@ class BoneObj extends Sprite {
     if(typeof angle === "undefined") {
       let currentPos = this.currentState.pos;
       angle = Math.atan2(currentPos[3] - currentPos[1], currentPos[2] - currentPos[0]);
+      if(isNaN(angle)) angle = 0;
     }
     if(!("maxAngle" in this || "minAngle" in this)) return angle;
     let parentAngle = ("parentID" in this) ? pathContainer.groups[this.parentID].currentState.angle : 0;
@@ -186,19 +202,18 @@ class BoneObj extends Sprite {
   calcInverseKinematics(pathContainer) {
     let reach =(tempState, x, y, targetBone)=> {
       let tempPos = tempState.pos;
-      let distX = tempPos[2] - tempPos[0];
-      let distY = tempPos[3] - tempPos[1];
-      let angle = Math.atan2(distY, distX);
-      let dist = Math.sqrt(distX*distX + distY*distY);
+      let state = BoneObj.getDistAndAngle(this.id + ":calcInverseKinematics", tempPos[0], tempPos[1], tempPos[2], tempPos[3]);
       let orgAngle = Math.atan2(y - tempPos[1], x - tempPos[0]);
-      let distAngle = angle - targetBone.currentState.angle;
+      if(isNaN(orgAngle)) orgAngle = 0;
+      
+      let distAngle = state.angle - targetBone.currentState.angle;
       let amdAngle = targetBone.limitAngle(pathContainer, orgAngle - distAngle);
       
       targetBone.rotateCurrentState(pathContainer, amdAngle);
       
       let resultAngle = amdAngle + distAngle;
-      let amdX = tempPos[2] = tempPos[0] + Math.cos(resultAngle) * dist;
-      let amdY = tempPos[3] = tempPos[1] + Math.sin(resultAngle) * dist;
+      let amdX = tempPos[2] = tempPos[0] + Math.cos(resultAngle) * state.distance;
+      let amdY = tempPos[3] = tempPos[1] + Math.sin(resultAngle) * state.distance;
       tempState.resultAngle = resultAngle - distAngle;
       
       return {
@@ -281,7 +296,7 @@ class BoneObj extends Sprite {
     }
   };
   
-  /**
+  /** 
    * @param {PathContainer} pathContainer
    */
   calcForwardKinematics(pathContainer) {
@@ -289,7 +304,7 @@ class BoneObj extends Sprite {
     
     let currentPos = this.currentState.pos;
     let target = pathContainer.groups[this.parentID];
-    if(this.isParentPin) {
+    if(target.isPin) {
       let x = target.effectSprite.x - target.effectSprite.anchorX;
       let y = target.effectSprite.y - target.effectSprite.anchorY;
       currentPos[0] += x;
@@ -357,9 +372,9 @@ class BoneObj extends Sprite {
     if(!this.visible || !DebugPath.isShowBones) {
       return;
     }
+    
     let ratio = pathContainer.pathRatio;
     let tau = Math.PI*2;
-    
     this.paths.forEach(path=>{
       let currentPos = this.currentState.pos;
       let x0 = currentPos[0] * ratio;

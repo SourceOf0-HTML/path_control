@@ -176,7 +176,7 @@ var SVGLoader = {
     let getY=()=>parseFloat(data.shift())/base;
     
     let posData = [];
-    while(data.length > 0 && posData.length < 3) {
+    while(data.length > 0 && posData.length < 2) {
       let type = data.shift();
       switch(type) {
         case "M":
@@ -199,21 +199,8 @@ var SVGLoader = {
       }
     }
     
-    let dist1X = posData[1][0] - posData[0][0];
-    let dist1Y = posData[1][1] - posData[0][1];
-    let dist1 = dist1X * dist1X + dist1Y * dist1Y;
-    
-    let dist2X = posData[2][0] - posData[0][0];
-    let dist2Y = posData[2][1] - posData[0][1];
-    let dist2 = dist2X * dist2X + dist2Y * dist2Y;
-    
-    if(dist1 > dist2) {
-      ret.push({type:"M", pos:[posData[0][0] + dist2X/2, posData[0][1] + dist2Y/2]});
-      ret.push({type:"L", pos:[posData[1][0], posData[1][1]]});
-    } else {
-      ret.push({type:"M", pos:[posData[0][0] + dist1X/2, posData[0][1] + dist1Y/2]});
-      ret.push({type:"L", pos:[posData[2][0], posData[2][1]]});
-    }
+    ret.push({type:"M", pos:[posData[0][0], posData[0][1]]});
+    ret.push({type:"L", pos:[posData[1][0], posData[1][1]]});
     
     return ret;
   },

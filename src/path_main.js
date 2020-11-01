@@ -41,10 +41,16 @@ var PathMain = {
       let data = !e.data? e.detail : e.data;
       switch(data.cmd) {
         case "main-init-complete":
-        case "main-bone-load-complete":
           if(!!PathMain.completeLoadFunc) {
             PathMain.completeLoadFunc();
             PathMain.completeLoadFunc = null;
+          }
+          return false;
+          
+        case "main-bone-load-complete":
+          if(!!PathMain.completeBoneLoadFunc) {
+            PathMain.completeBoneLoadFunc();
+            PathMain.completeBoneLoadFunc = null;
           }
           return false;
           
@@ -172,7 +178,7 @@ var PathMain = {
    * @param {Function} completeFunc - callback when loading complete
    */
   loadBone: function(path, completeFunc) {
-    PathMain.completeLoadFunc = completeFunc;
+    PathMain.completeBoneLoadFunc = completeFunc;
     //console.log(new URL(path, window.location.href).href);
     PathMain.postMessage({cmd: "load-bone", path: new URL(path, window.location.href).href});
   },

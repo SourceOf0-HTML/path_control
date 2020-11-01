@@ -124,7 +124,7 @@ class PathContainer extends Sprite {
       let ret = { id: id, priority: -1, name: bone.id };
       if(!bone.defState) return ret;
       
-      let priority = id + offset * 2;
+      let priority = offset - id + offset * 2;
       let childNum = 0;
       this.bones.forEach(targetID=> {
         if(this.groups[targetID].parentID == bone.uid) {

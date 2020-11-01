@@ -1055,29 +1055,40 @@ class BoneObj extends Sprite {
   };
   
   /**
+   * @param {Number} x0
+   * @param {Number} y0
+   * @param {Number} x1
+   * @param {Number} y1
+   */
+  static getDistAndAngle(name, x0, y0, x1, y1) {
+    let distX = x1 - x0;
+    let distY = y1 - y0;
+    if(distX == 0 && distY == 0) {
+      return {
+        x0, y0, x1, y1,
+        distance: 0,
+        angle: 0,
+      };
+    }
+    return {
+      x0, y0, x1, y1,
+      distance: Math.sqrt(distX*distX + distY*distY),
+      angle: Math.atan2(distY, distX),
+    };
+  };
+  
+  /**
    * @param {BoneObj} bone - target bone
    * @param {Array} paths - path data array
    */
   static setPath(bone, path) {
     let pathDataList = path.getPathDataList();
-    let x0 = pathDataList[0].pos[0];
-    let y0 = pathDataList[0].pos[1];
-    let x1 = pathDataList[1].pos[0];
-    let y1 = pathDataList[1].pos[1];
-    let distX = x1 - x0;
-    let distY = y1 - y0;
-    let distance = Math.sqrt(distX*distX + distY*distY);
-    let angle = Math.atan2(distY, distX);
-    bone.defState = {  // default bone state
-      x0, y0,
-      x1, y1,
-      distance,
-      angle,
-    };
+    let state = BoneObj.getDistAndAngle(bone.id + ":setPath", pathDataList[0].pos[0], pathDataList[0].pos[1], pathDataList[1].pos[0], pathDataList[1].pos[1]);
+    bone.defState = state;  // default bone state
     bone.currentState = {  // current bone state
-      pos: [x0, y0, x1, y1],
-      distance,
-      angle,
+      pos: [state.x0, state.y0, state.x1, state.y1],
+      distance: state.distance,
+      angle: state.angle,
     };
   };
   
@@ -1135,19 +1146,23 @@ class BoneObj extends Sprite {
       currentPos[2] += tx;
       currentPos[3] += ty;
     }
-    let distX = currentPos[2] - currentPos[0];
-    let distY = currentPos[3] - currentPos[1];
-    let angle = this.currentState.angle = Math.atan2(distY, distX);
-    let dist = this.currentState.distance = Math.sqrt(distX*distX + distY*distY);
+    let state = BoneObj.getDistAndAngle(this.id + ":calcCurrentState", currentPos[0], currentPos[1], currentPos[2], currentPos[3]);
+    this.currentState.distance = state.distance;
+    this.currentState.angle = state.angle;
     
     let sprite = this.effectSprite;
     sprite.x = currentPos[0];
     sprite.y = currentPos[1];
     sprite.anchorX = this.defState.x0;
     sprite.anchorY = this.defState.y0;
-    sprite.scaleY = dist / this.defState.distance;
-    sprite.rotation = angle - this.defState.angle;
-  };
+    if(this.isPin) {
+      sprite.scaleY = 1;
+    } else {
+      sprite.scaleY = state.distance / this.defState.distance;
+      if(isNaN(sprite.scaleY)) sprite.scaleY = 1;
+    }
+    sprite.rotation = state.angle - this.defState.angle;
+ };
   
   /**
    * @param {PathContainer} pathContainer
@@ -1170,6 +1185,7 @@ class BoneObj extends Sprite {
     if(typeof angle === "undefined") {
       let currentPos = this.currentState.pos;
       angle = Math.atan2(currentPos[3] - currentPos[1], currentPos[2] - currentPos[0]);
+      if(isNaN(angle)) angle = 0;
     }
     if(!("maxAngle" in this || "minAngle" in this)) return angle;
     let parentAngle = ("parentID" in this) ? pathContainer.groups[this.parentID].currentState.angle : 0;
@@ -1225,19 +1241,18 @@ class BoneObj extends Sprite {
   calcInverseKinematics(pathContainer) {
     let reach =(tempState, x, y, targetBone)=> {
       let tempPos = tempState.pos;
-      let distX = tempPos[2] - tempPos[0];
-      let distY = tempPos[3] - tempPos[1];
-      let angle = Math.atan2(distY, distX);
-      let dist = Math.sqrt(distX*distX + distY*distY);
+      let state = BoneObj.getDistAndAngle(this.id + ":calcInverseKinematics", tempPos[0], tempPos[1], tempPos[2], tempPos[3]);
       let orgAngle = Math.atan2(y - tempPos[1], x - tempPos[0]);
-      let distAngle = angle - targetBone.currentState.angle;
+      if(isNaN(orgAngle)) orgAngle = 0;
+      
+      let distAngle = state.angle - targetBone.currentState.angle;
       let amdAngle = targetBone.limitAngle(pathContainer, orgAngle - distAngle);
       
       targetBone.rotateCurrentState(pathContainer, amdAngle);
       
       let resultAngle = amdAngle + distAngle;
-      let amdX = tempPos[2] = tempPos[0] + Math.cos(resultAngle) * dist;
-      let amdY = tempPos[3] = tempPos[1] + Math.sin(resultAngle) * dist;
+      let amdX = tempPos[2] = tempPos[0] + Math.cos(resultAngle) * state.distance;
+      let amdY = tempPos[3] = tempPos[1] + Math.sin(resultAngle) * state.distance;
       tempState.resultAngle = resultAngle - distAngle;
       
       return {
@@ -1320,7 +1335,7 @@ class BoneObj extends Sprite {
     }
   };
   
-  /**
+  /** 
    * @param {PathContainer} pathContainer
    */
   calcForwardKinematics(pathContainer) {
@@ -1328,7 +1343,7 @@ class BoneObj extends Sprite {
     
     let currentPos = this.currentState.pos;
     let target = pathContainer.groups[this.parentID];
-    if(this.isParentPin) {
+    if(target.isPin) {
       let x = target.effectSprite.x - target.effectSprite.anchorX;
       let y = target.effectSprite.y - target.effectSprite.anchorY;
       currentPos[0] += x;
@@ -1396,9 +1411,9 @@ class BoneObj extends Sprite {
     if(!this.visible || !DebugPath.isShowBones) {
       return;
     }
+    
     let ratio = pathContainer.pathRatio;
     let tau = Math.PI*2;
-    
     this.paths.forEach(path=>{
       let currentPos = this.currentState.pos;
       let x0 = currentPos[0] * ratio;
@@ -1589,7 +1604,7 @@ class PathContainer extends Sprite {
       let ret = { id: id, priority: -1, name: bone.id };
       if(!bone.defState) return ret;
       
-      let priority = id + offset * 2;
+      let priority = offset - id + offset * 2;
       let childNum = 0;
       this.bones.forEach(targetID=> {
         if(this.groups[targetID].parentID == bone.uid) {
@@ -1678,7 +1693,7 @@ class PathContainer extends Sprite {
 var BinaryLoader = {
   bonePropList: {
     parentID: 1,
-    isParentPin: 2,
+    isPin: 2,
     feedback: 3,
     strength: 4,
     maxAngle: 5,
@@ -1834,8 +1849,8 @@ var BinaryLoader = {
             case BinaryLoader.bonePropList["parentID"]:
               ret.parentID = getUint16();
               break;
-            case BinaryLoader.bonePropList["isParentPin"]:
-              ret.isParentPin = true;
+            case BinaryLoader.bonePropList["isPin"]:
+              ret.isPin = true;
               break;
             case BinaryLoader.bonePropList["feedback"]:
               ret.feedback = true;
@@ -2210,9 +2225,9 @@ var BoneLoader = {
         PathCtr.loadState("  parentID: " + bone.parentID + "(" + data.parent + ")");
       }
       
-      if("isParentPin" in data && (typeof data.isParentPin === "boolean")) {
-        bone.isParentPin = data.isParentPin;
-        PathCtr.loadState("  isParentPin: " + bone.isParentPin);
+      if("isPin" in data && (typeof data.isPin === "boolean")) {
+        bone.isPin = data.isPin;
+        PathCtr.loadState("  isPin: " + bone.isPin);
       }
       
       if("feedback" in data && (typeof data.feedback === "boolean")) {
@@ -2341,7 +2356,7 @@ var BoneLoader = {
         if(typeof parentID !== "undefined") {
           let target = pathContainer.groups[parentID];
           amendBonePos(parentID, actionID, frame, boneIDs);
-          if(bone.isParentPin) {
+          if(target.isPin) {
             let diffX = target.anchorX - target.defState.x0;
             let diffY = target.anchorY - target.defState.y0;
             pathDiffListData[0][0] -= diffX;
@@ -2384,7 +2399,9 @@ var BoneLoader = {
             let y0 = bone.anchorY = pathDataList[0].pos[1];
             let x1 = bone.x = pathDataList[1].pos[0];
             let y1 = bone.y = pathDataList[1].pos[1];
-            bone.effectSprite.rotation = bone.defState.angle - Math.atan2(y1 - y0, x1 - x0);
+            let angle = Math.atan2(y1 - y0, x1 - x0);
+            if(isNaN(angle)) angle = bone.defState.angle;
+            bone.effectSprite.rotation = bone.defState.angle - angle;
           });
           let boneIDs = [];
           pathContainer.bones.forEach(id=>amendBonePos(id, actionID, frame, boneIDs));
@@ -2396,19 +2413,8 @@ var BoneLoader = {
         bone.reset();
         if(!bone.defState) return;
         let pathDataList = bone.paths[0].getPathDataList(0, 0);
-        let x0 = pathDataList[0].pos[0];
-        let y0 = pathDataList[0].pos[1];
-        let x1 = pathDataList[1].pos[0];
-        let y1 = pathDataList[1].pos[1];
-        let distX = x1 - x0;
-        let distY = y1 - y0;
         bone.effectSprite.reset();
-        bone.defState.x0 = x0;
-        bone.defState.y0 = y0;
-        bone.defState.x1 = x1;
-        bone.defState.y1 = y1;
-        bone.defState.distance = Math.sqrt(distX*distX + distY*distY);
-        bone.defState.angle = Math.atan2(distY, distX);
+        bone.defState = BoneObj.getDistAndAngle(bone.id + ":load", pathDataList[0].pos[0], pathDataList[0].pos[1], pathDataList[1].pos[0], pathDataList[1].pos[1]);
       });
       
       PathCtr.loadState("bones JSON load complete.");
@@ -2652,7 +2658,7 @@ var DebugPath = {
           setUint8(BinaryLoader.bonePropList[propName]);
           switch(propName) {
             case "parentID": setUint16(group.parentID); break;
-            case "isParentPin": break;
+            case "isPin": break;
             case "feedback": break;
             case "strength": setFloat32(group.strength); break;
             case "maxAngle": setFloat32(group.maxAngle / Math.PI * 180); break;
@@ -2850,10 +2856,16 @@ var PathMain = {
       let data = !e.data? e.detail : e.data;
       switch(data.cmd) {
         case "main-init-complete":
-        case "main-bone-load-complete":
           if(!!PathMain.completeLoadFunc) {
             PathMain.completeLoadFunc();
             PathMain.completeLoadFunc = null;
+          }
+          return false;
+          
+        case "main-bone-load-complete":
+          if(!!PathMain.completeBoneLoadFunc) {
+            PathMain.completeBoneLoadFunc();
+            PathMain.completeBoneLoadFunc = null;
           }
           return false;
           
@@ -2981,7 +2993,7 @@ var PathMain = {
    * @param {Function} completeFunc - callback when loading complete
    */
   loadBone: function(path, completeFunc) {
-    PathMain.completeLoadFunc = completeFunc;
+    PathMain.completeBoneLoadFunc = completeFunc;
     //console.log(new URL(path, window.location.href).href);
     PathMain.postMessage({cmd: "load-bone", path: new URL(path, window.location.href).href});
   },
@@ -3229,7 +3241,7 @@ var SVGLoader = {
     let getY=()=>parseFloat(data.shift())/base;
     
     let posData = [];
-    while(data.length > 0 && posData.length < 3) {
+    while(data.length > 0 && posData.length < 2) {
       let type = data.shift();
       switch(type) {
         case "M":
@@ -3252,21 +3264,8 @@ var SVGLoader = {
       }
     }
     
-    let dist1X = posData[1][0] - posData[0][0];
-    let dist1Y = posData[1][1] - posData[0][1];
-    let dist1 = dist1X * dist1X + dist1Y * dist1Y;
-    
-    let dist2X = posData[2][0] - posData[0][0];
-    let dist2Y = posData[2][1] - posData[0][1];
-    let dist2 = dist2X * dist2X + dist2Y * dist2Y;
-    
-    if(dist1 > dist2) {
-      ret.push({type:"M", pos:[posData[0][0] + dist2X/2, posData[0][1] + dist2Y/2]});
-      ret.push({type:"L", pos:[posData[1][0], posData[1][1]]});
-    } else {
-      ret.push({type:"M", pos:[posData[0][0] + dist1X/2, posData[0][1] + dist1Y/2]});
-      ret.push({type:"L", pos:[posData[2][0], posData[2][1]]});
-    }
+    ret.push({type:"M", pos:[posData[0][0], posData[0][1]]});
+    ret.push({type:"L", pos:[posData[1][0], posData[1][1]]});
     
     return ret;
   },

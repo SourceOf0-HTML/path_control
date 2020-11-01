@@ -20,9 +20,9 @@ var BoneLoader = {
         PathCtr.loadState("  parentID: " + bone.parentID + "(" + data.parent + ")");
       }
       
-      if("isParentPin" in data && (typeof data.isParentPin === "boolean")) {
-        bone.isParentPin = data.isParentPin;
-        PathCtr.loadState("  isParentPin: " + bone.isParentPin);
+      if("isPin" in data && (typeof data.isPin === "boolean")) {
+        bone.isPin = data.isPin;
+        PathCtr.loadState("  isPin: " + bone.isPin);
       }
       
       if("feedback" in data && (typeof data.feedback === "boolean")) {
@@ -151,7 +151,7 @@ var BoneLoader = {
         if(typeof parentID !== "undefined") {
           let target = pathContainer.groups[parentID];
           amendBonePos(parentID, actionID, frame, boneIDs);
-          if(bone.isParentPin) {
+          if(target.isPin) {
             let diffX = target.anchorX - target.defState.x0;
             let diffY = target.anchorY - target.defState.y0;
             pathDiffListData[0][0] -= diffX;
@@ -194,7 +194,9 @@ var BoneLoader = {
             let y0 = bone.anchorY = pathDataList[0].pos[1];
             let x1 = bone.x = pathDataList[1].pos[0];
             let y1 = bone.y = pathDataList[1].pos[1];
-            bone.effectSprite.rotation = bone.defState.angle - Math.atan2(y1 - y0, x1 - x0);
+            let angle = Math.atan2(y1 - y0, x1 - x0);
+            if(isNaN(angle)) angle = bone.defState.angle;
+            bone.effectSprite.rotation = bone.defState.angle - angle;
           });
           let boneIDs = [];
           pathContainer.bones.forEach(id=>amendBonePos(id, actionID, frame, boneIDs));
@@ -206,19 +208,8 @@ var BoneLoader = {
         bone.reset();
         if(!bone.defState) return;
         let pathDataList = bone.paths[0].getPathDataList(0, 0);
-        let x0 = pathDataList[0].pos[0];
-        let y0 = pathDataList[0].pos[1];
-        let x1 = pathDataList[1].pos[0];
-        let y1 = pathDataList[1].pos[1];
-        let distX = x1 - x0;
-        let distY = y1 - y0;
         bone.effectSprite.reset();
-        bone.defState.x0 = x0;
-        bone.defState.y0 = y0;
-        bone.defState.x1 = x1;
-        bone.defState.y1 = y1;
-        bone.defState.distance = Math.sqrt(distX*distX + distY*distY);
-        bone.defState.angle = Math.atan2(distY, distX);
+        bone.defState = BoneObj.getDistAndAngle(bone.id + ":load", pathDataList[0].pos[0], pathDataList[0].pos[1], pathDataList[1].pos[0], pathDataList[1].pos[1]);
       });
       
       PathCtr.loadState("bones JSON load complete.");

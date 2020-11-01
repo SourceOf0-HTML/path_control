@@ -6,7 +6,7 @@
 var BinaryLoader = {
   bonePropList: {
     parentID: 1,
-    isParentPin: 2,
+    isPin: 2,
     feedback: 3,
     strength: 4,
     maxAngle: 5,
@@ -16,7 +16,7 @@ var BinaryLoader = {
     smartMax: 9,
   },
   
-  binDataPosRange: 20000, // correction value of coordinates when saving to binary data
+  binDataPosRange: 30000, // correction value of coordinates when saving to binary data
   
   /**
    * @param {ArrayBuffer} buffer
@@ -162,8 +162,8 @@ var BinaryLoader = {
             case BinaryLoader.bonePropList["parentID"]:
               ret.parentID = getUint16();
               break;
-            case BinaryLoader.bonePropList["isParentPin"]:
-              ret.isParentPin = true;
+            case BinaryLoader.bonePropList["isPin"]:
+              ret.isPin = true;
               break;
             case BinaryLoader.bonePropList["feedback"]:
               ret.feedback = true;

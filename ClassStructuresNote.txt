@@ -44,7 +44,7 @@ BoneObj
   childGroups = [groupID, ... ];  // list of group id
   
   parentID = id;                  // parent bone id
-  isParentPin = isParentPin;      // parent bone is pin bone
+  isPin = isPin;                  // is pin bone or not
   feedback = receiveFeedback;     // receive feedback from other bones
   angleMin = angleMin;            // min angle
   angleMax = angleMax;            // max angle

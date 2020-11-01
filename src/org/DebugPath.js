@@ -231,7 +231,7 @@ var DebugPath = {
           setUint8(BinaryLoader.bonePropList[propName]);
           switch(propName) {
             case "parentID": setUint16(group.parentID); break;
-            case "isParentPin": break;
+            case "isPin": break;
             case "feedback": break;
             case "strength": setFloat32(group.strength); break;
             case "maxAngle": setFloat32(group.maxAngle / Math.PI * 180); break;
