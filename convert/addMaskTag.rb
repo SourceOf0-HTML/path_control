@@ -11,14 +11,17 @@
 
 require "pathname"
 
-source_dir = Pathname("source")
-destination_dir = Pathname("destination")
+source_dir = Pathname(ARGV[0])
+destination_dir = Pathname(ARGV[1])
 classList = []
 
 
 Pathname.glob(source_dir.join("**/*")) do |source_path|
   # ファイルじゃないとき（ディレクトリーのとき）はスキップ
   next unless source_path.file?
+
+  # svgではないときはスキップ
+  next if source_path.extname.downcase != ".svg"
 
   # source_dir から見た相対パス
   rel_path = source_path.relative_path_from source_dir
