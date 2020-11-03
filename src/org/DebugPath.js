@@ -236,9 +236,6 @@ var DebugPath = {
             case "strength": setFloat32(group.strength); break;
             case "maxAngle": setFloat32(group.maxAngle / Math.PI * 180); break;
             case "minAngle": setFloat32(group.minAngle / Math.PI * 180); break;
-            case "isSmartBone": break;
-            case "smartBase": setFloat32(group.smartBase / Math.PI * 180); break;
-            case "smartMax": setFloat32(group.smartMax / Math.PI * 180); break;
           };
         });
         setUint8(0);
@@ -272,6 +269,9 @@ var DebugPath = {
       if("smartBoneID" in action) {
         setUint8(1);
         setUint16(action.smartBoneID);
+        setUint16(action.smartFrames);
+        setFloat32(action.startAngle / Math.PI * 180);
+        setFloat32(action.endAngle / Math.PI * 180);
       } else {
         setUint8(0);
       }

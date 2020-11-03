@@ -45,30 +45,6 @@ var BoneLoader = {
         PathCtr.loadState("  minAngle: " + bone.minAngle);
       }
       
-      
-      if("smartBase" in data && Number.isFinite(data.smartBase)) {
-        bone.smartBase = data.smartBase/180 * Math.PI;
-        PathCtr.loadState("  smartBase: " + bone.smartBase);
-      }
-      
-      if("smartMax" in data && Number.isFinite(data.smartMax)) {
-        bone.smartMax = data.smartMax/180 * Math.PI;
-        PathCtr.loadState("  smartMax: " + bone.smartMax);
-      }
-      
-      if("smartAction" in data && (typeof data.smartAction === "string")) {
-        let action = pathContainer.actionList.find(action=>action.name == data.smartAction);
-        if(!action) {
-          console.error("smart action is not found : " + data.smartAction);
-          return;
-        }
-        bone.isSmartBone = true;
-        action.smartBoneID = bone.uid;
-        PathCtr.loadState("  isSmartBone: " + bone.isSmartBone);
-        PathCtr.loadState("    smartAction: " + action.name);
-      }
-      
-      
       if("flexiPoint" in data && (typeof data.flexiPoint === "object")) {
         let dataIndex = data.flexiPoint.dataIndex;
         let boneNameList = data.flexiPoint.bones;
@@ -129,6 +105,31 @@ var BoneLoader = {
               PathCtr.loadState("    " + name);
             }
           });
+        });
+      }
+      
+      if("action" in ret && (typeof ret.action === "object")) {
+        Object.keys(ret.action).forEach(name=> {
+          let action = pathContainer.actionList.find(action=>action.name == name);
+          if(!action) {
+            console.error("smart action is not found : " + name);
+            return;
+          }
+          let data = ret.action[name]
+          let bone = pathContainer.getBone(data.boneName);
+          if(!bone) {
+            console.error("bone is not found : " + id);
+            return;
+          }
+          action.smartBoneID = bone.uid;
+          action.startAngle = data.startAngle/180 * Math.PI;
+          action.endAngle = data.endAngle/180 * Math.PI;
+          action.smartFrames = data.smartFrames;
+          PathCtr.loadState("  smartAction: " + action.name);
+          PathCtr.loadState("    boneName: " + bone.id);
+          PathCtr.loadState("    startAngle: " + action.startAngle);
+          PathCtr.loadState("    endAngle: " + action.endAngle);
+          PathCtr.loadState("    smartFrames: " + action.smartFrames);
         });
       }
       

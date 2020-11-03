@@ -65,24 +65,6 @@ class BoneObj extends Sprite {
     };
   };
   
-  
-  /**
-   * @param {Integer} totalFrames - action total frames
-   */
-  getSmartFrame(totalFrames) {
-    if(!this.isSmartBone) {
-      console.error("It is not bone: " + this.id);
-      return 0;
-    }
-    
-    let angle = -this.currentState.angle;
-    angle -= this.smartBase;
-    
-    if(angle < 0) angle += Math.PI*2;
-    if(angle > this.smartMax) angle = this.smartMax;
-    return ((angle/this.smartMax * (totalFrames-2))^0) + 1;
-  };
-  
   /**
    * @param {PathContainer} pathContainer
    */
@@ -393,7 +375,7 @@ class BoneObj extends Sprite {
       context.strokeStyle = DebugPath.boneColor;
       context.stroke(path2D);
       
-      let dist = this.strength * ratio;
+      let dist = this.strength * ratio / 10;
       path2D = new Path2D();
       path2D.arc(x0, y0, dist, 0, tau);
       path2D.arc(x1, y1, dist, 0, tau);

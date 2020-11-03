@@ -15,6 +15,9 @@ PathContainer
      totalFrames: Uint16
      Uint8 ( == 1: add @ data)
        smartBoneID: Uint16 @
+       smartFrames: Uint16 @
+       startAngle: Float32(Degree measure) @
+       endAngle: Float32(Degree measure) @
  rootGroups
    length: Uint8
    groupID: Uint16
@@ -50,9 +53,6 @@ GroupObj
   4: strength: Float32
   5: maxAngle: Float32(Degree measure)
   6: minAngle: Float32(Degree measure)
-  7: isSmartBone: true
-  8: smartBase: Float32(Degree measure)
-  9: smartMax: Float32(Degree measure)
  flexiPoint
    length: Uint8
    groupID: Uint16

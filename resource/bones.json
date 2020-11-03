@@ -1,115 +1,159 @@
 {
+  "action" : {
+    "右足" : {
+      "boneName" : "bone_右足",
+      "endAngle" : 450,
+      "smartFrames" : 200,
+      "startAngle" : 90
+    },
+    "左腕" : {
+      "boneName" : "bone_左腕",
+      "endAngle" : 180,
+      "smartFrames" : 100,
+      "startAngle" : 90
+    },
+    "左足" : {
+      "boneName" : "bone_左足",
+      "endAngle" : 450,
+      "smartFrames" : 200,
+      "startAngle" : 90
+    },
+    "服" : {
+      "boneName" : "bone_服",
+      "endAngle" : 450,
+      "smartFrames" : 100,
+      "startAngle" : 90
+    },
+    "目" : {
+      "boneName" : "bone_目",
+      "endAngle" : 180,
+      "smartFrames" : 100,
+      "startAngle" : 0
+    },
+    "瞼" : {
+      "boneName" : "bone_瞼",
+      "endAngle" : 180,
+      "smartFrames" : 100,
+      "startAngle" : 90
+    },
+    "顔" : {
+      "boneName" : "bone_顔",
+      "endAngle" : 180,
+      "smartFrames" : 100,
+      "startAngle" : 0
+    }
+  },
   "bones" : {
-    "bone_B9" : {
-      "parent" : "bone_B3",
-      "strength" : 0.022718200087547
-    },
     "bone_B1" : {
-      "strength" : 0.020719499886036,
-      "isPin" : "true"
-    },
-    "bone_B13" : {
-      "parent" : "bone_B3",
-      "strength" : 0.027381700277328
-    },
-    "bone_左足" : {
-      "strength" : 0.0027155000716448,
-      "smartAction" : "左足",
-      "smartMax" : 360,
-      "smartBase" : 90
-    },
-    "bone_B3" : {
-      "parent" : "bone_B2",
-      "strength" : 0.072684800624847
-    },
-    "bone_B2" : {
-      "parent" : "bone_B1",
-      "strength" : 0.04736829996109
-    },
-    "bone_B5" : {
-      "strength" : 0.083344399929047,
-      "minAngle" : 45,
-      "parent" : "bone_B4",
-      "maxAngle" : 5
-    },
-    "bone_左腕" : {
-      "strength" : 0.0027155000716448,
-      "smartAction" : "左腕",
-      "smartMax" : 90,
-      "smartBase" : 90
-    },
-    "bone_瞼" : {
-      "strength" : 0.0027155000716448,
-      "smartAction" : "瞼",
-      "smartMax" : 90,
-      "smartBase" : 90
-    },
-    "bone_服" : {
-      "strength" : 0.0027155000716448,
-      "smartAction" : "服",
-      "smartMax" : 90,
-      "smartBase" : 90
-    },
-    "bone_右足" : {
-      "strength" : 0.0027155000716448,
-      "smartAction" : "右足",
-      "smartMax" : 360,
-      "smartBase" : 90
-    },
-    "bone_B18" : {
-      "parent" : "bone_B1",
-      "strength" : 0.00065449997782707
-    },
-    "bone_顔" : {
-      "strength" : 0.0027155000716448,
-      "smartAction" : "顔",
-      "smartMax" : 180,
-      "smartBase" : 0
-    },
-    "bone_B17" : {
-      "parent" : "bone_B1",
-      "strength" : 0.00065449997782707
-    },
-    "bone_B20" : {
-      "strength" : 0.1,
-      "parent" : "bone_B5",
-      "isPin" : "true"
+      "isPin" : true,
+      "strength" : 0.20719499886036
     },
     "bone_B11" : {
       "parent" : "bone_B9",
-      "strength" : 0.032711398601532
+      "strength" : 0.32711398601532
     },
-    "bone_B16" : {
-      "parent" : "bone_B20",
-      "strength" : 0.014656899869442
+    "bone_B13" : {
+      "parent" : "bone_B3",
+      "strength" : 0.27381700277328
     },
     "bone_B14" : {
       "parent" : "bone_B13",
-      "strength" : 0.036042600870132
+      "strength" : 0.36042600870132
     },
-    "bone_目" : {
-      "strength" : 0.0027155000716448,
-      "smartAction" : "目",
-      "smartMax" : 180,
-      "smartBase" : 0
+    "bone_B16" : {
+      "parent" : "bone_B20",
+      "strength" : 0.14656899869442
+    },
+    "bone_B17" : {
+      "parent" : "bone_B1",
+      "strength" : 0.0065449997782707
+    },
+    "bone_B18" : {
+      "parent" : "bone_B1",
+      "strength" : 0.0065449997782707
+    },
+    "bone_B2" : {
+      "parent" : "bone_B1",
+      "strength" : 0.4736829996109
+    },
+    "bone_B20" : {
+      "isPin" : true,
+      "parent" : "bone_B5",
+      "strength" : 1
+    },
+    "bone_B3" : {
+      "parent" : "bone_B2",
+      "strength" : 0.72684800624847
     },
     "bone_B4" : {
-      "strength" : 0.022051900625229,
-      "minAngle" : 25,
+      "maxAngle" : 25,
+      "minAngle" : -25,
       "parent" : "bone_B3",
-      "maxAngle" : 0
+      "strength" : 0.22051900625229
+    },
+    "bone_B5" : {
+      "maxAngle" : 45,
+      "minAngle" : -45,
+      "parent" : "bone_B4",
+      "strength" : 0.83344399929047
+    },
+    "bone_B9" : {
+      "parent" : "bone_B3",
+      "strength" : 0.22718200087547
+    },
+    "bone_右足" : {
+      "smartAction" : "右足",
+      "smartBase" : 90,
+      "smartMax" : 360,
+      "strength" : 0.027155000716448
+    },
+    "bone_左腕" : {
+      "smartAction" : "左腕",
+      "smartBase" : 90,
+      "smartMax" : 90,
+      "strength" : 0.027155000716448
+    },
+    "bone_左足" : {
+      "smartAction" : "左足",
+      "smartBase" : 90,
+      "smartMax" : 360,
+      "strength" : 0.027155000716448
+    },
+    "bone_服" : {
+      "smartAction" : "服",
+      "smartBase" : 90,
+      "smartMax" : 90,
+      "strength" : 0.027155000716448
+    },
+    "bone_目" : {
+      "smartAction" : "目",
+      "smartBase" : 0,
+      "smartMax" : 180,
+      "strength" : 0.027155000716448
+    },
+    "bone_瞼" : {
+      "smartAction" : "瞼",
+      "smartBase" : 90,
+      "smartMax" : 90,
+      "strength" : 0.027155000716448
+    },
+    "bone_顔" : {
+      "smartAction" : "顔",
+      "smartBase" : 0,
+      "smartMax" : 180,
+      "strength" : 0.027155000716448
     }
   },
   "flexi" : {
-    "right_arm" : ["bone_B13", "bone_B14"],
-    "left_arm" : ["bone_B9", "bone_B11"],
-    "layer_left_leg" : ["bone_B17"],
-    "jacket" : ["bone_B2", "bone_B3"],
-    "hat_brim" : ["bone_B5"],
-    "layer_head" : ["bone_B5"],
-    "neck" : ["bone_B4"],
+    "clothes" : ["bone_B2", "bone_B3"],
     "hair" : ["bone_B16"],
+    "hat_brim" : ["bone_B5"],
+    "jacket" : ["bone_B2", "bone_B3"],
+    "layer_head" : ["bone_B5"],
+    "layer_left_leg" : ["bone_B17"],
     "layer_right_leg" : ["bone_B18"],
-    "clothes" : ["bone_B2", "bone_B3"]
+    "left_arm" : ["bone_B9", "bone_B11"],
+    "neck" : ["bone_B4"],
+    "right_arm" : ["bone_B13", "bone_B14"]
   }
 }

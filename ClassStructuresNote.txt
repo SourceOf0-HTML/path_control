@@ -18,7 +18,12 @@ PathContainer
       name : actionName,
       id : actionID,
       totalFrames : totalFrames,
+      
       smartBoneID: smartBoneID,
+      smartFrames: smartFrames,
+      startAngle: startAngle,
+      endAngle: endAngle,
+      
       pastFrame: pastFrame,
       currentFrame: currentFrame,
     },
@@ -50,9 +55,6 @@ BoneObj
   angleMax = angleMax;            // max angle
   
   strength = strength;            // scope of influence of bone
-  isSmartBone = isSmartBone;      // is smart bone or not
-  smartBase = smartBase;          // base angle of smartbone
-  smartMax = smartMax;            // max angle of smartbone
   posIK = {                       // data for inverse kinematics
     enable: enable,
     x: x,

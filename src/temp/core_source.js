@@ -1094,24 +1094,6 @@ class BoneObj extends Sprite {
     };
   };
   
-  
-  /**
-   * @param {Integer} totalFrames - action total frames
-   */
-  getSmartFrame(totalFrames) {
-    if(!this.isSmartBone) {
-      console.error("It is not bone: " + this.id);
-      return 0;
-    }
-    
-    let angle = -this.currentState.angle;
-    angle -= this.smartBase;
-    
-    if(angle < 0) angle += Math.PI*2;
-    if(angle > this.smartMax) angle = this.smartMax;
-    return ((angle/this.smartMax * (totalFrames-2))^0) + 1;
-  };
-  
   /**
    * @param {PathContainer} pathContainer
    */
@@ -1422,7 +1404,7 @@ class BoneObj extends Sprite {
       context.strokeStyle = DebugPath.boneColor;
       context.stroke(path2D);
       
-      let dist = this.strength * ratio;
+      let dist = this.strength * ratio / 10;
       path2D = new Path2D();
       path2D.arc(x0, y0, dist, 0, tau);
       path2D.arc(x1, y1, dist, 0, tau);
@@ -1645,7 +1627,26 @@ class PathContainer extends Sprite {
       if(targetAction.id == action.id) return;
       targetAction.pastFrame = targetAction.currentFrame;
       if("smartBoneID" in targetAction) {
-        targetAction.currentFrame = this.groups[targetAction.smartBoneID].getSmartFrame(targetAction.totalFrames);
+        let bone = this.groups[targetAction.smartBoneID];
+        let angle = -bone.currentState.angle;
+        let range = targetAction.endAngle - targetAction.startAngle;
+        if(range >= 0) {
+          angle -= targetAction.startAngle;
+          if(angle < 0) angle += Math.PI*2;
+          if(angle > range) {
+            targetAction.currentFrame = targetAction.smartFrames;
+          } else {
+            targetAction.currentFrame = ((angle/range * (targetAction.smartFrames-1))^0) + 1;
+          }
+        } else {
+          angle -= targetAction.endAngle;
+          if(angle < 0) angle += Math.PI*2;
+          if(angle > -range) {
+            targetAction.currentFrame = targetAction.smartFrames;
+          } else {
+            targetAction.currentFrame = targetAction.smartFrames + ((angle/range * (targetAction.smartFrames-1))^0);
+          }
+        }
       }
     });
     
@@ -1688,12 +1689,9 @@ var BinaryLoader = {
     strength: 4,
     maxAngle: 5,
     minAngle: 6,
-    isSmartBone: 7,
-    smartBase: 8,
-    smartMax: 9,
   },
   
-  binDataPosRange: 20000, // correction value of coordinates when saving to binary data
+  binDataPosRange: 30000, // correction value of coordinates when saving to binary data
   
   /**
    * @param {ArrayBuffer} buffer
@@ -1854,16 +1852,6 @@ var BinaryLoader = {
             case BinaryLoader.bonePropList["minAngle"]:
               ret.minAngle = getFloat32() / 180 * Math.PI;
               break;
-            case BinaryLoader.bonePropList["isSmartBone"]:
-              ret.isSmartBone = true;
-              break;
-            case BinaryLoader.bonePropList["smartBase"]:
-              ret.smartBase = getFloat32() / 180 * Math.PI;
-              break;
-            case BinaryLoader.bonePropList["smartMax"]:
-              let rad = getFloat32();
-              ret.smartMax = rad / 180 * Math.PI;
-              break;
           };
           kind = getUint8();
         }
@@ -1901,6 +1889,9 @@ var BinaryLoader = {
         let action = pathContainer.addAction(getString(), getUint8(), getUint16());
         if(getUint8()) {
           action.smartBoneID = getUint16();
+          action.smartFrames = getUint16();
+          action.startAngle = getFloat32() / 180 * Math.PI;
+          action.endAngle = getFloat32() / 180 * Math.PI;
         }
       }
     }

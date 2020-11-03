@@ -11,9 +11,6 @@ var BinaryLoader = {
     strength: 4,
     maxAngle: 5,
     minAngle: 6,
-    isSmartBone: 7,
-    smartBase: 8,
-    smartMax: 9,
   },
   
   binDataPosRange: 30000, // correction value of coordinates when saving to binary data
@@ -177,16 +174,6 @@ var BinaryLoader = {
             case BinaryLoader.bonePropList["minAngle"]:
               ret.minAngle = getFloat32() / 180 * Math.PI;
               break;
-            case BinaryLoader.bonePropList["isSmartBone"]:
-              ret.isSmartBone = true;
-              break;
-            case BinaryLoader.bonePropList["smartBase"]:
-              ret.smartBase = getFloat32() / 180 * Math.PI;
-              break;
-            case BinaryLoader.bonePropList["smartMax"]:
-              let rad = getFloat32();
-              ret.smartMax = rad / 180 * Math.PI;
-              break;
           };
           kind = getUint8();
         }
@@ -224,6 +211,9 @@ var BinaryLoader = {
         let action = pathContainer.addAction(getString(), getUint8(), getUint16());
         if(getUint8()) {
           action.smartBoneID = getUint16();
+          action.smartFrames = getUint16();
+          action.startAngle = getFloat32() / 180 * Math.PI;
+          action.endAngle = getFloat32() / 180 * Math.PI;
         }
       }
     }

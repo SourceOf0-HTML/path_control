@@ -175,7 +175,26 @@ class PathContainer extends Sprite {
       if(targetAction.id == action.id) return;
       targetAction.pastFrame = targetAction.currentFrame;
       if("smartBoneID" in targetAction) {
-        targetAction.currentFrame = this.groups[targetAction.smartBoneID].getSmartFrame(targetAction.totalFrames);
+        let bone = this.groups[targetAction.smartBoneID];
+        let angle = -bone.currentState.angle;
+        let range = targetAction.endAngle - targetAction.startAngle;
+        if(range >= 0) {
+          angle -= targetAction.startAngle;
+          if(angle < 0) angle += Math.PI*2;
+          if(angle > range) {
+            targetAction.currentFrame = targetAction.smartFrames;
+          } else {
+            targetAction.currentFrame = ((angle/range * (targetAction.smartFrames-1))^0) + 1;
+          }
+        } else {
+          angle -= targetAction.endAngle;
+          if(angle < 0) angle += Math.PI*2;
+          if(angle > -range) {
+            targetAction.currentFrame = targetAction.smartFrames;
+          } else {
+            targetAction.currentFrame = targetAction.smartFrames + ((angle/range * (targetAction.smartFrames-1))^0);
+          }
+        }
       }
     });
     
