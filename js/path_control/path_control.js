@@ -1270,9 +1270,9 @@ class BoneObj extends Sprite {
     }];
     let bone = this;
     while("parentID" in bone) {
-      if(bone.fixed) break;
       let parentID = bone.parentID;
       let target = pathContainer.groups[parentID];
+      if(target.fixed) break;
       tempList.push({
         pos: [
           target.currentState.pos[0],
@@ -1325,16 +1325,6 @@ class BoneObj extends Sprite {
     
     let currentPos = this.currentState.pos;
     let target = pathContainer.groups[this.parentID];
-    if(target.isPin) {
-      let x = target.effectSprite.x - target.effectSprite.anchorX;
-      let y = target.effectSprite.y - target.effectSprite.anchorY;
-      currentPos[0] += x;
-      currentPos[1] += y;
-      currentPos[2] += x;
-      currentPos[3] += y;
-      this.calcCurrentState(pathContainer);
-      return;
-    }
     target.effectSprite.getMatrix().applyToArray(currentPos);
     this.calcCurrentState(pathContainer);
   };

@@ -1260,9 +1260,9 @@ class BoneObj extends Sprite {
     }];
     let bone = this;
     while("parentID" in bone) {
-      if(bone.fixed) break;
       let parentID = bone.parentID;
       let target = pathContainer.groups[parentID];
+      if(target.fixed) break;
       tempList.push({
         pos: [
           target.currentState.pos[0],
@@ -1315,16 +1315,6 @@ class BoneObj extends Sprite {
     
     let currentPos = this.currentState.pos;
     let target = pathContainer.groups[this.parentID];
-    if(target.isPin) {
-      let x = target.effectSprite.x - target.effectSprite.anchorX;
-      let y = target.effectSprite.y - target.effectSprite.anchorY;
-      currentPos[0] += x;
-      currentPos[1] += y;
-      currentPos[2] += x;
-      currentPos[3] += y;
-      this.calcCurrentState(pathContainer);
-      return;
-    }
     target.effectSprite.getMatrix().applyToArray(currentPos);
     this.calcCurrentState(pathContainer);
   };
@@ -2338,25 +2328,16 @@ var BoneLoader = {
         if(typeof parentID !== "undefined") {
           let target = pathContainer.groups[parentID];
           amendBonePos(parentID, actionID, frame, boneIDs);
-          if(target.isPin) {
-            let diffX = target.anchorX - target.defState.x0;
-            let diffY = target.anchorY - target.defState.y0;
-            pathDiffListData[0][0] -= diffX;
-            pathDiffListData[0][1] -= diffY;
-            pathDiffListData[1][0] -= diffX;
-            pathDiffListData[1][1] -= diffY;
-          } else {
-            let diffX = target.x - target.defState.x1;
-            let diffY = target.y - target.defState.y1;
-            let data = [pathDataList[0].pos[0] - diffX, pathDataList[0].pos[1] - diffY, pathDataList[1].pos[0] - diffX, pathDataList[1].pos[1] - diffY];
-            target.effectSprite.x = target.effectSprite.anchorX = data[0];
-            target.effectSprite.y = target.effectSprite.anchorY = data[1];
-            target.effectSprite.getMatrix().applyToArray(data);
-            pathDiffListData[0][0] = data[0] - bone.defState.x0;
-            pathDiffListData[0][1] = data[1] - bone.defState.y0;
-            pathDiffListData[1][0] = data[2] - bone.defState.x1;
-            pathDiffListData[1][1] = data[3] - bone.defState.y1;
-          }
+          let diffX = target.x - target.defState.x1;
+          let diffY = target.y - target.defState.y1;
+          let data = [pathDataList[0].pos[0] - diffX, pathDataList[0].pos[1] - diffY, pathDataList[1].pos[0] - diffX, pathDataList[1].pos[1] - diffY];
+          target.effectSprite.x = target.effectSprite.anchorX = data[0];
+          target.effectSprite.y = target.effectSprite.anchorY = data[1];
+          target.effectSprite.getMatrix().applyToArray(data);
+          pathDiffListData[0][0] = data[0] - bone.defState.x0;
+          pathDiffListData[0][1] = data[1] - bone.defState.y0;
+          pathDiffListData[1][0] = data[2] - bone.defState.x1;
+          pathDiffListData[1][1] = data[3] - bone.defState.y1;
         }
       };
       

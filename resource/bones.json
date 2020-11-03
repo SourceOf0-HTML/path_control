@@ -46,6 +46,7 @@
   "bones" : {
     "bone_B1" : {
       "isPin" : true,
+      "fixed": true,
       "strength" : 0.20719499886036
     },
     "bone_B11" : {
