@@ -25,9 +25,9 @@ var BoneLoader = {
         PathCtr.loadState("  isPin: " + bone.isPin);
       }
       
-      if("feedback" in data && (typeof data.feedback === "boolean")) {
-        bone.feedback = data.feedback;
-        PathCtr.loadState("  feedback: " + bone.feedback);
+      if("fixed" in data && (typeof data.fixed === "boolean")) {
+        bone.fixed = data.fixed;
+        PathCtr.loadState("  fixed: " + bone.fixed);
       }
       
       if("strength" in data && Number.isFinite(data.strength)) {

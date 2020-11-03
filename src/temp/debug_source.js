@@ -1260,7 +1260,7 @@ class BoneObj extends Sprite {
     }];
     let bone = this;
     while("parentID" in bone) {
-      if(!bone.feedback) break;
+      if(bone.fixed) break;
       let parentID = bone.parentID;
       let target = pathContainer.groups[parentID];
       tempList.push({
@@ -1606,7 +1606,7 @@ class PathContainer extends Sprite {
         let targetData = bonesMap.find(data=> data.id == bone.parentID);
         targetData.priority = --pri;
         bone = this.groups[bone.parentID];
-        if(!bone.feedback) break;
+        if(bone.fixed) break;
       }
     });
     
@@ -1685,7 +1685,7 @@ var BinaryLoader = {
   bonePropList: {
     parentID: 1,
     isPin: 2,
-    feedback: 3,
+    fixed: 3,
     strength: 4,
     maxAngle: 5,
     minAngle: 6,
@@ -1840,8 +1840,8 @@ var BinaryLoader = {
             case BinaryLoader.bonePropList["isPin"]:
               ret.isPin = true;
               break;
-            case BinaryLoader.bonePropList["feedback"]:
-              ret.feedback = true;
+            case BinaryLoader.bonePropList["fixed"]:
+              ret.fixed = true;
               break;
             case BinaryLoader.bonePropList["strength"]:
               ret.strength = getFloat32();
@@ -2211,9 +2211,9 @@ var BoneLoader = {
         PathCtr.loadState("  isPin: " + bone.isPin);
       }
       
-      if("feedback" in data && (typeof data.feedback === "boolean")) {
-        bone.feedback = data.feedback;
-        PathCtr.loadState("  feedback: " + bone.feedback);
+      if("fixed" in data && (typeof data.fixed === "boolean")) {
+        bone.fixed = data.fixed;
+        PathCtr.loadState("  fixed: " + bone.fixed);
       }
       
       if("strength" in data && Number.isFinite(data.strength)) {
@@ -2641,7 +2641,7 @@ var DebugPath = {
           switch(propName) {
             case "parentID": setUint16(group.parentID); break;
             case "isPin": break;
-            case "feedback": break;
+            case "fixed": break;
             case "strength": setFloat32(group.strength); break;
             case "maxAngle": setFloat32(group.maxAngle / Math.PI * 180); break;
             case "minAngle": setFloat32(group.minAngle / Math.PI * 180); break;

@@ -142,7 +142,7 @@ function BN_SaveSmartAction:Run(moho)
 	local orgPath = moho.document:Path()
 	local path = string.sub(orgPath, 0, string.len(orgPath)-5)
 	
-	layer:ActivateAction("")
+	layer:ActivateAction(NULL)
 	moho.document:ClearAnimation(0, false)
 	moho.document:SetEndFrame(1)
 	moho:FileSaveAs(path .. "_base.moho")
@@ -166,7 +166,7 @@ function BN_SaveSmartAction:Run(moho)
 				whenEndKey = math.max(whenEndKey, when)
 			end
 			
-			layer:ActivateAction("")
+			layer:ActivateAction(NULL)
 			moho.document:ClearAnimation(0, false)
 			
 			for when, val in pairs(keyInfo) do

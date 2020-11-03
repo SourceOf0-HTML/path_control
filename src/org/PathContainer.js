@@ -154,7 +154,7 @@ class PathContainer extends Sprite {
         let targetData = bonesMap.find(data=> data.id == bone.parentID);
         targetData.priority = --pri;
         bone = this.groups[bone.parentID];
-        if(!bone.feedback) break;
+        if(bone.fixed) break;
       }
     });
     

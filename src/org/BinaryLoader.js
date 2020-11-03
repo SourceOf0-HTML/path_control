@@ -7,7 +7,7 @@ var BinaryLoader = {
   bonePropList: {
     parentID: 1,
     isPin: 2,
-    feedback: 3,
+    fixed: 3,
     strength: 4,
     maxAngle: 5,
     minAngle: 6,
@@ -162,8 +162,8 @@ var BinaryLoader = {
             case BinaryLoader.bonePropList["isPin"]:
               ret.isPin = true;
               break;
-            case BinaryLoader.bonePropList["feedback"]:
-              ret.feedback = true;
+            case BinaryLoader.bonePropList["fixed"]:
+              ret.fixed = true;
               break;
             case BinaryLoader.bonePropList["strength"]:
               ret.strength = getFloat32();

@@ -102,45 +102,32 @@
       "strength" : 0.22718200087547
     },
     "bone_右足" : {
-      "smartAction" : "右足",
-      "smartBase" : 90,
-      "smartMax" : 360,
       "strength" : 0.027155000716448
     },
     "bone_左腕" : {
-      "smartAction" : "左腕",
-      "smartBase" : 90,
-      "smartMax" : 90,
+      "maxAngle" : 90,
+      "minAngle" : 0,
       "strength" : 0.027155000716448
     },
     "bone_左足" : {
-      "smartAction" : "左足",
-      "smartBase" : 90,
-      "smartMax" : 360,
       "strength" : 0.027155000716448
     },
     "bone_服" : {
-      "smartAction" : "服",
-      "smartBase" : 90,
-      "smartMax" : 90,
       "strength" : 0.027155000716448
     },
     "bone_目" : {
-      "smartAction" : "目",
-      "smartBase" : 0,
-      "smartMax" : 180,
+      "maxAngle" : 90,
+      "minAngle" : -90,
       "strength" : 0.027155000716448
     },
     "bone_瞼" : {
-      "smartAction" : "瞼",
-      "smartBase" : 90,
-      "smartMax" : 90,
+      "maxAngle" : 90,
+      "minAngle" : 0,
       "strength" : 0.027155000716448
     },
     "bone_顔" : {
-      "smartAction" : "顔",
-      "smartBase" : 0,
-      "smartMax" : 180,
+      "maxAngle" : 90,
+      "minAngle" : -90,
       "strength" : 0.027155000716448
     }
   },

@@ -49,6 +49,7 @@ end
 BN_OutputJson.boneLayerName = "bone"
 BN_OutputJson.bonesProp = "bones"
 BN_OutputJson.flexiProp = "flexi"
+BN_OutputJson.actionProp = "action"
 BN_OutputJson.boneNamePrefix = "bone_"
 
 -- **************************************************
@@ -98,18 +99,10 @@ function BN_OutputJson:Run(moho)
 		return
 	end
 	
-	if (LM.GUI.Alert(LM.GUI.ALERT_INFO,
-		"JSONの出力を行います",
-		nil,
-		nil,
-		MOHO.Localize("/Scripts/OK=OK"),
-		MOHO.Localize("/Scripts/Cancel=Cancel"),
-		nil) == 1) then
+	path = LM.GUI.SaveFile("ボーン用jsonファイルの保存先を指定してください")
+	if (path == "") then
 		return
 	end
-	
-	layer:ActivateAction("")
-	moho:SetCurFrame(0)
 	
 	self.json = {}
 	self.json[self.bonesProp] = {}
@@ -123,16 +116,15 @@ function BN_OutputJson:Run(moho)
 		self:setFlexiInfo(i, boneLayer:Layer(i), 0)
 	end
 	
-	path = LM.GUI.SaveFile("ボーン用jsonファイルの保存先を指定してください")
-	if (path ~= "") then
-		fp = io.open("bones.json","w")
-		if (fp == nil) then
-			self:SetupAlert("bones.jsonの保存に失敗しました。\nファイルを開いている場合は閉じてから実行してください。")
-		else
-			fp:write(self:OutputJson(self.json, 0))
-			io.close(fp)
-			self:SetupAlert("bones.jsonを保存しました")
-		end
+	self:SetActionInfo()
+	
+	fp = io.open("bones.json","w")
+	if (fp == nil) then
+		self:SetupAlert("bones.jsonの保存に失敗しました。\nファイルを開いている場合は閉じてから実行してください。")
+	else
+		fp:write(self:OutputJson(self.json, 0))
+		io.close(fp)
+		self:SetupAlert("bones.jsonを保存しました")
 	end
 end
 
@@ -178,10 +170,12 @@ end
 function BN_OutputJson:AdjustAngle(angle)
 	local ret = math.floor(angle / math.pi * 180 + 0.5)
 	local addCount = 1
+	--[[
 	while (ret < 0) do
 		ret = math.floor(angle / math.pi * 180 + addCount * math.pi * 2 + 0.5)
 		addCount = addCount + 1
 	end
+	]]
 	return ret
 end
 
@@ -199,25 +193,20 @@ function BN_OutputJson:SetBoneInfo(boneID)
 		isEnable = true
 	end
 	
-	if (self.layer:HasAction(boneName)) then
-		data["smartAction"] = "\"" .. boneName .. "\""
-		data["smartBase"] = self:AdjustAngle(bone.fAngle + bone.fMinConstraint)
-		data["smartMax"] = self:AdjustAngle(bone.fMaxConstraint - bone.fMinConstraint)
-		isEnable = true
-	elseif (bone.fConstraints) then
-		data["maxAngle"] = self:AdjustAngle(bone.fMinConstraint)
-		data["minAngle"] = self:AdjustAngle(bone.fMaxConstraint)
+	if (bone.fConstraints) then
+		data["minAngle"] = self:AdjustAngle(bone.fMinConstraint)
+		data["maxAngle"] = self:AdjustAngle(bone.fMaxConstraint)
 		isEnable = true
 	end
 	
 	local strength = bone.fStrength
 	if (strength ~= 0) then
-		data["strength"] = strength/10
+		data["strength"] = strength
 		isEnable = true
 	end
 	
 	if (bone.fLength == 0) then
-		data["isPin"] = "\"true\""
+		data["isPin"] = "true"
 		isEnable = true
 	end
 	
@@ -226,12 +215,73 @@ function BN_OutputJson:SetBoneInfo(boneID)
 	end
 end
 
+--! Set action info at json.
+function BN_OutputJson:SetActionInfo()
+	local layer = self.layer
+	
+	if (layer:CountActions() == 0) then
+		return
+	end
+	
+	local currentAction = self.layer:CurrentAction()
+	if (currentAction == "") then
+		currentAction = NULL
+	end
+	
+	self.json[self.actionProp] = {}
+	for i = 0, layer:CountActions()-1 do
+		local actionName = layer:ActionName(i)
+		if (layer:IsSmartBoneAction(actionName)) then
+			layer:ActivateAction(actionName)
+			
+			local bone = self.skel:BoneByName(actionName)
+			if (bone == nil) then
+				bone = self.skel:BoneByName(string.sub(actionName, 0, string.len(actionName)-2))
+			end
+			
+			local animAngle = bone.fAnimAngle
+			local whenStartKey = 0
+			local whenEndKey = 0
+			if (animAngle:CountKeys() > 2) then
+				whenStartKey = animAngle:GetKeyWhen(1)
+			end
+			for i = 0, animAngle:CountKeys()-1 do
+				whenEndKey = math.max(whenEndKey, animAngle:GetKeyWhen(i))
+			end
+			
+			local data = {}
+			data["boneName"] = "\"" .. BN_OutputJson.boneNamePrefix .. bone:Name() .. "\""
+			data["startAngle"] = self:AdjustAngle(animAngle:GetValue(whenStartKey))
+			data["endAngle"] = self:AdjustAngle(animAngle:GetValue(whenEndKey))
+			data["smartFrames"] = whenEndKey
+			self.json[self.actionProp][actionName] = data
+		end
+	end
+	
+	layer:ActivateAction(currentAction)
+end
+
+--! Sort table and return iterator
+--! @param Table targetTable
+--! @param Integer indentCount
+--! @retval Function
+function pairsByKeys(targetTable, func)
+	local temp = {}
+	for n in pairs(targetTable) do temp[#temp+1] = n end
+	
+	table.sort(temp, func)
+	local i = 0
+	return function()
+		i = i + 1
+		return temp[i], targetTable[temp[i]]
+	end
+end
 
 --! Output json
---! @param Table table
+--! @param Table targetTable
 --! @param Integer indentCount
 --! @retval String
-function BN_OutputJson:OutputJson(table, indentCount)
+function BN_OutputJson:OutputJson(targetTable, indentCount)
 	local indent = ""
 	for k = 0, indentCount do
 		indent = indent .. "  "
@@ -243,7 +293,7 @@ function BN_OutputJson:OutputJson(table, indentCount)
 	end
 	
 	local dataCount = 0
-	for key, val in pairs(table) do
+	for key, val in pairsByKeys(targetTable) do
 		if (dataCount > 0) then
 			ret = ret .. ",\n"
 		end

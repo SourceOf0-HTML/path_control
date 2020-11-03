@@ -50,7 +50,7 @@ BoneObj
   
   parentID = id;                  // parent bone id
   isPin = isPin;                  // is pin bone or not
-  feedback = receiveFeedback;     // receive feedback from other bones
+  fixed = fixed;                  // do not receive feedback from other bones
   angleMin = angleMin;            // min angle
   angleMax = angleMax;            // max angle
   

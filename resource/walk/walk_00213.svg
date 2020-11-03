@@ -254,16 +254,16 @@
 </mask>
 <g id="cmn_f3906406-f197-4bf1-91d8-744c09cca836">
 <path class="path-0" d="M150.183,187.277C150.763,186.548,152.946,181.965,153.983,183.072C153.772,182.859,148.807,184.507,148.041,185.837C147.423,186.909,149.636,191.465,148.124,191.647C147.631,191.706,149.982,187.531,150.183,187.277M158.732,190.962C158.834,190.374,158.688,184.104,156.425,183.317C155.115,182.862,153.476,184.641,152.325,185.450C149.722,187.198,134.407,181.354,135.424,177.284C135.891,175.415,146.903,175.248,148.577,176.166C159.082,181.924,129.804,206.041,146.372,208.161C146.836,208.221,154.464,185.944,151.621,189.911C150.511,191.461,158.539,192.080,158.732,190.962M185.811,192.759C183.668,192.589,181.346,193.602,178.889,191.324C176.855,189.438,196.108,192.039,197.879,191.982C199.106,191.942,211.681,191.957,212.341,191.545C212.465,191.467,214.534,191.473,214.707,191.433C214.852,191.400,189.695,193.068,185.811,192.759M221.823,194.622C222.197,194.304,222.951,187.798,222.500,187.341C219.299,184.102,206.634,186.593,199.846,186.088C196.032,185.803,189.527,185.741,187.151,184.924C183.206,183.726,180.244,182.537,177.701,183.831C175.629,184.885,173.485,188.160,173.713,190.473C173.918,192.558,176.076,194.637,178.328,195.714C182.762,197.836,203.306,196.048,206.778,196.209C206.775,196.209,219.230,196.830,221.823,194.622Z"/>
-<path class="path-46" d="M212.341,191.545C212.465,191.467,214.534,191.473,214.707,191.433"/>
-<path class="path-46" d="M214.707,191.433C214.852,191.400,189.695,193.068,185.811,192.759"/>
-<path class="path-46" d="M185.811,192.759C183.668,192.589,181.346,193.602,178.889,191.324"/>
-<path class="path-46" d="M178.889,191.324C176.855,189.438,196.108,192.039,197.879,191.982"/>
-<path class="path-46" d="M197.879,191.982C199.106,191.942,211.681,191.957,212.341,191.545"/>
+<path class="path-24" d="M212.341,191.545C212.465,191.467,214.534,191.473,214.707,191.433"/>
+<path class="path-24" d="M214.707,191.433C214.852,191.400,189.695,193.068,185.811,192.759"/>
+<path class="path-24" d="M185.811,192.759C183.668,192.589,181.346,193.602,178.889,191.324"/>
+<path class="path-24" d="M178.889,191.324C176.855,189.438,196.108,192.039,197.879,191.982"/>
+<path class="path-24" d="M197.879,191.982C199.106,191.942,211.681,191.957,212.341,191.545"/>
 <path class="path-0" d="M212.341,191.545C212.465,191.467,214.534,191.473,214.707,191.433C214.852,191.400,189.695,193.068,185.811,192.759C183.668,192.589,181.346,193.602,178.889,191.324C176.855,189.438,196.108,192.039,197.879,191.982C199.106,191.942,211.681,191.957,212.341,191.545Z"/>
-<path class="path-46" d="M148.124,191.647C147.631,191.706,149.982,187.531,150.183,187.277"/>
-<path class="path-46" d="M150.183,187.277C150.763,186.548,152.946,181.965,153.983,183.072"/>
-<path class="path-46" d="M153.983,183.072C153.772,182.859,148.807,184.507,148.041,185.837"/>
-<path class="path-46" d="M148.041,185.837C147.423,186.909,149.636,191.465,148.124,191.647"/>
+<path class="path-24" d="M148.124,191.647C147.631,191.706,149.982,187.531,150.183,187.277"/>
+<path class="path-24" d="M150.183,187.277C150.763,186.548,152.946,181.965,153.983,183.072"/>
+<path class="path-24" d="M153.983,183.072C153.772,182.859,148.807,184.507,148.041,185.837"/>
+<path class="path-24" d="M148.041,185.837C147.423,186.909,149.636,191.465,148.124,191.647"/>
 <path class="path-0" d="M148.124,191.647C147.631,191.706,149.982,187.531,150.183,187.277C150.763,186.548,152.946,181.965,153.983,183.072C153.772,182.859,148.807,184.507,148.041,185.837C147.423,186.909,149.636,191.465,148.124,191.647Z"/>
 </g>
 </g>
@@ -475,28 +475,6 @@
 .path-21{fill:none;stroke:#fafd5b;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
 .path-22{fill:#fafd5b;fill-rule:evenodd;stroke:none;}
 .path-23{fill:none;stroke:#00ff00;stroke-width:8;stroke-linecap:round;stroke-linejoin:round;}
-.path-24{fill:none;stroke:#fafafa;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
-.path-25{fill:#fafafa;fill-rule:evenodd;stroke:none;}
-.path-26{fill:none;stroke:#ececec;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
-.path-27{fill:#ececec;fill-rule:evenodd;stroke:none;}
-.path-28{fill:none;stroke:#d7d7d7;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
-.path-29{fill:#d7d7d7;fill-rule:evenodd;stroke:none;}
-.path-30{fill:none;stroke:#bdbdbd;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
-.path-31{fill:#bdbdbd;fill-rule:evenodd;stroke:none;}
-.path-32{fill:none;stroke:#9f9f9f;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
-.path-33{fill:#9f9f9f;fill-rule:evenodd;stroke:none;}
-.path-34{fill:none;stroke:#808080;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
-.path-35{fill:#808080;fill-rule:evenodd;stroke:none;}
-.path-36{fill:none;stroke:#606060;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
-.path-37{fill:#606060;fill-rule:evenodd;stroke:none;}
-.path-38{fill:none;stroke:#424242;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
-.path-39{fill:#424242;fill-rule:evenodd;stroke:none;}
-.path-40{fill:none;stroke:#282828;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
-.path-41{fill:#282828;fill-rule:evenodd;stroke:none;}
-.path-42{fill:none;stroke:#131313;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
-.path-43{fill:#131313;fill-rule:evenodd;stroke:none;}
-.path-44{fill:none;stroke:#050505;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
-.path-45{fill:#050505;fill-rule:evenodd;stroke:none;}
-.path-46{fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
+.path-24{fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;}
 </style>
 </svg>

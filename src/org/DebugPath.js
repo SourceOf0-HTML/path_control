@@ -232,7 +232,7 @@ var DebugPath = {
           switch(propName) {
             case "parentID": setUint16(group.parentID); break;
             case "isPin": break;
-            case "feedback": break;
+            case "fixed": break;
             case "strength": setFloat32(group.strength); break;
             case "maxAngle": setFloat32(group.maxAngle / Math.PI * 180); break;
             case "minAngle": setFloat32(group.minAngle / Math.PI * 180); break;

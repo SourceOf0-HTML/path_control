@@ -231,7 +231,7 @@ class BoneObj extends Sprite {
     }];
     let bone = this;
     while("parentID" in bone) {
-      if(!bone.feedback) break;
+      if(bone.fixed) break;
       let parentID = bone.parentID;
       let target = pathContainer.groups[parentID];
       tempList.push({

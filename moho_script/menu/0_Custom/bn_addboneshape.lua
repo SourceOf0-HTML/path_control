@@ -109,7 +109,7 @@ function BN_AddBoneShape:Run(moho)
 	moho.document:SetDirty()
 	moho.document:PrepUndo(NULL)
 	
-	layer:ActivateAction("")
+	layer:ActivateAction(NULL)
 	moho:SetCurFrame(0)
 	
 	local parent = moho:CreateNewLayer(MOHO.LT_GROUP)

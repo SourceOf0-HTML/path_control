@@ -1270,7 +1270,7 @@ class BoneObj extends Sprite {
     }];
     let bone = this;
     while("parentID" in bone) {
-      if(!bone.feedback) break;
+      if(bone.fixed) break;
       let parentID = bone.parentID;
       let target = pathContainer.groups[parentID];
       tempList.push({
@@ -1616,7 +1616,7 @@ class PathContainer extends Sprite {
         let targetData = bonesMap.find(data=> data.id == bone.parentID);
         targetData.priority = --pri;
         bone = this.groups[bone.parentID];
-        if(!bone.feedback) break;
+        if(bone.fixed) break;
       }
     });
     
@@ -1695,7 +1695,7 @@ var BinaryLoader = {
   bonePropList: {
     parentID: 1,
     isPin: 2,
-    feedback: 3,
+    fixed: 3,
     strength: 4,
     maxAngle: 5,
     minAngle: 6,
@@ -1850,8 +1850,8 @@ var BinaryLoader = {
             case BinaryLoader.bonePropList["isPin"]:
               ret.isPin = true;
               break;
-            case BinaryLoader.bonePropList["feedback"]:
-              ret.feedback = true;
+            case BinaryLoader.bonePropList["fixed"]:
+              ret.fixed = true;
               break;
             case BinaryLoader.bonePropList["strength"]:
               ret.strength = getFloat32();
