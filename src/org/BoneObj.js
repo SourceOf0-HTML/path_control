@@ -98,12 +98,8 @@ class BoneObj extends Sprite {
     sprite.y = currentPos[1];
     sprite.anchorX = this.defState.x0;
     sprite.anchorY = this.defState.y0;
-    if(this.isPin) {
-      sprite.scaleY = 1;
-    } else {
-      sprite.scaleY = state.distance / this.defState.distance;
-      if(isNaN(sprite.scaleY)) sprite.scaleY = 1;
-    }
+    sprite.scaleY = state.distance / this.defState.distance;
+    if(isNaN(sprite.scaleY)) sprite.scaleY = 1;
     sprite.rotation = state.angle - this.defState.angle;
  };
   
