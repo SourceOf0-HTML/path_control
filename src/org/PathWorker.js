@@ -41,7 +41,7 @@ var PathWorker = {
           return false;
           
         case "load-bone":
-          BoneLoader.load(data.path, PathCtr.pathContainers[PathCtr.pathContainers.length-1]);
+          BoneLoader.load(data.filePathList, PathCtr.pathContainers[PathCtr.pathContainers.length-1]);
           return false;
           
           

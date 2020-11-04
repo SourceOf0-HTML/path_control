@@ -13,7 +13,7 @@ PathMain.init("./js/walk.js", ()=> {
     [SVGLoader.FILE_KIND_SMRT, 100, "服", "./resource/walk_服/walk_服_"],
     [SVGLoader.FILE_KIND_SMRT, 200, "右足", "./resource/walk_右足/walk_右足_"],
     [SVGLoader.FILE_KIND_SMRT, 200, "左足", "./resource/walk_左足/walk_左足_"],
-  ], "./resource/bones.json", loadComplete);
+  ], ["./resource/bones.json", "./resource/bones_custom.json"], loadComplete);
 });
 
 function output_data() {

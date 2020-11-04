@@ -174,13 +174,19 @@ var PathMain = {
   },
   
   /**
-   * @param {String} path - file path info
+   * @param {Array} filePathList - json file path list
    * @param {Function} completeFunc - callback when loading complete
    */
-  loadBone: function(path, completeFunc) {
+  loadBone: function(filePathList, completeFunc) {
+    if(!Array.isArray(filePathList)) {
+      console.error("filePathList is not array data.");
+      console.log(filePathList);
+      return;
+    }
+    
     PathMain.completeBoneLoadFunc = completeFunc;
-    //console.log(new URL(path, window.location.href).href);
-    PathMain.postMessage({cmd: "load-bone", path: new URL(path, window.location.href).href});
+    let pathList = filePathList.map(path=> new URL(path, window.location.href).href);
+    PathMain.postMessage({cmd: "load-bone", filePathList: pathList});
   },
   
   /**

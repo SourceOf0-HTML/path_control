@@ -46,30 +46,19 @@
   "bones" : {
     "bone_B1" : {
       "isPin" : true,
-      "fixed": true,
       "strength" : 0.20719499886036
     },
     "bone_B11" : {
       "parent" : "bone_B9",
-      "strength" : 0.32711398601532,
-      "maxAngle": 150,
-      "minAngle": -150
+      "strength" : 0.32711398601532
     },
     "bone_B13" : {
       "parent" : "bone_B3",
-      "strength" : 0.27381700277328,
-      "flexiPoint": {
-        "dataIndex": 0,
-        "bones": ["bone_B2", "bone_B3"]
-      }
+      "strength" : 0.27381700277328
     },
     "bone_B14" : {
       "parent" : "bone_B13",
-      "strength" : 0.36042600870132,
-      "flexiPoint": {
-        "dataIndex": 1,
-        "bones": ["bone_B18"]
-      }
+      "strength" : 0.36042600870132
     },
     "bone_B16" : {
       "parent" : "bone_B20",
@@ -77,25 +66,15 @@
     },
     "bone_B17" : {
       "parent" : "bone_B1",
-      "strength" : 0.0065449997782707,
-      "flexiPoint": {
-        "dataIndex": 0,
-        "bones": ["bone_B2", "bone_B3"]
-      }
+      "strength" : 0.0065449997782707
     },
     "bone_B18" : {
       "parent" : "bone_B1",
-      "strength" : 0.0065449997782707,
-      "flexiPoint": {
-        "dataIndex": 0,
-        "bones": ["bone_B2", "bone_B3"]
-      }
+      "strength" : 0.0065449997782707
     },
     "bone_B2" : {
       "parent" : "bone_B1",
-      "strength" : 0.4736829996109,
-      "maxAngle": -80,
-      "minAngle": -100
+      "strength" : 0.4736829996109
     },
     "bone_B20" : {
       "isPin" : true,
@@ -104,9 +83,7 @@
     },
     "bone_B3" : {
       "parent" : "bone_B2",
-      "strength" : 0.72684800624847,
-      "maxAngle": 60,
-      "minAngle": -60
+      "strength" : 0.72684800624847
     },
     "bone_B4" : {
       "maxAngle" : 25,
@@ -122,11 +99,7 @@
     },
     "bone_B9" : {
       "parent" : "bone_B3",
-      "strength" : 0.22718200087547,
-      "flexiPoint": {
-        "dataIndex": 0,
-        "bones": ["bone_B2", "bone_B3"]
-      }
+      "strength" : 0.22718200087547
     },
     "bone_右足" : {
       "strength" : 0.027155000716448

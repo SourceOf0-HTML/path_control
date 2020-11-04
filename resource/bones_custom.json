@@ -1,0 +1,49 @@
+{
+  "bones" : {
+    "bone_B1" : {
+      "fixed": true
+    },
+    "bone_B2" : {
+      "maxAngle": -80,
+      "minAngle": -100
+    },
+    "bone_B3" : {
+      "maxAngle": 60,
+      "minAngle": -60
+    },
+    "bone_B9" : {
+      "flexiPoint": {
+        "dataIndex": 0,
+        "bones": ["bone_B2", "bone_B3"]
+      }
+    },
+    "bone_B11" : {
+      "maxAngle": 150,
+      "minAngle": -150
+    },
+    "bone_B13" : {
+      "flexiPoint": {
+        "dataIndex": 0,
+        "bones": ["bone_B2", "bone_B3"]
+      }
+    },
+    "bone_B14" : {
+      "flexiPoint": {
+        "dataIndex": 1,
+        "bones": ["bone_B18"]
+      }
+    },
+    "bone_B17" : {
+      "flexiPoint": {
+        "dataIndex": 0,
+        "bones": ["bone_B2", "bone_B3"]
+      }
+    },
+    "bone_B18" : {
+      "flexiPoint": {
+        "dataIndex": 0,
+        "bones": ["bone_B2", "bone_B3"]
+      }
+    }
+  }
+}

@@ -6,9 +6,17 @@
 var BoneLoader = {
   
   /**
-   * @param {String} filePath - json file path
+   * @param {Array} filePathList - json file path list
+   * @param {PathContainer} pathContainer
    */
-  load: function(filePath, pathContainer) {
+  load: function(filePathList, pathContainer) {
+    if(!Array.isArray(filePathList)) {
+      console.error("filePathList is not array data.");
+      console.log(filePathList);
+      return;
+    }
+    
+    let loadIndex = 0;
     let request = new XMLHttpRequest();
     let setJSONData =(bone, data)=> {
       if(!bone || !data) return;
@@ -68,10 +76,14 @@ var BoneLoader = {
       }
     };
     
-    request.onload = function(e) {
+    let loadJson = request.onreadystatechange = function(e) {
       let target = e.target;
       if(target.readyState != 4) return;
-      if(target.status != 200 && target.status != 0) return;
+      if((target.status != 200 && target.status != 0) || target.responseText == "") {
+        console.error("failed to read file: " + target.responseURL);
+        console.error(target.statusText);
+        return;
+      }
       
       let ret = JSON.parse(target.responseText);
       if("bones" in ret && (typeof ret.bones === "object")) {
@@ -131,6 +143,13 @@ var BoneLoader = {
           PathCtr.loadState("    endAngle: " + action.endAngle);
           PathCtr.loadState("    smartFrames: " + action.smartFrames);
         });
+      }
+      
+      if(loadIndex < filePathList.length) {
+        request.open("GET", filePathList[loadIndex++], true);
+        request.onreadystatechange = loadJson;
+        request.send();
+        return;
       }
       
       let amendBonePos =(id, actionID, frame, boneIDs)=> {
@@ -208,7 +227,8 @@ var BoneLoader = {
       PathCtr.loadState(pathContainer);
       PathWorker.postMessage({cmd: "main-bone-load-complete"});
     }
-    request.open("GET", filePath, true);
+    
+    request.open("GET", filePathList[loadIndex++], true);
     request.send();
   },
 };
