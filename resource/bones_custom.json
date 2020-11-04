@@ -4,42 +4,50 @@
       "fixed": true
     },
     "bone_B2" : {
+      "strength": 0.05,
       "maxAngle": -80,
       "minAngle": -100
     },
     "bone_B3" : {
+      "strength": 0.05,
       "maxAngle": 60,
       "minAngle": -60
     },
     "bone_B9" : {
+      "strength": 0.05,
       "flexiPoint": {
         "dataIndex": 0,
         "bones": ["bone_B2", "bone_B3"]
       }
     },
     "bone_B11" : {
+      "strength": 0.05,
       "maxAngle": 150,
       "minAngle": -150
     },
     "bone_B13" : {
+      "strength": 0.05,
       "flexiPoint": {
         "dataIndex": 0,
         "bones": ["bone_B2", "bone_B3"]
       }
     },
     "bone_B14" : {
+      "strength": 0.05,
       "flexiPoint": {
         "dataIndex": 1,
         "bones": ["bone_B18"]
       }
     },
     "bone_B17" : {
+      "strength": 0.05,
       "flexiPoint": {
         "dataIndex": 0,
         "bones": ["bone_B2", "bone_B3"]
       }
     },
     "bone_B18" : {
+      "strength": 0.05,
       "flexiPoint": {
         "dataIndex": 0,
         "bones": ["bone_B2", "bone_B3"]
