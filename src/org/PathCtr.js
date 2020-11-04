@@ -4,22 +4,6 @@
  * Singleton
  */
 var PathCtr = {
-  isOutputDebugPrint: false,
-  debugPrint: function() {
-    if(!PathCtr.isOutputDebugPrint) return;
-    //console.log("Func : " + PathCtr.debugPrint.caller.name);
-    console.log.apply(null, arguments);
-  },
-  
-  isOutputLoadState: true,
-  loadState: function() {
-    if(!PathCtr.isOutputLoadState) return;
-    for(let i = 0; i < arguments.length; ++i) {
-      console.log(arguments[i]);
-    }
-  },
-  
-  
   defaultCanvasContainerID: "path-container",  // default canvas container element name
   defaultActionName: "base",
   initTarget: null,  // instance to be initialized
@@ -72,7 +56,7 @@ var PathCtr = {
     pathContainer.context = PathWorker.isWorker? PathCtr.context : PathCtr.subContext;
     PathCtr.setSize(PathCtr.viewWidth, PathCtr.viewHeight);
     PathCtr.initTarget = null;
-    PathCtr.loadState(pathContainer);
+    PathWorker.loadPrint(pathContainer);
     if(typeof DebugPath !== "undefined") {
       DebugPath.init(pathContainer);
     }
@@ -94,7 +78,7 @@ var PathCtr = {
     
     let elapsed = (timestamp - PathCtr.prevTimestamp) / 1000;
     PathCtr.average = (PathCtr.average + elapsed) / 2;
-    //PathCtr.debugPrint((PathCtr.average * 100000)^0);
+    //PathWorker.debugPrint((PathCtr.average * 100000)^0);
     
     if(PathCtr.pathContainers.length <= 0) return;
     
@@ -116,10 +100,10 @@ var PathCtr = {
     PathCtr.prevTimestamp = timestamp;
     if(PathCtr.average > frameTime * 2) {
       PathCtr.fixFrameTime *= 0.99;
-      PathCtr.debugPrint("up");
+      PathWorker.debugPrint("up");
     } else if(PathCtr.average < frameTime * 0.5) {
       PathCtr.fixFrameTime *= 1.01;
-      PathCtr.debugPrint("down");
+      PathWorker.debugPrint("down");
     } else {
       PathCtr.fixFrameTime = (frameTime + PathCtr.fixFrameTime) / 2;
     }

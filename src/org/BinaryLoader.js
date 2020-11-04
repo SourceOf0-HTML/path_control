@@ -222,16 +222,16 @@ var BinaryLoader = {
     
     let groupsNum = getUint16();
     for(let i = 0; i < groupsNum; ++i) {
-      PathCtr.debugPrint("count : " + i);
-      PathCtr.debugPrint(i);
-      PathCtr.debugPrint(sumLength);
+      PathWorker.debugPrint("count : " + i);
+      PathWorker.debugPrint(i);
+      PathWorker.debugPrint(sumLength);
       
       let group = getGroup(i);
       pathContainer.groups[i] = group;
       if(BoneObj.prototype.isPrototypeOf(group)) {
         pathContainer.bones.push(group.uid);
       }
-      PathCtr.debugPrint(group);
+      PathWorker.debugPrint(group);
     }
     
     return pathContainer;
@@ -261,7 +261,7 @@ var BinaryLoader = {
       let pathContainer = BinaryLoader.init(buffer);
       pathContainer.index = index;
       
-      PathCtr.loadState("loading completed");
+      PathWorker.loadPrint("loading completed");
       
       if(!!completeFunc) {
         completeFunc();

@@ -276,7 +276,7 @@ var SVGLoader = {
     let childGroups = [];
     Array.prototype.slice.call(groupDOM.children).forEach(child=>{
       let tagName = child.tagName;
-      //PathCtr.debugPrint("make group : " + name + " : " + tagName);
+      //console.log("make group : " + name + " : " + tagName);
       switch(tagName) {
         case "path":
           if(isPathSkip) break;

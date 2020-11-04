@@ -4,6 +4,23 @@
  * Singleton
  */
 var PathWorker = {
+  debugPrint: function(){},
+  loadPrint: function(){},
+  
+  /**
+   * @param {Boolean} isOn
+   */
+  setDebugPrint: function(isOn) {
+    PathWorker.debugPrint = isOn? console.debug : function(){};
+  },
+  
+  /**
+   * @param {Boolean} isOn
+   */
+  setLoadPrint: function(isOn) {
+    PathWorker.loadPrint = isOn? console.log : function(){};
+  },
+  
   instance: null,
   isWorker: false,
   
@@ -23,7 +40,7 @@ var PathWorker = {
       let data = !e.data? e.detail : e.data;
       switch(data.cmd) {
         case "init":
-          PathCtr.loadState("init");
+          PathWorker.loadPrint("init");
           PathCtr.defaultBoneName = data.defaultBoneName;
           PathCtr.init(data.canvas, data.subCanvas, data.viewWidth, data.viewHeight);
           return false;
@@ -96,13 +113,13 @@ var PathWorker = {
           /* ---- create data ---- */
           
         case "create-path-container":
-          PathCtr.loadState("init path container");
+          PathWorker.loadPrint("init path container");
           PathCtr.initTarget = new PathContainer(data.name, data.width, data.height);
           PathCtr.initTarget.index = data.index;
           return false;
           
         case "add-action":
-          PathCtr.loadState("load action: " + data.actionName + " - " + data.totalFrames);
+          PathWorker.loadPrint("load action: " + data.actionName + " - " + data.totalFrames);
           PathCtr.initTarget.addAction(data.actionName, data.frame, data.totalFrames);
           return false;
           

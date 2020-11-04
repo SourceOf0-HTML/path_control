@@ -79,22 +79,6 @@ var InputInfo = {
  * Singleton
  */
 var PathCtr = {
-  isOutputDebugPrint: false,
-  debugPrint: function() {
-    if(!PathCtr.isOutputDebugPrint) return;
-    //console.log("Func : " + PathCtr.debugPrint.caller.name);
-    console.log.apply(null, arguments);
-  },
-  
-  isOutputLoadState: true,
-  loadState: function() {
-    if(!PathCtr.isOutputLoadState) return;
-    for(let i = 0; i < arguments.length; ++i) {
-      console.log(arguments[i]);
-    }
-  },
-  
-  
   defaultCanvasContainerID: "path-container",  // default canvas container element name
   defaultActionName: "base",
   initTarget: null,  // instance to be initialized
@@ -147,7 +131,7 @@ var PathCtr = {
     pathContainer.context = PathWorker.isWorker? PathCtr.context : PathCtr.subContext;
     PathCtr.setSize(PathCtr.viewWidth, PathCtr.viewHeight);
     PathCtr.initTarget = null;
-    PathCtr.loadState(pathContainer);
+    PathWorker.loadPrint(pathContainer);
     if(typeof DebugPath !== "undefined") {
       DebugPath.init(pathContainer);
     }
@@ -169,7 +153,7 @@ var PathCtr = {
     
     let elapsed = (timestamp - PathCtr.prevTimestamp) / 1000;
     PathCtr.average = (PathCtr.average + elapsed) / 2;
-    //PathCtr.debugPrint((PathCtr.average * 100000)^0);
+    //PathWorker.debugPrint((PathCtr.average * 100000)^0);
     
     if(PathCtr.pathContainers.length <= 0) return;
     
@@ -191,10 +175,10 @@ var PathCtr = {
     PathCtr.prevTimestamp = timestamp;
     if(PathCtr.average > frameTime * 2) {
       PathCtr.fixFrameTime *= 0.99;
-      PathCtr.debugPrint("up");
+      PathWorker.debugPrint("up");
     } else if(PathCtr.average < frameTime * 0.5) {
       PathCtr.fixFrameTime *= 1.01;
-      PathCtr.debugPrint("down");
+      PathWorker.debugPrint("down");
     } else {
       PathCtr.fixFrameTime = (frameTime + PathCtr.fixFrameTime) / 2;
     }
@@ -570,7 +554,7 @@ class ActionContainer {
     let output =(action, val)=> {
       if(!PathCtr.isOutputDebugPrint) return;
       if(this.result == val) return;
-      PathCtr.debugPrint(action.name, action.pastFrame, action.currentFrame, val);
+      ;
     };
     let data = null;
     
@@ -586,7 +570,7 @@ class ActionContainer {
           let targetData = actionDataList[targetFrame];
           if(typeof targetData === "undefined") continue;
           data = targetData;
-          output(action, data);
+          if(this.result != data) PathWorker.debugPrint(action.name, action.pastFrame, action.currentFrame, data);
           break;
         }
       } else {
@@ -598,7 +582,7 @@ class ActionContainer {
             let targetData = actionDataList[targetFrame];
             if(typeof targetData === "undefined") continue;
             data = targetData;
-            output(action, data);
+            if(this.result != data) PathWorker.debugPrint(action.name, action.pastFrame, action.currentFrame, data);
             break;
           }
           break;
@@ -1886,16 +1870,16 @@ var BinaryLoader = {
     
     let groupsNum = getUint16();
     for(let i = 0; i < groupsNum; ++i) {
-      PathCtr.debugPrint("count : " + i);
-      PathCtr.debugPrint(i);
-      PathCtr.debugPrint(sumLength);
+      PathWorker.debugPrint("count : " + i);
+      PathWorker.debugPrint(i);
+      PathWorker.debugPrint(sumLength);
       
       let group = getGroup(i);
       pathContainer.groups[i] = group;
       if(BoneObj.prototype.isPrototypeOf(group)) {
         pathContainer.bones.push(group.uid);
       }
-      PathCtr.debugPrint(group);
+      PathWorker.debugPrint(group);
     }
     
     return pathContainer;
@@ -1925,7 +1909,7 @@ var BinaryLoader = {
       let pathContainer = BinaryLoader.init(buffer);
       pathContainer.index = index;
       
-      PathCtr.loadState("loading completed");
+      PathWorker.loadPrint("loading completed");
       
       if(!!completeFunc) {
         completeFunc();
@@ -1944,6 +1928,23 @@ var BinaryLoader = {
  * Singleton
  */
 var PathWorker = {
+  debugPrint: function(){},
+  loadPrint: function(){},
+  
+  /**
+   * @param {Boolean} isOn
+   */
+  setDebugPrint: function(isOn) {
+    PathWorker.debugPrint = isOn? console.debug : function(){};
+  },
+  
+  /**
+   * @param {Boolean} isOn
+   */
+  setLoadPrint: function(isOn) {
+    PathWorker.loadPrint = isOn? console.log : function(){};
+  },
+  
   instance: null,
   isWorker: false,
   
@@ -1963,7 +1964,7 @@ var PathWorker = {
       let data = !e.data? e.detail : e.data;
       switch(data.cmd) {
         case "init":
-          PathCtr.loadState("init");
+          PathWorker.loadPrint("init");
           PathCtr.defaultBoneName = data.defaultBoneName;
           PathCtr.init(data.canvas, data.subCanvas, data.viewWidth, data.viewHeight);
           return false;
@@ -2036,13 +2037,13 @@ var PathWorker = {
           /* ---- create data ---- */
           
         case "create-path-container":
-          PathCtr.loadState("init path container");
+          PathWorker.loadPrint("init path container");
           PathCtr.initTarget = new PathContainer(data.name, data.width, data.height);
           PathCtr.initTarget.index = data.index;
           return false;
           
         case "add-action":
-          PathCtr.loadState("load action: " + data.actionName + " - " + data.totalFrames);
+          PathWorker.loadPrint("load action: " + data.actionName + " - " + data.totalFrames);
           PathCtr.initTarget.addAction(data.actionName, data.frame, data.totalFrames);
           return false;
           

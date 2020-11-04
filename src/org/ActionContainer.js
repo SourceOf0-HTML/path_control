@@ -78,7 +78,7 @@ class ActionContainer {
     let output =(action, val)=> {
       if(!PathCtr.isOutputDebugPrint) return;
       if(this.result == val) return;
-      PathCtr.debugPrint(action.name, action.pastFrame, action.currentFrame, val);
+      ;
     };
     let data = null;
     
@@ -94,7 +94,7 @@ class ActionContainer {
           let targetData = actionDataList[targetFrame];
           if(typeof targetData === "undefined") continue;
           data = targetData;
-          output(action, data);
+          if(this.result != data) PathWorker.debugPrint(action.name, action.pastFrame, action.currentFrame, data);
           break;
         }
       } else {
@@ -106,7 +106,7 @@ class ActionContainer {
             let targetData = actionDataList[targetFrame];
             if(typeof targetData === "undefined") continue;
             data = targetData;
-            output(action, data);
+            if(this.result != data) PathWorker.debugPrint(action.name, action.pastFrame, action.currentFrame, data);
             break;
           }
           break;

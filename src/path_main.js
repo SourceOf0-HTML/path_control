@@ -159,7 +159,6 @@ var PathMain = {
     let a = document.createElement("a");
     document.body.appendChild(a);
     a.style = "display: none";
-    console.log(a);
     
     let blob = new Blob([data], {type: type});
     
@@ -224,7 +223,7 @@ var PathMain = {
       }
       PathMain.initWorker();
     } else {
-      console.log("this browser is not supported");
+      console.warn("this browser is not supported");
       PathMain.worker = window;
       
       if(!!jsPath) {

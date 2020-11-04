@@ -20,37 +20,37 @@ var BoneLoader = {
     let request = new XMLHttpRequest();
     let setJSONData =(bone, data)=> {
       if(!bone || !data) return;
-      PathCtr.loadState("BONE: " + bone.id);
+      PathWorker.loadPrint("BONE: " + bone.id);
       
       let parentBone = pathContainer.getBone(data.parent);
       if("parent" in data && !!parentBone) {
         bone.parentID = parentBone.uid;
-        PathCtr.loadState("  parentID: " + bone.parentID + "(" + data.parent + ")");
+        PathWorker.loadPrint("  parentID: " + bone.parentID + "(" + data.parent + ")");
       }
       
       if("isPin" in data && (typeof data.isPin === "boolean")) {
         bone.isPin = data.isPin;
-        PathCtr.loadState("  isPin: " + bone.isPin);
+        PathWorker.loadPrint("  isPin: " + bone.isPin);
       }
       
       if("fixed" in data && (typeof data.fixed === "boolean")) {
         bone.fixed = data.fixed;
-        PathCtr.loadState("  fixed: " + bone.fixed);
+        PathWorker.loadPrint("  fixed: " + bone.fixed);
       }
       
       if("strength" in data && Number.isFinite(data.strength)) {
         bone.strength = data.strength;
-        PathCtr.loadState("  strength: " + bone.strength);
+        PathWorker.loadPrint("  strength: " + bone.strength);
       }
       
       if("maxAngle" in data && Number.isFinite(data.maxAngle)) {
         bone.maxAngle = data.maxAngle/180 * Math.PI;
-        PathCtr.loadState("  maxAngle: " + bone.maxAngle);
+        PathWorker.loadPrint("  maxAngle: " + bone.maxAngle);
       }
       
       if("minAngle" in data && Number.isFinite(data.minAngle)) {
         bone.minAngle = data.minAngle/180 * Math.PI;
-        PathCtr.loadState("  minAngle: " + bone.minAngle);
+        PathWorker.loadPrint("  minAngle: " + bone.minAngle);
       }
       
       if("flexiPoint" in data && (typeof data.flexiPoint === "object")) {
@@ -59,14 +59,14 @@ var BoneLoader = {
         if(!Number.isFinite(dataIndex) || !Array.isArray(boneNameList)) return;
         if(dataIndex >= 2) return;
         
-        PathCtr.loadState("  flexiPoint:");
-        PathCtr.loadState("    dataIndex: " + dataIndex);
+        PathWorker.loadPrint("  flexiPoint:");
+        PathWorker.loadPrint("    dataIndex: " + dataIndex);
         let bones = [];
         boneNameList.forEach(name=> {
           let bone = pathContainer.getBone(name);
           if(!!bone) {
             bones.push(bone.uid);
-            PathCtr.loadState("    bone: " + name);
+            PathWorker.loadPrint("    bone: " + name);
           }
         });
         bone.flexiPoint = {
@@ -106,15 +106,15 @@ var BoneLoader = {
           }
           let groupNameList = ret.flexi[name];
           if(!groupNameList || !Array.isArray(groupNameList) || groupNameList.length == 0) return;
-          PathCtr.loadState("FLEXI GROUP: " + group.id);
+          PathWorker.loadPrint("FLEXI GROUP: " + group.id);
           
           group.flexi = [];
-          PathCtr.loadState("  flexi:");
+          PathWorker.loadPrint("  flexi:");
           groupNameList.forEach(name=> {
             let bone = pathContainer.getBone(name);
             if(!!bone) {
               group.flexi.push(bone.uid);
-              PathCtr.loadState("    " + name);
+              PathWorker.loadPrint("    " + name);
             }
           });
         });
@@ -137,11 +137,11 @@ var BoneLoader = {
           action.startAngle = data.startAngle/180 * Math.PI;
           action.endAngle = data.endAngle/180 * Math.PI;
           action.smartFrames = data.smartFrames;
-          PathCtr.loadState("  smartAction: " + action.name);
-          PathCtr.loadState("    boneName: " + bone.id);
-          PathCtr.loadState("    startAngle: " + action.startAngle);
-          PathCtr.loadState("    endAngle: " + action.endAngle);
-          PathCtr.loadState("    smartFrames: " + action.smartFrames);
+          PathWorker.loadPrint("  smartAction: " + action.name);
+          PathWorker.loadPrint("    boneName: " + bone.id);
+          PathWorker.loadPrint("    startAngle: " + action.startAngle);
+          PathWorker.loadPrint("    endAngle: " + action.endAngle);
+          PathWorker.loadPrint("    smartFrames: " + action.smartFrames);
         });
       }
       
@@ -223,8 +223,8 @@ var BoneLoader = {
         bone.defState = BoneObj.getDistAndAngle(bone.id + ":load", pathDataList[0].pos[0], pathDataList[0].pos[1], pathDataList[1].pos[0], pathDataList[1].pos[1]);
       });
       
-      PathCtr.loadState("bones JSON load complete.");
-      PathCtr.loadState(pathContainer);
+      PathWorker.loadPrint("bones JSON load complete.");
+      PathWorker.loadPrint(pathContainer);
       PathWorker.postMessage({cmd: "main-bone-load-complete"});
     }
     

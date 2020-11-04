@@ -23,6 +23,9 @@ var DebugPath = {
   
   actionIndex: 0,
   
+  isOutputDebugPrint: false,
+  isOutputLoadPrint: false,
+  
   /**
    * @param {PathContainer} pathContainer
    */
@@ -56,10 +59,12 @@ var DebugPath = {
         setAction(pathContainer.actionList[this.actionIndex].name);
         break;
       case "KeyD":
-        PathCtr.isOutputDebugPrint = !PathCtr.isOutputDebugPrint;
+        this.isOutputDebugPrint = !this.isOutputDebugPrint;
+        PathCtr.setDebugPrint(this.isOutputDebugPrint);
         break;
       case "KeyL":
-        PathCtr.isOutputLoadState = !PathCtr.isOutputLoadState;
+        this.isOutputLoadPrint = !this.isOutputLoadPrint;
+        PathWorker.loadPrint(this.isOutputLoadPrint);
         break;
       case "KeyB":
         this.isShowBones = !this.isShowBones;
@@ -282,7 +287,7 @@ var DebugPath = {
     let groupsNum = pathContainer.groups.length;
     setUint16(groupsNum);
     pathContainer.groups.forEach(group=>{
-      PathCtr.loadState("count : " + groupsNum--);
+      PathWorker.loadPrint("count : " + groupsNum--);
       setGroup(group);
     });
     
