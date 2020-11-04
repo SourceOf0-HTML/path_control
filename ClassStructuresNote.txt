@@ -2,6 +2,7 @@
 PathContainer
   name = name;                           // paths name
   index = index;                         // layer index
+  visible = visible;                     // display when true
   originalWidth = originalWidth;         // original svg width
   originalHeight = originalHeight;       // original svg height
   displayWidth = displayWidth;           // display width

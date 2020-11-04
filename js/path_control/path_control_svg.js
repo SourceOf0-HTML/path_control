@@ -145,6 +145,7 @@ var PathCtr = {
     if(typeof DebugPath !== "undefined") {
       DebugPath.init(pathContainer);
     }
+    pathContainer.visible = true;
     if(typeof setup !== "undefined") setup(pathContainer);
   },
   
@@ -1442,7 +1443,7 @@ class PathContainer extends Sprite {
     super();
     this.name = name;             // paths name
     this.index = null;            // layer index
-    this.visible = true;          // display when true
+    this.visible = false;         // display when true
     this.originalWidth = width;   // original svg width
     this.originalHeight = height; // original svg height
     this.displayWidth = width;    // display width
@@ -1499,7 +1500,7 @@ class PathContainer extends Sprite {
     this.currentActionID = action.id;
     
     if(typeof frame !== "undefined" && frame >= 0) {
-      this.currentFrame = frame % action.totalFrames;
+      action.currentFrame = this.currentFrame = frame % action.totalFrames;
     }
   };
   

@@ -60,6 +60,7 @@ var PathCtr = {
     if(typeof DebugPath !== "undefined") {
       DebugPath.init(pathContainer);
     }
+    pathContainer.visible = true;
     if(typeof setup !== "undefined") setup(pathContainer);
   },
   
