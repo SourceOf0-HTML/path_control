@@ -2733,6 +2733,23 @@ var DebugPath = {
  * Singleton
  */
 var PathMain = {
+  debugPrint: function(){},
+  loadPrint: function(){},
+  
+  /**
+   * @param {Boolean} isOn
+   */
+  setDebugPrint: function(isOn) {
+    PathMain.debugPrint = isOn? console.debug : function(){};
+  },
+  
+  /**
+   * @param {Boolean} isOn
+   */
+  setLoadPrint: function(isOn) {
+    PathMain.loadPrint = isOn? console.log : function(){};
+  },
+  
   defaultBoneName: "bone",
   isUseMin: false,
   

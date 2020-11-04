@@ -2,6 +2,7 @@ function loadComplete() {
   document.getElementById("output-btn").disabled = "";
 }
 
+PathMain.setLoadPrint(true);
 PathMain.init("./js/walk.js", ()=> {
   SVGLoader.load("walk", 0, [
     [SVGLoader.FILE_KIND_BASE,   1, "base", "./resource/walk_base/walk_base_"],

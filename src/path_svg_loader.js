@@ -276,7 +276,7 @@ var SVGLoader = {
     let childGroups = [];
     Array.prototype.slice.call(groupDOM.children).forEach(child=>{
       let tagName = child.tagName;
-      //console.log("make group : " + name + " : " + tagName);
+      //PathMain.loadPrint("make group : " + name + " : " + tagName);
       switch(tagName) {
         case "path":
           if(isPathSkip) break;
@@ -327,7 +327,7 @@ var SVGLoader = {
    * @param {String} actionName
    */
   addActionGroup: function(index, groupDOM, name, frame, actionName) {
-    if(frame % 10 == 0 && index == 0) console.log("add action DOM: " + actionName + " - " + frame);
+    if(frame % 10 == 0 && index == 0) PathMain.loadPrint("add action DOM: " + actionName + " - " + frame);
     
     let uid = SVGLoader.groupNameToIDList[name];
     let childGroups = [];
@@ -387,7 +387,7 @@ var SVGLoader = {
       return;
     }
     
-    console.log("check id");
+    PathMain.loadPrint("check id");
     let groupsDOMArr = Array.prototype.slice.call(this.domList);
     let baseDom = groupsDOMArr[0];
     groupsDOMArr.forEach(targetDom=>{
@@ -418,7 +418,7 @@ var SVGLoader = {
       targetIds = null;
     });
     
-    console.log("check diff");
+    PathMain.loadPrint("check diff");
     let actionGroup = [];
     Object.keys(this.groupNameToIDList).forEach(name=> {
       let base = baseDom.getElementById(name);
@@ -433,7 +433,7 @@ var SVGLoader = {
     
     groupsDOMArr.forEach((targetDom, frame)=> {
       if(frame == 0) return;
-      if(frame % 10 == 0) console.log("add action : " + actionName + " - " + frame);
+      if(frame % 10 == 0) PathMain.loadPrint("add action : " + actionName + " - " + frame);
       actionGroup.forEach((name, i)=> {
         setTimeout(this.addActionGroup, 0, i, targetDom.getElementById(name), name, frame, actionName);
       });
@@ -533,7 +533,7 @@ var SVGLoader = {
   },
   
   loadDOMEnd: function() {
-    console.log("DOM END");
+    PathMain.loadPrint("DOM END");
     SVGLoader.domList.forEach(dom=>dom.parentNode.remove());
     SVGLoader.domList.length = 0;
     SVGLoader.initKind = "";
@@ -541,7 +541,7 @@ var SVGLoader = {
   },
   
   loadEnd: function() {
-    console.log("LOAD END")
+    PathMain.loadPrint("LOAD END")
     SVGLoader.groupNameToIDList = null;
     SVGLoader.masksList = null;
     PathMain.postMessage({cmd: "load-complete"});
@@ -590,7 +590,7 @@ var SVGLoader = {
           break;
           
         case "new-svg":
-          if(data.frame % 10 == 0) console.log("load file: " + data.actionName + " - " + data.frame);
+          if(data.frame % 10 == 0) PathMain.loadPrint("load file: " + data.actionName + " - " + data.frame);
           SVGLoader.addSvgDOM(data.svg);
           break;
           
