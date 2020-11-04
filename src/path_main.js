@@ -237,9 +237,8 @@ var PathMain = {
    * @param {String} path - file path info
    * @param {Integer} index - paths layer index
    * @param {Function} completeFunc - callback when loading complete
-   * @param {Boolean} isDebug - use debug mode when true
    */
-  load: function(path, index, completeFunc = null, isDebug = false) {
+  load: function(path, index, completeFunc = null) {
     PathMain.completeLoadFunc = completeFunc;
     PathMain.postMessage({
       cmd: "load-bin",

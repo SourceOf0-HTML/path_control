@@ -2178,7 +2178,7 @@ if(PathWorker.isWorker) {
 var BoneLoader = {
   
   /**
-   * @param {String} filePath - binary file path
+   * @param {String} filePath - json file path
    */
   load: function(filePath, pathContainer) {
     let request = new XMLHttpRequest();

@@ -551,11 +551,10 @@ var SVGLoader = {
    * @param {String} name
    * @param {Integer} index - paths layer index
    * @param {Array} fileInfoList - [ [ kind, totalFrames, actionName, filePath ], ... ]
+   * @param {String} jsonPath - json file path
    * @param {Function} completeFunc - callback when loading complete
-   * @param {String} jsPath - file path to webworker
-   * @param {Boolean} isDebug - use debug mode when true
    */
-  load: function(name, index, fileInfoList, completeFunc = null, jsPath = null, isDebug = false) {
+  load: function(name, index, fileInfoList, jsonPath = null, completeFunc = null) {
     if(!fileInfoList || !Array.isArray(fileInfoList) || !Array.isArray(fileInfoList[0])) {
       console.error("fileInfoList format is woring");
       console.log(fileInfoList);
@@ -601,7 +600,14 @@ var SVGLoader = {
       }
     });
     
-    PathMain.completeLoadFunc = completeFunc;
+    if(jsonPath == null) {
+      PathMain.completeLoadFunc = completeFunc;
+    } else {
+      PathMain.completeLoadFunc =()=> {
+        PathMain.loadBone(jsonPath, completeFunc);
+      };
+    }
+    
     this.loadWorker.postMessage({
       cmd: "load",
       fileInfoList: fileInfoList
