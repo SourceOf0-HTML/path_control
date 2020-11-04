@@ -2430,9 +2430,6 @@ var DebugPath = {
   
   actionIndex: 0,
   
-  isOutputDebugPrint: false,
-  isOutputLoadPrint: false,
-  
   /**
    * @param {PathContainer} pathContainer
    */
@@ -2466,12 +2463,10 @@ var DebugPath = {
         setAction(pathContainer.actionList[this.actionIndex].name);
         break;
       case "KeyD":
-        this.isOutputDebugPrint = !this.isOutputDebugPrint;
-        PathCtr.setDebugPrint(this.isOutputDebugPrint);
+        PathWorker.setDebugPrint(PathWorker.debugPrint != console.debug);
         break;
       case "KeyL":
-        this.isOutputLoadPrint = !this.isOutputLoadPrint;
-        PathWorker.loadPrint(this.isOutputLoadPrint);
+        PathWorker.setLoadPrint(PathWorker.loadPrint != console.log);
         break;
       case "KeyB":
         this.isShowBones = !this.isShowBones;
