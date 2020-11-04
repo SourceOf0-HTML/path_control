@@ -61,7 +61,6 @@ var PathCtr = {
       DebugPath.init(pathContainer);
     }
     if(typeof setup !== "undefined") setup(pathContainer);
-    PathCtr.update();
   },
   
   draw: function(timestamp) {
@@ -80,7 +79,13 @@ var PathCtr = {
     PathCtr.average = (PathCtr.average + elapsed) / 2;
     //PathWorker.debugPrint((PathCtr.average * 100000)^0);
     
-    if(PathCtr.pathContainers.length <= 0) return;
+    if(PathCtr.pathContainers.length <= 0) {
+      PathCtr.context.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
+      PathCtr.context.fillStyle = "#000000";
+      PathCtr.context.font = "20px Arial";
+      PathCtr.context.fillText(PathWorker.loadState, 20, PathCtr.viewHeight - 20);
+      return;
+    }
     
     let frameTime = 1 / 24;
     
@@ -142,6 +147,7 @@ var PathCtr = {
     
     canvas.width = subCanvas.width = PathCtr.viewWidth = viewWidth;
     canvas.height = subCanvas.height = PathCtr.viewHeight = viewHeight;
+    PathCtr.update();
   },
 };
 

@@ -1,6 +1,4 @@
 function setup(pathContainer) {
-  PathWorker.setLoadPrint(true);
-  
   if(pathContainer.name != "walk") return;
   pathContainer.setAction("walk", 100);
   

@@ -136,7 +136,6 @@ var PathCtr = {
       DebugPath.init(pathContainer);
     }
     if(typeof setup !== "undefined") setup(pathContainer);
-    PathCtr.update();
   },
   
   draw: function(timestamp) {
@@ -155,7 +154,13 @@ var PathCtr = {
     PathCtr.average = (PathCtr.average + elapsed) / 2;
     //PathWorker.debugPrint((PathCtr.average * 100000)^0);
     
-    if(PathCtr.pathContainers.length <= 0) return;
+    if(PathCtr.pathContainers.length <= 0) {
+      PathCtr.context.clearRect(0, 0, PathCtr.viewWidth, PathCtr.viewHeight);
+      PathCtr.context.fillStyle = "#000000";
+      PathCtr.context.font = "20px Arial";
+      PathCtr.context.fillText(PathWorker.loadState, 20, PathCtr.viewHeight - 20);
+      return;
+    }
     
     let frameTime = 1 / 24;
     
@@ -217,6 +222,7 @@ var PathCtr = {
     
     canvas.width = subCanvas.width = PathCtr.viewWidth = viewWidth;
     canvas.height = subCanvas.height = PathCtr.viewHeight = viewHeight;
+    PathCtr.update();
   },
 };
 
@@ -1945,6 +1951,7 @@ var PathWorker = {
     PathWorker.loadPrint = isOn? console.log : function(){};
   },
   
+  loadState: "",
   instance: null,
   isWorker: false,
   
@@ -1970,6 +1977,7 @@ var PathWorker = {
           return false;
           
         case "load-complete":
+          PathWorker.loadState = "";
           PathCtr.loadComplete();
           PathWorker.postMessage({cmd: "main-init-complete"});
           return false;
@@ -1982,6 +1990,8 @@ var PathWorker = {
           return false;
           
         case "load-bone":
+          PathWorker.loadState = "load bone";
+          PathWorker.loadPrint(PathWorker.loadState);
           BoneLoader.load(data.filePathList, PathCtr.pathContainers[PathCtr.pathContainers.length-1]);
           return false;
           
@@ -2037,13 +2047,15 @@ var PathWorker = {
           /* ---- create data ---- */
           
         case "create-path-container":
-          PathWorker.loadPrint("init path container");
+          PathWorker.loadState = "init path container";
+          PathWorker.loadPrint(PathWorker.loadState);
           PathCtr.initTarget = new PathContainer(data.name, data.width, data.height);
           PathCtr.initTarget.index = data.index;
           return false;
           
         case "add-action":
-          PathWorker.loadPrint("load action: " + data.actionName + " - " + data.totalFrames);
+          PathWorker.loadState = "load action: " + data.actionName + " - " + data.totalFrames;
+          PathWorker.loadPrint(PathWorker.loadState);
           PathCtr.initTarget.addAction(data.actionName, data.frame, data.totalFrames);
           return false;
           
@@ -2052,6 +2064,8 @@ var PathWorker = {
           return false;
           
         case "new-group":
+          PathWorker.loadState = "new group: " + data.uid + " - " + data.name;
+          PathWorker.loadPrint(PathWorker.loadState);
           PathCtr.initTarget.groups[data.uid] = new GroupObj(
             data.uid,
             data.name,
@@ -2062,6 +2076,8 @@ var PathWorker = {
           return false;
           
         case "new-bone":
+          PathWorker.loadState = "new bone: " + data.uid + " - " + data.name;
+          PathWorker.loadPrint(PathWorker.loadState);
           PathCtr.initTarget.groups[data.uid] = new BoneObj(
             data.uid,
             data.name,
@@ -2072,6 +2088,8 @@ var PathWorker = {
           return false;
           
         case "add-group-action":
+          PathWorker.loadState = "add action: " + data.actionName + " - " + data.frame;
+          PathWorker.loadPrint(PathWorker.loadState);
           if(!PathCtr.initTarget.bones.includes(data.uid)) {
             PathCtr.initTarget.groups[data.uid].addAction(
               data.childGroups,
