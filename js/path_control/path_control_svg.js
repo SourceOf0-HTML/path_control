@@ -1917,7 +1917,7 @@ var BinaryLoader = {
       let target = e.target;
       if(target.readyState != 4) return;
       if((target.status != 200 && target.status != 0) || !target.response) {
-        console.error("failed to read file: " + target.responseURL);
+        console.error("failed to read file: " + filePath);
         console.error(target.statusText);
         return;
       }
@@ -2282,7 +2282,7 @@ var BoneLoader = {
       let target = e.target;
       if(target.readyState != 4) return;
       if((target.status != 200 && target.status != 0) || target.responseText == "") {
-        console.error("failed to read file: " + target.responseURL);
+        console.error("failed to read file: " + filePathList[loadIndex]);
         console.error(target.statusText);
         return;
       }
@@ -2760,7 +2760,7 @@ addEventListener("message", function(e) {
       let target = e.target;
       if(target.readyState != 4) return;
       if((target.status != 200 && target.status != 0) || target.responseText == "") {
-        console.error("failed to read file: " + target.responseURL);
+        console.error("failed to read file: " + fileName);
         console.error(target.statusText);
         return;
       }
@@ -2774,9 +2774,9 @@ addEventListener("message", function(e) {
       
       delete request;
       if(loadFrame <= totalFrames) {
+        fileName = filePath + getFrameNum(loadFrame++);
         request = new XMLHttpRequest();
-        //console.log(filePath + getFrameNum(loadFrame));
-        request.open("GET", filePath + getFrameNum(loadFrame++), true);
+        request.open("GET", fileName, true);
         request.onreadystatechange = loadSVG;
         request.send();
         return;
@@ -2799,8 +2799,8 @@ addEventListener("message", function(e) {
         close();
       }
     };
-    //console.log(filePath + getFrameNum(loadFrame));
-    request.open("GET", filePath + getFrameNum(loadFrame++), true);
+    let fileName = filePath + getFrameNum(loadFrame++);
+    request.open("GET", fileName, true);
     request.send();
   };
   
@@ -3643,13 +3643,9 @@ var SVGLoader = {
   },
   
   /**
-   * @param {String} name
-   * @param {Integer} index - paths layer index
    * @param {Array} fileInfoList - [ [ kind, totalFrames, actionName, filePath ], ... ]
-   * @param {String} jsonPath - json file path
-   * @param {Function} completeFunc - callback when loading complete
    */
-  load: function(name, index, fileInfoList, jsonPath = null, completeFunc = null) {
+  startWorker: function(fileInfoList) {
     if(!fileInfoList || !Array.isArray(fileInfoList) || !Array.isArray(fileInfoList[0])) {
       console.error("fileInfoList format is woring");
       console.log(fileInfoList);
@@ -3662,11 +3658,6 @@ var SVGLoader = {
     fileInfoList.forEach(info=> {
       info[3] = new URL(info[3], window.location.href).href;
     });
-    
-    this.name = name;
-    this.index = index;
-    this.groupNameToIDList = {};
-    this.masksList = {};
     
     let blob = new Blob([path_load_svg_worker], {type: "text/javascript"});
     let filePath = window.URL.createObjectURL(blob);
@@ -3695,6 +3686,25 @@ var SVGLoader = {
       }
     });
     
+    this.loadWorker.postMessage({
+      cmd: "load",
+      fileInfoList: fileInfoList
+    });
+  },
+  
+  /**
+   * @param {String} name
+   * @param {Integer} index - paths layer index
+   * @param {String} csvPath - csv file path
+   * @param {String} jsonPath - json file path
+   * @param {Function} completeFunc - callback when loading complete
+   */
+  load: function(name, index, csvPath, jsonPath = null, completeFunc = null) {
+    this.name = name;
+    this.index = index;
+    this.groupNameToIDList = {};
+    this.masksList = {};
+    
     if(jsonPath == null) {
       PathMain.completeLoadFunc = completeFunc;
     } else {
@@ -3703,9 +3713,24 @@ var SVGLoader = {
       };
     }
     
-    this.loadWorker.postMessage({
-      cmd: "load",
-      fileInfoList: fileInfoList
-    });
+    let request = new XMLHttpRequest();
+    request.onreadystatechange = function(e) {
+      let target = e.target;
+      if(target.readyState != 4) return;
+      if((target.status != 200 && target.status != 0) || target.responseText == "") {
+        console.error("failed to read file: " + csvPath);
+        console.error(target.statusText);
+        return;
+      }
+      let fileInfoList = target.responseText.split("\n").map(data=> {
+        let list = data.split(", ");
+        if(list.length != 4) return false;
+        list[1] = Number(list[1]);
+        return list;
+      }).filter(data=>data);
+      SVGLoader.startWorker(fileInfoList);
+    };
+    request.open("GET", csvPath, true);
+    request.send();
   },
 };

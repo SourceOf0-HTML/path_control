@@ -1,6 +1,6 @@
 function setup(pathContainer) {
   if(pathContainer.name != "walk") return;
-  pathContainer.setAction("walk", 100);
+  pathContainer.setAction("歩き", 100);
   
   //let hair = pathContainer.getGroup("bone11_hair");
   //hair.mRotation = 0;

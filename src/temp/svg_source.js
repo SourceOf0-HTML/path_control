@@ -16,7 +16,7 @@ addEventListener("message", function(e) {
       let target = e.target;
       if(target.readyState != 4) return;
       if((target.status != 200 && target.status != 0) || target.responseText == "") {
-        console.error("failed to read file: " + target.responseURL);
+        console.error("failed to read file: " + fileName);
         console.error(target.statusText);
         return;
       }
@@ -30,9 +30,9 @@ addEventListener("message", function(e) {
       
       delete request;
       if(loadFrame <= totalFrames) {
+        fileName = filePath + getFrameNum(loadFrame++);
         request = new XMLHttpRequest();
-        //console.log(filePath + getFrameNum(loadFrame));
-        request.open("GET", filePath + getFrameNum(loadFrame++), true);
+        request.open("GET", fileName, true);
         request.onreadystatechange = loadSVG;
         request.send();
         return;
@@ -55,8 +55,8 @@ addEventListener("message", function(e) {
         close();
       }
     };
-    //console.log(filePath + getFrameNum(loadFrame));
-    request.open("GET", filePath + getFrameNum(loadFrame++), true);
+    let fileName = filePath + getFrameNum(loadFrame++);
+    request.open("GET", fileName, true);
     request.send();
   };
   

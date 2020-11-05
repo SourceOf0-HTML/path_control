@@ -46,6 +46,7 @@ end
 -- Recurring values
 -- **************************************************
 
+BN_OutputJson.jsonName = "bones.json"
 BN_OutputJson.boneLayerName = "bone"
 BN_OutputJson.bonesProp = "bones"
 BN_OutputJson.flexiProp = "flexi"
@@ -118,13 +119,13 @@ function BN_OutputJson:Run(moho)
 	
 	self:SetActionInfo()
 	
-	fp = io.open("bones.json","w")
+	fp = io.open(BN_OutputJson.jsonName,"w")
 	if (fp == nil) then
-		self:SetupAlert("bones.jsonの保存に失敗しました。\nファイルを開いている場合は閉じてから実行してください。")
+		self:SetupAlert(BN_OutputJson.jsonName .. "の保存に失敗しました。\nファイルを開いている場合は閉じてから実行してください。")
 	else
 		fp:write(self:OutputJson(self.json, 0))
 		io.close(fp)
-		self:SetupAlert("bones.jsonを保存しました")
+		self:SetupAlert(BN_OutputJson.jsonName .. "を保存しました")
 	end
 end
 
@@ -170,12 +171,6 @@ end
 function BN_OutputJson:AdjustAngle(angle)
 	local ret = math.floor(angle / math.pi * 180 + 0.5)
 	local addCount = 1
-	--[[
-	while (ret < 0) do
-		ret = math.floor(angle / math.pi * 180 + addCount * math.pi * 2 + 0.5)
-		addCount = addCount + 1
-	end
-	]]
 	return ret
 end
 

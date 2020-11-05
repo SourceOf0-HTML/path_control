@@ -80,7 +80,7 @@ var BoneLoader = {
       let target = e.target;
       if(target.readyState != 4) return;
       if((target.status != 200 && target.status != 0) || target.responseText == "") {
-        console.error("failed to read file: " + target.responseURL);
+        console.error("failed to read file: " + filePathList[loadIndex]);
         console.error(target.statusText);
         return;
       }
