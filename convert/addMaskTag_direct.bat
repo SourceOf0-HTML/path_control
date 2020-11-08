@@ -1,1 +1,0 @@
-ruby -Eutf-8 addMaskTag.rb ../moho ../resource
