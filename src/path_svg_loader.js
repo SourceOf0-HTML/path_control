@@ -292,9 +292,6 @@ var SVGLoader = {
             this.makeGroup(c);
           });
           break;
-        case "clipPath":
-          // TODO
-          break;
         case "g":
           childGroups.push(this.groupNameToIDList[child.getAttribute("id")]);
           this.makeGroup(child);
@@ -347,7 +344,6 @@ var SVGLoader = {
             }
             break;
           case "mask":
-          case "clipPath":
             break;
           case "g":
             childGroups.push(SVGLoader.groupNameToIDList[child.getAttribute("id")]);
@@ -519,12 +515,56 @@ var SVGLoader = {
   },
   
   /**
+   * @param {HTMLElement} rootDOM - root element
+   */
+  amendMohoSVG: function(rootDOM) {
+    Array.prototype.slice.call(rootDOM.getElementsByTagName("clipPath")).forEach(clipPath=>{
+      let clipID = "cmn_" + clipPath.getAttribute("id");
+      let elem = clipPath.nextElementSibling;
+      if(elem.tagName != "path") return;
+      let isSame = true;
+      let sameElemList = [];
+      Array.prototype.slice.call(clipPath.getElementsByTagName("path")).forEach(innerElem=>{
+        if(!isSame && elem.tagName != "path" && innerElem.outerHTML != elem.outerHTML) {
+          isSame = false;
+          return;
+        }
+        sameElemList.push(elem);
+        elem = elem.nextElementSibling;
+      });
+      if(isSame) {
+        let g = document.createElement("g");
+        g.setAttribute("id", clipID);
+        
+        clipPath.innerHTML = "<use xlink:href=\"#" + clipID + "\"/>";
+        sameElemList.forEach(sameElem=>{
+          g.insertAdjacentElement("beforeend", sameElem);
+        });
+        clipPath.insertAdjacentElement("afterend", g);
+      }
+    });
+    rootDOM.innerHTML = rootDOM.innerHTML.replace(/clip-path=/g, "mask=").replace(/<clipPath/g, "<mask style=\"mask-type:alpha;\"").replace(/<\/clipPath>/g, "</mask>");
+    
+    let targetElem = rootDOM.querySelectorAll("[id$=\"Mtarget\"]");
+    targetElem.forEach(elem=>elem.setAttribute("mask", "url(#mask_target)"));
+    
+    let maskElem = rootDOM.querySelectorAll("[id$=\"Mask\"]");
+    maskElem.forEach(elem=>{
+      let line = "<mask id=\"mask_target\" style=\"mask-type:alpha;\">\n";
+      line += "<use xlink:href=\"#" + elem.getAttribute("id") + "\"/>";
+      line += "</mask>\n";
+      elem.outerHTML += line;
+    });
+  },
+   
+  /**
    * @param {String} svg
    */
   addSvgDOM: function(svg) {
     let div = document.createElement("div");
     div.setAttribute("style", "display:none;");
     div.innerHTML = svg;
+    this.amendMohoSVG(div);
     let svgDOM = div.firstElementChild;
     document.body.append(div);
     this.domList[parseInt(svg.match(/id="Frame_(\d+)"/)[1]) - 1] = svgDOM;
