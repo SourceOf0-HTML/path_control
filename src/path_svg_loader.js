@@ -198,9 +198,15 @@ var SVGLoader = {
           break;
       }
     }
-    
-    ret.push({type:"M", pos:[posData[0][0], posData[0][1]]});
-    ret.push({type:"L", pos:[posData[1][0], posData[1][1]]});
+    if(posData.length == 2) {
+      ret.push({type:"M", pos:[posData[0][0], posData[0][1]]});
+      ret.push({type:"L", pos:[posData[1][0], posData[1][1]]});
+    } else {
+      console.error("unknown bone format");
+      console.log(dataAttribute);
+      ret.push({type:"M", pos:[0, 0]});
+      ret.push({type:"L", pos:[0, 0]});
+    }
     
     return ret;
   },
@@ -234,7 +240,14 @@ var SVGLoader = {
   addBoneActionPath: function(uid, pathID, pathDOM, frame, actionName) {
     let pathDataList = null;
     if(!!pathDOM) {
-      pathDataList = this.makeBonePathDataList(pathDOM.getAttribute("d"));
+      let d = pathDOM.getAttribute("d");
+      if(!d) {
+        console.error("unknown bone format");
+        console.log("actionName: " + actionName + ", frame: " + frame + ", uid:" + uid);
+        console.log(pathDOM);
+        return;
+      }
+      pathDataList = this.makeBonePathDataList(d);
     }
     
     PathMain.postMessage({
@@ -521,27 +534,30 @@ var SVGLoader = {
     Array.prototype.slice.call(rootDOM.getElementsByTagName("clipPath")).forEach(clipPath=>{
       let clipID = "cmn_" + clipPath.getAttribute("id");
       let elem = clipPath.nextElementSibling;
-      if(elem.tagName != "path") return;
-      let isSame = true;
-      let sameElemList = [];
-      Array.prototype.slice.call(clipPath.getElementsByTagName("path")).forEach(innerElem=>{
-        if(!isSame && elem.tagName != "path" && innerElem.outerHTML != elem.outerHTML) {
-          isSame = false;
+      if(!!elem && elem.tagName == "path") {
+        let isSame = true;
+        let sameElemList = [];
+        Array.prototype.slice.call(clipPath.getElementsByTagName("path")).forEach(innerElem=>{
+          if(!isSame || !elem || elem.tagName != "path" || innerElem.outerHTML != elem.outerHTML) {
+            isSame = false;
+            return;
+          }
+          sameElemList.push(elem);
+          elem = elem.nextElementSibling;
+        });
+        if(isSame) {
+          let g = document.createElement("g");
+          g.setAttribute("id", clipID);
+          
+          clipPath.innerHTML = "<use xlink:href=\"#" + clipID + "\"/>";
+          sameElemList.forEach(sameElem=>{
+            g.insertAdjacentElement("beforeend", sameElem);
+          });
+          clipPath.insertAdjacentElement("afterend", g);
           return;
         }
-        sameElemList.push(elem);
-        elem = elem.nextElementSibling;
-      });
-      if(isSame) {
-        let g = document.createElement("g");
-        g.setAttribute("id", clipID);
-        
-        clipPath.innerHTML = "<use xlink:href=\"#" + clipID + "\"/>";
-        sameElemList.forEach(sameElem=>{
-          g.insertAdjacentElement("beforeend", sameElem);
-        });
-        clipPath.insertAdjacentElement("afterend", g);
       }
+      clipPath.innerHTML = "<g id=\"" + clipID + "\">" + clipPath.innerHTML + "</g>";
     });
     rootDOM.innerHTML = rootDOM.innerHTML.replace(/clip-path=/g, "mask=").replace(/<clipPath/g, "<mask style=\"mask-type:alpha;\"").replace(/<\/clipPath>/g, "</mask>");
     
