@@ -1511,6 +1511,12 @@ class PathContainer extends Sprite {
     };
   };
   
+  resetAction() {
+    this.actionList.forEach(data=> {
+      data.currentFrame = 0;
+    });
+  };
+  
   /**
    * @param {Number} width - reference width
    * @param {Number} height - reference height
@@ -1529,7 +1535,7 @@ class PathContainer extends Sprite {
   
   step() {
     let action = this.actionList[this.currentActionID];
-    this.currentFrame = this.currentFrame % action.totalFrames + 1;
+    this.currentFrame = (this.currentFrame + 1) % action.totalFrames;
   }
   
   update() {
@@ -1611,21 +1617,23 @@ class PathContainer extends Sprite {
           angle -= targetAction.startAngle;
           if(angle < 0) angle += Math.PI*2;
           if(angle > range) {
-            targetAction.currentFrame = targetAction.smartFrames;
+            targetAction.currentFrame = 0;
           } else {
             targetAction.currentFrame = ((angle/range * (targetAction.smartFrames-1))^0) + 1;
           }
         } else {
           angle -= targetAction.endAngle;
           if(angle < 0) angle += Math.PI*2;
-          if(angle > -range) {
-            targetAction.currentFrame = targetAction.smartFrames;
+          if(angle >= -range) {
+            targetAction.currentFrame = 0;
           } else {
             targetAction.currentFrame = targetAction.smartFrames + ((angle/range * (targetAction.smartFrames-1))^0);
           }
         }
       }
     });
+    
+    if(typeof update !== "undefined") update(this);
     
     this.rootGroups.forEach(id=> {
       this.groups[id].update(this, (new Sprite().setSprite(this)));

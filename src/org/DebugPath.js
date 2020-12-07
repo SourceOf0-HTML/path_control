@@ -37,6 +37,7 @@ var DebugPath = {
   keyUp: function(pathContainer, code) {
     let setAction =name=> {
       console.log(name);
+      pathContainer.resetAction();
       pathContainer.setAction(name);
     };
     switch(code) {
